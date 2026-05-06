@@ -7,8 +7,16 @@
       </div>
       
       <el-table :data="articles" style="width: 100%" v-loading="loading" empty-text="暂无文章，快去发布一篇吧">
-        <el-table-column prop="id" label="编号" width="80"></el-table-column>
-        <el-table-column prop="title" label="标题"></el-table-column>
+        <el-table-column label="编号" width="80">
+          <template slot-scope="scope">
+            {{ scope.row.id }}
+          </template>
+        </el-table-column>
+        <el-table-column label="标题">
+          <template slot-scope="scope">
+            {{ scope.row.title }}
+          </template>
+        </el-table-column>
         <el-table-column prop="createTime" label="发布时间" width="180">
           <template slot-scope="scope">
             {{ new Date(scope.row.createTime).toLocaleString() }}
