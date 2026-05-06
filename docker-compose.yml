@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  mysql_server:
+    image: mysql:8.0
+    container_name: blog_mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: blog_db
+      MYSQL_ROOT_PASSWORD: ProductionStrongPassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # 将建表 SQL 挂载到初始化目录，MySQL 首次启动时会自动执行建表
+      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: blog_backend
+    restart: always
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mysql_server
+
+  frontend:
+    build:
+      context: ./blog_client
+      dockerfile: Dockerfile
+    container_name: blog_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:

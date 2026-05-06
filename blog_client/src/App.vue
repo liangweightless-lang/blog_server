@@ -2,7 +2,7 @@
   <div id="app">
     <el-container>
       <el-header>
-        <div class="logo" @click="$router.push('/')">Blog Dashboard</div>
+        <div class="logo" @click="$router.push('/')">博客管理后台</div>
       </el-header>
       <el-main>
         <router-view></router-view>
