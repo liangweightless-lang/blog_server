@@ -2,16 +2,10 @@
   <div id="app">
     <el-container>
       <el-header>
-        <h2>Blog Server Dashboard</h2>
+        <div class="logo" @click="$router.push('/')">Blog Dashboard</div>
       </el-header>
       <el-main>
-        <el-card>
-          <div slot="header" class="clearfix">
-            <span>Welcome to the Blog System</span>
-            <el-button style="float: right; padding: 3px 0" type="text">Create Post</el-button>
-          </div>
-          <div>前端基础结构已搭载完毕 (Vue2 + Element UI)。</div>
-        </el-card>
+        <router-view></router-view>
       </el-main>
     </el-container>
   </div>
@@ -34,7 +28,15 @@ body {
   color: white;
   line-height: 60px;
 }
+.logo {
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+}
 .el-main {
   padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+  width: 100%;
 }
 </style>
