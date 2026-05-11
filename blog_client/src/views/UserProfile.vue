@@ -1,127 +1,157 @@
-<template>
-  <div class="profile-container">
-    <div class="profile-header">
-      <h1 class="profile-title">个人信息维护</h1>
-      <p class="profile-subtitle">完善您的基本信息，以便我们提供更好的配送与沟通服务。</p>
+  <div class="user-center-container">
+    <!-- 1. 顶部用户信息区 -->
+    <div class="user-profile-header">
+      <div class="header-content" v-if="user">
+        <div class="user-info-main">
+          <div class="avatar-wrapper">
+            <img :src="user.avatarUrl || '/img/avatar.png'" class="user-avatar-big" />
+          </div>
+          <div class="user-text-info">
+            <h2 class="user-nickname">{{ user.nickname || '未设置昵称' }}</h2>
+            <p class="user-account-id">账号: {{ user.username }}</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <el-button icon="el-icon-edit-outline" circle size="small" @click="showEditDialog"></el-button>
+        </div>
+      </div>
     </div>
 
-    <el-card class="profile-card">
-      <el-form :model="profileForm" label-width="100px" v-loading="loading">
-        <el-form-item label="头像">
-          <div class="avatar-uploader-container">
-            <el-upload
-              class="avatar-uploader"
-              action="/api/files/upload"
-              :show-file-list="false"
-              :on-success="handleAvatarSuccess"
-              :before-upload="beforeAvatarUpload">
-              <img v-if="profileForm.avatarUrl" :src="profileForm.avatarUrl" class="avatar">
-              <i v-else class="el-icon-plus avatar-uploader-icon"></i>
-            </el-upload>
-            <p class="upload-tip">点击预览图上传新头像</p>
+    <!-- 2. 资产统计条 -->
+    <div class="stats-bar-wrapper">
+      <div class="stats-bar-card">
+        <div class="stats-item">
+          <span class="stats-val">{{ user ? user.points : 0 }}</span>
+          <span class="stats-label">我的积分</span>
+        </div>
+        <div class="stats-item">
+          <span class="stats-val">0</span>
+          <span class="stats-label">优惠券</span>
+        </div>
+        <div class="stats-item">
+          <span class="stats-val">¥0.00</span>
+          <span class="stats-label">余额</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. 我的订单板块 -->
+    <div class="section-card order-section">
+      <div class="section-header">
+        <span class="section-title">我的订单</span>
+        <el-button type="text" class="view-all" @click="activeOrderTab = 'all'">全部订单 <i class="el-icon-arrow-right"></i></el-button>
+      </div>
+      <div class="order-status-grid">
+        <div class="status-item" @click="activeOrderTab = 'unpaid'">
+          <el-badge :value="unpaidCount" :hidden="unpaidCount === 0" class="badge-item">
+            <i class="el-icon-wallet icon"></i>
+          </el-badge>
+          <span>待付款</span>
+        </div>
+        <div class="status-item">
+          <i class="el-icon-box icon"></i>
+          <span>待发货</span>
+        </div>
+        <div class="status-item">
+          <i class="el-icon-truck icon"></i>
+          <span>待收货</span>
+        </div>
+        <div class="status-item">
+          <i class="el-icon-chat-line-round icon"></i>
+          <span>评价</span>
+        </div>
+      </div>
+      
+      <!-- 快捷查看最近订单 -->
+      <div class="recent-orders" v-if="orders.length > 0">
+        <div v-for="order in orders.slice(0, 2)" :key="order.id" class="mini-order-card">
+          <div class="mini-order-info">
+            <span class="mini-id">#{{ order.id.substring(0, 8) }}</span>
+            <span class="mini-status">{{ order.status === 1 ? '已完成' : '待支付' }}</span>
           </div>
+          <div class="mini-order-price">¥{{ order.amount }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. 常用工具/服务区 -->
+    <div class="section-card tools-section">
+      <div class="section-header">
+        <span class="section-title">常用工具</span>
+      </div>
+      <div class="tools-list">
+        <div class="tool-cell" @click="showAddressDialog">
+          <div class="cell-left">
+            <i class="el-icon-location-outline tool-icon" style="color: #409EFF"></i>
+            <span>收货地址</span>
+          </div>
+          <i class="el-icon-arrow-right"></i>
+        </div>
+        <div class="tool-cell" @click="showInviteDialog">
+          <div class="cell-left">
+            <i class="el-icon-present tool-icon" style="color: #F56C6C"></i>
+            <span>邀请有礼</span>
+          </div>
+          <i class="el-icon-arrow-right"></i>
+        </div>
+        <div class="tool-cell" v-if="user && user.role === 'ADMIN'" @click="$router.push('/admin')">
+          <div class="cell-left">
+            <i class="el-icon-set-up tool-icon" style="color: #E6A23C"></i>
+            <span>管理后台</span>
+          </div>
+          <i class="el-icon-arrow-right"></i>
+        </div>
+        <div class="tool-cell" @click="handleLogout">
+          <div class="cell-left">
+            <i class="el-icon-switch-button tool-icon" style="color: #909399"></i>
+            <span>退出登录</span>
+          </div>
+          <i class="el-icon-arrow-right"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- 编辑资料弹窗 -->
+    <el-dialog title="修改个人信息" :visible.sync="editDialogVisible" :width="isMobile ? '90%' : '500px'" round>
+      <el-form :model="profileForm" label-width="80px">
+        <el-form-item label="头像">
+          <el-upload
+            class="avatar-uploader"
+            action="/api/files/upload"
+            :show-file-list="false"
+            :on-success="handleAvatarSuccess"
+            :before-upload="beforeAvatarUpload">
+            <img v-if="profileForm.avatarUrl" :src="profileForm.avatarUrl" class="avatar">
+            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+          </el-upload>
         </el-form-item>
-        
         <el-form-item label="昵称">
           <el-input v-model="profileForm.nickname"></el-input>
         </el-form-item>
-
-        <el-form-item label="注册手机号">
-          <el-input :value="user ? user.username : ''" disabled placeholder="注册账号"></el-input>
-          <p class="upload-tip">注册账号不可修改</p>
-        </el-form-item>
-
         <el-form-item label="微信号">
-          <el-input v-model="profileForm.wechatId" placeholder="方便后续沟通与发货通知"></el-input>
+          <el-input v-model="profileForm.wechatId" placeholder="方便后续沟通"></el-input>
         </el-form-item>
-
-        <el-form-item label="年龄">
-          <el-input-number v-model="profileForm.age" :min="1" :max="120"></el-input-number>
-        </el-form-item>
-
-        <el-form-item label="性别">
-          <el-radio-group v-model="profileForm.gender">
-            <el-radio label="MALE">男</el-radio>
-            <el-radio label="FEMALE">女</el-radio>
-            <el-radio label="OTHER">其他</el-radio>
-          </el-radio-group>
-        </el-form-item>
-
-        <el-form-item label="常用配送地址">
-          <el-input type="textarea" v-model="profileForm.address" :rows="3" placeholder="请填写详细的收货地址"></el-input>
-        </el-form-item>
-
-        <el-form-item v-if="user && user.role === 'ADMIN'" label="管理权限">
-          <el-button type="danger" plain round @click="$router.push('/admin')">进入管理后台</el-button>
-        </el-form-item>
-
-        <el-form-item>
-          <el-button type="primary" round @click="handleUpdate" :loading="updating">保存修改</el-button>
-          <el-button round @click="$router.go(-1)">返回</el-button>
+        <el-form-item label="收货地址">
+          <el-input type="textarea" v-model="profileForm.address" placeholder="详细地址"></el-input>
         </el-form-item>
       </el-form>
-    </el-card>
-
-    <div class="points-info" v-if="user">
-      <el-alert
-        title="当前积分状态"
-        type="success"
-        :description="'您当前拥有 ' + user.points + ' 积分。通过邀请好友注册并购买可获得更多积分奖励！'"
-        show-icon
-        :closable="false">
-      </el-alert>
-    </div>
-
-    <!-- 邀请好友 -->
-    <el-card class="invite-card" v-if="user">
-      <div slot="header" class="invite-header">
-        <span>邀请好友加入</span>
-        <el-tag size="small" type="warning">每一位好友注册双方均得50积分</el-tag>
+      <div slot="footer">
+        <el-button @click="editDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="handleUpdate" :loading="updating">保存</el-button>
       </div>
-      <div class="invite-content">
-        <div class="invite-code-box">
-          <p class="label">您的专属邀请码</p>
-          <h2 class="invite-code">{{ user.inviteCode }}</h2>
-        </div>
-        <div class="share-actions">
-          <el-button type="primary" icon="el-icon-document-copy" round @click="copyInviteLink">复制邀请链接</el-button>
-          <p class="share-tip">将链接发给好友，注册时将自动填入您的邀请码</p>
-        </div>
-      </div>
-    </el-card>
-    </el-card>
+    </el-dialog>
 
-    <!-- 我的订单 -->
-    <div class="user-orders" v-if="user">
-      <div class="orders-header">
-        <h3>我的订单记录</h3>
-        <el-button type="text" @click="fetchMyOrders">刷新 <i class="el-icon-refresh"></i></el-button>
+    <!-- 邀请码弹窗 -->
+    <el-dialog title="我的邀请码" :visible.sync="inviteDialogVisible" :width="isMobile ? '85%' : '400px'" round center>
+      <div class="invite-dialog-content" v-if="user">
+        <div class="invite-box">
+          <p class="invite-label">专属邀请码</p>
+          <h2 class="invite-code-text">{{ user.inviteCode }}</h2>
+        </div>
+        <el-button type="primary" round style="width: 100%" @click="copyInviteLink">复制邀请链接</el-button>
+        <p class="invite-tip">每邀请一位好友注册，双方均可获得50积分奖励</p>
       </div>
-      <el-card class="order-list-card">
-        <div v-if="orders.length === 0" class="empty-orders">
-          <i class="el-icon-document" style="font-size: 40px; color: #DCDFE6;"></i>
-          <p>暂无购买记录</p>
-        </div>
-        <div v-else class="order-item" v-for="order in orders" :key="order.id">
-          <div class="order-main">
-            <div class="order-info">
-              <p class="order-id">订单号: {{ order.id.substring(0, 12) }}...</p>
-              <p class="order-date">{{ formatTime(order.createTime) }}</p>
-            </div>
-            <div class="order-status">
-              <el-tag :type="order.status === 1 ? 'success' : 'info'" size="mini">
-                {{ order.status === 1 ? '已完成' : '待支付' }}
-              </el-tag>
-              <el-tag v-if="order.orderType === 'GROUP'" type="warning" size="mini" plain style="margin-left: 5px;">拼团</el-tag>
-            </div>
-          </div>
-          <div class="order-footer">
-            <span class="order-amount">实付: ¥{{ order.amount }}</span>
-            <el-button v-if="order.status === 0" type="primary" size="mini" @click="$router.push('/store')">去支付</el-button>
-          </div>
-        </div>
-      </el-card>
-    </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -144,14 +174,45 @@ export default {
         address: ''
       },
       orders: [],
-      loadingOrders: false
+      loadingOrders: false,
+      editDialogVisible: false,
+      inviteDialogVisible: false,
+      activeOrderTab: 'all',
+      isMobile: window.innerWidth <= 768
     }
   },
   created() {
     this.fetchUser();
     this.fetchMyOrders();
+    window.addEventListener('resize', this.handleResize);
+  },
+  beforeDestroy() {
+    window.removeEventListener('resize', this.handleResize);
+  },
+  computed: {
+    unpaidCount() {
+      return this.orders.filter(o => o.status === 0).length;
+    }
   },
   methods: {
+    handleResize() {
+      this.isMobile = window.innerWidth <= 768;
+    },
+    showEditDialog() {
+      this.editDialogVisible = true;
+    },
+    showAddressDialog() {
+      this.editDialogVisible = true; // Address is in edit dialog
+    },
+    showInviteDialog() {
+      this.inviteDialogVisible = true;
+    },
+    handleLogout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      this.$router.push('/');
+      this.$message.success('已安全退出');
+    },
     async fetchUser() {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -205,6 +266,8 @@ export default {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         this.$message.success('个人信息更新成功');
+        this.editDialogVisible = false;
+        this.fetchUser();
         window.dispatchEvent(new CustomEvent('refresh-user'));
       } catch (error) {
         this.$message.error('更新失败');
@@ -246,175 +309,224 @@ export default {
 </script>
 
 <style scoped>
-.profile-container {
-  padding: 20px 0 60px;
+.user-center-container {
+  background: #F7F8FA;
+  min-height: 100vh;
+  padding-bottom: 80px;
 }
-.profile-header {
-  text-align: center;
-  margin-bottom: 30px;
+
+/* Header Section */
+.user-profile-header {
+  background: linear-gradient(135deg, #FF7E67 0%, #FF9E8D 100%);
+  padding: 40px 20px 60px;
+  color: white;
 }
-.profile-title {
-  font-size: 28px;
-  font-weight: 800;
-  color: #5C433B;
-}
-.profile-subtitle {
-  color: #8C6A5D;
-  font-size: 14px;
-}
-.profile-card {
-  border-radius: 20px;
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   max-width: 600px;
   margin: 0 auto;
-  box-shadow: 0 4px 20px rgba(255, 126, 103, 0.05);
 }
-.avatar-uploader-container {
+.user-info-main {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+.user-avatar-big {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.3);
+  object-fit: cover;
+}
+.user-nickname {
+  margin: 0;
+  font-size: 20px;
+  font-weight: bold;
+}
+.user-account-id {
+  margin: 4px 0 0;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* Stats Bar */
+.stats-bar-wrapper {
+  margin: -30px 15px 0;
+  z-index: 10;
+  position: relative;
+}
+.stats-bar-card {
+  background: white;
+  border-radius: 12px;
+  display: flex;
+  padding: 15px 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  max-width: 600px;
+  margin: 0 auto;
+}
+.stats-item {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 4px;
 }
-.avatar-uploader {
-  border: 1px dashed #d9d9d9;
-  border-radius: 50%;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  width: 100px;
-  height: 100px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  transition: border-color 0.3s;
+.stats-val {
+  font-weight: bold;
+  font-size: 16px;
+  color: #303133;
 }
-.avatar-uploader:hover {
-  border-color: #FF7E67;
-}
-.avatar-uploader-icon {
-  font-size: 28px;
-  color: #8c939d;
-}
-.avatar {
-  width: 100px;
-  height: 100px;
-  display: block;
-  object-fit: cover;
-}
-.upload-tip {
-  font-size: 12px;
+.stats-label {
+  font-size: 11px;
   color: #909399;
-  margin-top: 8px;
 }
-.points-info {
+
+/* Sections */
+.section-card {
+  background: white;
+  margin: 15px;
+  border-radius: 12px;
+  padding: 15px;
   max-width: 600px;
-  margin: 20px auto;
+  margin: 15px auto;
 }
-.invite-card {
-  max-width: 600px;
-  margin: 20px auto;
-  border-radius: 20px;
-  background: linear-gradient(135deg, #FFFDF8 0%, #FDF0E6 100%);
-  border: 1px solid #FFE4D6;
-}
-.invite-header {
+.section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 15px;
+}
+.section-title {
   font-weight: bold;
+  font-size: 15px;
+  color: #303133;
 }
-.invite-content {
-  text-align: center;
-  padding: 10px 0;
-}
-.invite-code-box {
-  background: #FFFFFF;
-  padding: 15px;
-  border-radius: 12px;
-  display: inline-block;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-}
-.invite-code-box .label {
+.view-all {
   font-size: 12px;
   color: #909399;
-  margin-bottom: 5px;
+  padding: 0;
 }
-.invite-code {
-  font-size: 32px;
-  letter-spacing: 4px;
+
+/* Orders Grid */
+.order-status-grid {
+  display: flex;
+  padding: 5px 0;
+}
+.status-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.status-item .icon {
+  font-size: 24px;
+  color: #5C433B;
+}
+.status-item span {
+  font-size: 12px;
+  color: #606266;
+}
+
+/* Recent Orders */
+.recent-orders {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #F2F6FC;
+}
+.mini-order-card {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-bottom: 8px;
+  color: #909399;
+}
+.mini-status {
   color: #FF7E67;
-  margin: 0;
+  margin-left: 8px;
 }
-.share-tip {
+
+/* Tools List */
+.tools-list {
+  display: flex;
+  flex-direction: column;
+}
+.tool-cell {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 0;
+  border-bottom: 1px solid #F2F6FC;
+  cursor: pointer;
+}
+.tool-cell:last-child {
+  border-bottom: none;
+}
+.cell-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.tool-icon {
+  font-size: 20px;
+}
+.cell-left span {
+  font-size: 14px;
+  color: #303133;
+}
+
+/* Invite Dialog */
+.invite-dialog-content {
+  text-align: center;
+}
+.invite-box {
+  background: #FDF0E6;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+.invite-label {
   font-size: 12px;
   color: #8C6A5D;
+  margin-bottom: 8px;
+}
+.invite-code-text {
+  font-size: 32px;
+  color: #FF7E67;
+  letter-spacing: 2px;
+  margin: 0;
+}
+.invite-tip {
+  font-size: 12px;
+  color: #909399;
   margin-top: 15px;
 }
 
-.user-orders {
-  max-width: 600px;
-  margin: 30px auto;
-}
-.orders-header {
+.avatar-uploader {
+  border: 1px dashed #d9d9d9;
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  margin-bottom: 10px;
-  padding: 0 10px;
+  margin: 0 auto;
 }
-.orders-header h3 {
-  margin: 0;
-  font-size: 18px;
-  color: #5C433B;
-}
-.order-list-card {
-  border-radius: 16px;
-  border: none;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-}
-.empty-orders {
-  text-align: center;
-  padding: 40px 0;
-  color: #909399;
-}
-.order-item {
-  padding: 15px 0;
-  border-bottom: 1px solid #F2F6FC;
-}
-.order-item:last-child {
-  border-bottom: none;
-}
-.order-main {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 10px;
-}
-.order-id {
-  font-size: 13px;
-  font-weight: bold;
-  color: #303133;
-  margin: 0 0 4px 0;
-}
-.order-date {
-  font-size: 11px;
-  color: #909399;
-  margin: 0;
-}
-.order-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.order-amount {
-  font-size: 14px;
-  font-weight: 800;
-  color: #FF7E67;
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
 }
 
 @media (max-width: 768px) {
-  .profile-card, .invite-card, .points-info, .user-orders {
-    border-radius: 12px;
-    margin: 10px;
+  .user-profile-header {
+    padding: 30px 15px 50px;
+  }
+  .section-card {
+    margin: 12px;
   }
 }
 </style>
