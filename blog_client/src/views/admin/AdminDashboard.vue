@@ -9,10 +9,19 @@
       <!-- 文章管理 -->
       <el-tab-pane label="日常/文章管理" name="articles">
         <div class="tab-header">
-          <span style="margin-right: 15px; color: #8C6A5D;">共 {{ articles.length }} 篇</span>
+          <span style="margin-right: 15px; color: #8C6A5D; font-weight: bold;">[测试日志] 共 {{ articles.length }} 篇数据已到达</span>
           <el-button type="primary" size="small" icon="el-icon-plus" @click="goToCreateArticle">发布新日常</el-button>
         </div>
-        <el-table :data="articles" :key="articles.length" style="width: 100%" v-loading="loadingArticles">
+
+        <!-- 调试用：原生 HTML 列表 -->
+        <div v-if="articles.length > 0" style="margin: 10px 0; padding: 10px; background: #fffbe6; border: 1px solid #ffe58f;">
+          <p style="color: #856404; font-size: 12px;">正在直接渲染数据标题（排查表格组件故障）：</p>
+          <div v-for="article in articles" :key="'debug-' + article.id" style="font-size: 13px; margin-bottom: 5px; color: #333;">
+            ID: {{ article.id }} | 标题: {{ article.title }}
+          </div>
+        </div>
+
+        <el-table :data="articles" :key="'table-' + articles.length" style="width: 100%">
           <el-table-column prop="id" label="ID" width="80"></el-table-column>
           <el-table-column label="封面" width="120">
             <template slot-scope="scope">
@@ -39,7 +48,7 @@
         <div class="tab-header">
           <el-button type="success" size="small" icon="el-icon-plus" @click="showAddProductDialog">上架新商品</el-button>
         </div>
-        <el-table :data="products" :key="products.length" style="width: 100%" v-loading="loadingProducts">
+        <el-table :data="products" :key="'table-p-' + products.length" style="width: 100%">
           <el-table-column prop="id" label="ID" width="80"></el-table-column>
           <el-table-column label="商品图" width="120">
             <template slot-scope="scope">
@@ -68,7 +77,7 @@
 
       <!-- 用户管理 -->
       <el-tab-pane label="注册人员管理" name="users">
-        <el-table :data="users" :key="users.length" style="width: 100%" v-loading="loadingUsers">
+        <el-table :data="users" :key="'table-u-' + users.length" style="width: 100%">
           <el-table-column label="头像" width="70">
             <template slot-scope="scope">
               <el-avatar :size="32" :src="scope.row.avatarUrl"></el-avatar>
@@ -96,7 +105,7 @@
 
       <!-- 订单管理 -->
       <el-tab-pane label="订单/发货管理" name="orders">
-        <el-table :data="orders" :key="orders.length" style="width: 100%" v-loading="loadingOrders">
+        <el-table :data="orders" :key="'table-o-' + orders.length" style="width: 100%">
           <el-table-column prop="id" label="订单号" width="120" show-overflow-tooltip></el-table-column>
           <el-table-column prop="productId" label="商品ID" width="80"></el-table-column>
           <el-table-column prop="amount" label="实付金额" width="100">
@@ -130,7 +139,7 @@
 
       <!-- 拼团管理 -->
       <el-tab-pane label="拼团进度管理" name="groupbuys">
-        <el-table :data="groupbuys" :key="groupbuys.length" style="width: 100%" v-loading="loadingGroups">
+        <el-table :data="groupbuys" :key="'table-g-' + groupbuys.length" style="width: 100%">
           <el-table-column prop="id" label="ID" width="80"></el-table-column>
           <el-table-column prop="productName" label="拼团商品"></el-table-column>
           <el-table-column prop="initiatorNickname" label="发起人" width="120"></el-table-column>
