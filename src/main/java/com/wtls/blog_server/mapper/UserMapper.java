@@ -21,4 +21,7 @@ public interface UserMapper {
 
     @Update("UPDATE user SET points = points + #{pointsToAdd} WHERE id = #{id}")
     void addPoints(@Param("id") Long id, @Param("pointsToAdd") int pointsToAdd);
+
+    @Update("UPDATE user SET points = points - #{pointsToDeduct} WHERE id = #{id} AND points >= #{pointsToDeduct}")
+    int deductPoints(@Param("id") Long id, @Param("pointsToDeduct") int pointsToDeduct);
 }

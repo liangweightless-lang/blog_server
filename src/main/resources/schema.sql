@@ -74,3 +74,30 @@ CREATE TABLE IF NOT EXISTS `product_order` (
   KEY `idx_user_id` (`user_id`),
   KEY `idx_product_id` (`product_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商品订单表';
+
+-- 8. 创建拼团活动表
+CREATE TABLE IF NOT EXISTS `group_buy` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `product_id` bigint(20) NOT NULL COMMENT '商品ID',
+  `initiator_id` bigint(20) NOT NULL COMMENT '发起人ID',
+  `required_num` int(11) NOT NULL DEFAULT 8 COMMENT '成团人数',
+  `current_num` int(11) NOT NULL DEFAULT 1 COMMENT '当前人数',
+  `status` tinyint(1) NOT NULL DEFAULT 0 COMMENT '状态(0:拼团中, 1:成功, 2:失败/过期)',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '开启时间',
+  `expire_time` datetime NOT NULL COMMENT '过期时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_product_id` (`product_id`),
+  KEY `idx_initiator_id` (`initiator_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='拼团活动表';
+
+-- 9. 创建拼团成员表
+CREATE TABLE IF NOT EXISTS `group_buy_member` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `group_id` bigint(20) NOT NULL COMMENT '拼团ID',
+  `user_id` bigint(20) NOT NULL COMMENT '成员ID',
+  `order_id` varchar(64) NOT NULL COMMENT '关联订单号',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_group_user` (`group_id`, `user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='拼团成员表';
+

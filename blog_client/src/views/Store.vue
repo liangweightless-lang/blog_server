@@ -5,6 +5,25 @@
       <p class="store-subtitle">概念展示区：展示未来可能上架的生活方式好物与概念周边。</p>
     </div>
 
+    <!-- 活跃拼团区 -->
+    <div v-if="activeGroups.length > 0" class="group-buy-section">
+      <h2 class="section-title"><i class="el-icon-timer"></i> 正在进行的拼团</h2>
+      <el-row :gutter="20">
+        <el-col :xs="24" :sm="12" :md="8" v-for="group in activeGroups" :key="group.id">
+          <div class="group-card">
+            <div class="group-info">
+              <span class="product-name">{{ group.productName }}</span>
+              <span class="initiator">团长: {{ group.initiatorNickname }}</span>
+              <div class="progress-bar">
+                <el-progress :percentage="(group.currentNum / group.requiredNum) * 100" :format="() => `${group.currentNum}/${group.requiredNum}`"></el-progress>
+              </div>
+            </div>
+            <el-button type="warning" size="mini" round @click="handleJoinGroup(group)">加入拼团</el-button>
+          </div>
+        </el-col>
+      </el-row>
+    </div>
+
     <el-row :gutter="24">
       <el-col :xs="24" :sm="12" :md="8" v-for="product in products" :key="product.id" class="product-col">
         <el-card class="product-card" shadow="hover" :body-style="{ padding: '0px' }">
@@ -17,7 +36,11 @@
             <p class="product-desc">{{ product.description }}</p>
             <div class="product-bottom">
               <span class="product-price">¥{{ product.price }}</span>
-              <el-button type="primary" size="small" round @click="handleBuy(product)">立即购买</el-button>
+              <div class="button-group">
+                <el-button type="text" style="color: #E6A23C; margin-right: 10px;" @click="handleRedeem(product)">1000积分兑换</el-button>
+                <el-button type="primary" size="small" round @click="handleBuy(product)">立即购买</el-button>
+                <el-button v-if="isMonday" type="warning" size="small" round @click="handleStartGroup(product)">发起拼团</el-button>
+              </div>
             </div>
           </div>
         </el-card>
@@ -56,13 +79,67 @@ export default {
       buyDialogVisible: false,
       purchasing: false,
       currentProduct: {},
-      products: []
+      products: [],
+      activeGroups: [],
+      isMonday: new Date().getDay() === 1
     }
   },
   created() {
     this.fetchProducts();
+    this.fetchActiveGroups();
   },
   methods: {
+    async fetchActiveGroups() {
+      try {
+        const res = await axios.get('/api/groups/active');
+        this.activeGroups = res.data;
+      } catch (error) {
+        console.error('获取拼团列表失败');
+      }
+    },
+    async handleStartGroup(product) {
+      if (!localStorage.getItem('token')) {
+        return this.$message.warning('请先登录再发起拼团');
+      }
+      try {
+        await axios.post('/api/groups/start', { productId: product.id }, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        this.$message.success('开团成功！快邀请好友来凑单吧 (满8人成团)');
+        this.fetchActiveGroups();
+      } catch (error) {
+        this.$message.error(error.response?.data?.error || '开团失败');
+      }
+    },
+    async handleJoinGroup(group) {
+      if (!localStorage.getItem('token')) {
+        return this.$message.warning('请先登录再参加拼团');
+      }
+      try {
+        await axios.post(`/api/groups/${group.id}/join`, {}, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        this.$message.success('加入拼团成功！');
+        this.fetchActiveGroups();
+        window.dispatchEvent(new CustomEvent('refresh-user'));
+      } catch (error) {
+        this.$message.error(error.response?.data?.error || '加入失败');
+      }
+    },
+    async handleRedeem(product) {
+      if (!localStorage.getItem('token')) {
+        return this.$message.warning('请先登录再兑换');
+      }
+      try {
+        await axios.post('/api/orders/redeem', { productId: product.id }, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        this.$message.success('兑换成功！商品已归入您的账户。');
+        window.dispatchEvent(new CustomEvent('refresh-user'));
+      } catch (error) {
+        this.$message.error(error.response?.data?.error || '兑换失败');
+      }
+    },
     async fetchProducts() {
       try {
         const res = await axios.get('/api/products');
@@ -243,5 +320,56 @@ export default {
   .product-price {
     font-size: 18px;
   }
+}
+
+/* 拼团样式 */
+.group-buy-section {
+  background: #FFFDF8;
+  padding: 24px;
+  border-radius: 24px;
+  border: 2px dashed #FF7E67;
+  margin-bottom: 40px;
+}
+
+.section-title {
+  font-size: 20px;
+  color: #FF7E67;
+  margin-bottom: 20px;
+  font-weight: 800;
+}
+
+.group-card {
+  background: #FFFFFF;
+  padding: 16px;
+  border-radius: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  margin-bottom: 15px;
+}
+
+.group-info {
+  flex-grow: 1;
+  margin-right: 15px;
+}
+
+.group-info .product-name {
+  display: block;
+  font-weight: 800;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.group-info .initiator {
+  font-size: 12px;
+  color: #909399;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.button-group {
+  display: flex;
+  align-items: center;
 }
 </style>

@@ -61,4 +61,29 @@ public class ProductOrderService {
 
         return orderMapper.findById(orderId);
     }
+    @Transactional
+    public ProductOrder redeemWithPoints(Long userId, Long productId) {
+        Product product = productMapper.findById(productId);
+        if (product == null) {
+            throw new RuntimeException("Product not found");
+        }
+
+        // 1000 points for a free item
+        int pointsNeeded = 1000;
+        int rows = userMapper.deductPoints(userId, pointsNeeded);
+        if (rows == 0) {
+            throw new RuntimeException("积分不足，兑换失败 (需1000积分)");
+        }
+
+        ProductOrder order = new ProductOrder();
+        order.setId("POINTS_" + UUID.randomUUID().toString().replace("-", "").substring(0, 10));
+        order.setUserId(userId);
+        order.setProductId(productId);
+        order.setAmount(java.math.BigDecimal.ZERO);
+        order.setStatus(1); // Auto paid
+        order.setPayTime(java.time.LocalDateTime.now());
+
+        orderMapper.insert(order);
+        return order;
+    }
 }

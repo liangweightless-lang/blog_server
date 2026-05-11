@@ -52,4 +52,15 @@ public class ProductOrderController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
+    @PostMapping("/redeem")
+    public ResponseEntity<?> redeem(@RequestHeader("Authorization") String authHeader, @RequestBody CreateOrderRequest req) {
+        try {
+            Long userId = getUserIdFromToken(authHeader);
+            ProductOrder order = orderService.redeemWithPoints(userId, req.productId);
+            return ResponseEntity.ok(order);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 }
