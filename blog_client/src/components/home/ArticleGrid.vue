@@ -2,7 +2,7 @@
   <div class="article-grid-container">
     <div class="section-header">
       <span class="section-title">📖 创作者日记</span>
-      <el-button round size="small" style="background: #FF7E67; color: white; border: none; font-weight: bold;" @click="$router.push('/create')">
+      <el-button class="hidden-xs-only" round size="small" style="background: #FF7E67; color: white; border: none; font-weight: bold;" @click="$router.push('/create')">
         <i class="el-icon-edit"></i> 记录新日常
       </el-button>
     </div>

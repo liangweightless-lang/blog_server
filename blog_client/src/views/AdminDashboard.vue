@@ -67,7 +67,7 @@
     </el-tabs>
 
     <!-- 商品编辑/添加弹窗 -->
-    <el-dialog :title="isEditing ? '编辑商品' : '上架新商品'" :visible.sync="productDialogVisible" width="500px">
+    <el-dialog :title="isEditing ? '编辑商品' : '上架新商品'" :visible.sync="productDialogVisible" :width="isMobile ? '90%' : '500px'">
       <el-form :model="productForm" label-width="80px">
         <el-form-item label="名称">
           <el-input v-model="productForm.name"></el-input>
@@ -107,6 +107,7 @@ export default {
       products: [],
       productDialogVisible: false,
       isEditing: false,
+      isMobile: window.innerWidth <= 768,
       productForm: {
         id: null,
         name: '',
@@ -120,8 +121,15 @@ export default {
   created() {
     this.fetchArticles();
     this.fetchProducts();
+    window.addEventListener('resize', this.handleResize);
+  },
+  beforeDestroy() {
+    window.removeEventListener('resize', this.handleResize);
   },
   methods: {
+    handleResize() {
+      this.isMobile = window.innerWidth <= 768;
+    },
     getAuthHeader() {
       return { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
     },
@@ -219,6 +227,25 @@ export default {
 
 .admin-subtitle {
   color: #8C6A5D;
+}
+
+@media (max-width: 768px) {
+  .admin-title {
+    font-size: 22px;
+  }
+  .admin-subtitle {
+    font-size: 13px;
+  }
+  ::v-deep .el-table {
+    font-size: 12px;
+  }
+  ::v-deep .el-tabs__item {
+    padding: 0 10px !important;
+    font-size: 13px;
+  }
+  .admin-container {
+    padding: 10px 0 60px;
+  }
 }
 
 .tab-header {

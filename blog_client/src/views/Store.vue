@@ -24,8 +24,8 @@
       </el-row>
     </div>
 
-    <el-row :gutter="24">
-      <el-col :xs="24" :sm="12" :md="8" v-for="product in products" :key="product.id" class="product-col">
+    <el-row :gutter="12">
+      <el-col :xs="12" :sm="12" :md="8" v-for="product in products" :key="product.id" class="product-col">
         <el-card class="product-card" shadow="hover" :body-style="{ padding: '0px' }">
           <div class="product-image-wrapper">
             <img :src="product.image" class="product-image" :alt="product.name">
@@ -318,7 +318,20 @@ export default {
     padding: 15px;
   }
   .product-price {
-    font-size: 18px;
+    font-size: 16px;
+  }
+  .product-name {
+    font-size: 15px;
+  }
+  .button-group {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+  }
+  .button-group .el-button {
+    margin: 0 !important;
+    padding: 4px 8px;
+    font-size: 11px;
   }
 }
 

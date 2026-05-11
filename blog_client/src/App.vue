@@ -1,23 +1,30 @@
 <template>
   <div id="app">
     <el-container direction="vertical">
-      <GlobalHeader />
+      <GlobalHeader class="hidden-xs-only" />
+      <MobileHeader class="visible-xs-only" />
       <el-main>
         <router-view></router-view>
       </el-main>
-      <GlobalFooter />
+      <GlobalFooter class="hidden-xs-only" />
+      <div class="bottom-nav-spacer visible-xs-only"></div>
+      <MobileBottomNav class="visible-xs-only" />
     </el-container>
   </div>
 </template>
 
 <script>
 import GlobalHeader from './components/layout/GlobalHeader.vue'
+import MobileHeader from './components/layout/MobileHeader.vue'
+import MobileBottomNav from './components/layout/MobileBottomNav.vue'
 import GlobalFooter from './components/layout/GlobalFooter.vue'
 
 export default {
   name: 'App',
   components: {
     GlobalHeader,
+    MobileHeader,
+    MobileBottomNav,
     GlobalFooter
   }
 }

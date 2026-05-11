@@ -70,13 +70,20 @@ export default {
         username: '',
         password: '',
         inviteCode: ''
-      }
+      },
+      isMobile: window.innerWidth <= 768
+    }
+  },
+  computed: {
+    dialogWidth() {
+      return this.isMobile ? '90%' : '360px';
     }
   },
   created() {
     this.checkUser();
-    // Listen for manual refresh requests
+    window.addEventListener('resize', this.handleResize);
     window.addEventListener('refresh-user', this.checkUser);
+    window.addEventListener('open-login', this.showLogin);
     
     // Check if there is an invite code in URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -89,9 +96,17 @@ export default {
     }
   },
   beforeDestroy() {
+    window.removeEventListener('resize', this.handleResize);
     window.removeEventListener('refresh-user', this.checkUser);
+    window.removeEventListener('open-login', this.showLogin);
   },
   methods: {
+    handleResize() {
+      this.isMobile = window.innerWidth <= 768;
+    },
+    showLogin() {
+      this.loginDialogVisible = true;
+    },
     checkUser() {
       const token = localStorage.getItem('token');
       if (token) {
