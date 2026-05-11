@@ -198,6 +198,7 @@ export default {
       loadingUsers: false,
       loadingOrders: false,
       articles: [],
+      products: [],
       users: [],
       orders: [],
       groupbuys: [],
@@ -237,7 +238,8 @@ export default {
       this.loadingArticles = true;
       try {
         const res = await axios.get('/api/articles');
-        this.articles = res.data.data;
+        console.log('Admin fetch articles:', res.data);
+        this.articles = res.data.data || [];
       } catch (error) {
         this.$message.error('加载文章失败');
       } finally {
