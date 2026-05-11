@@ -37,7 +37,7 @@
             <div class="product-bottom">
               <span class="product-price">¥{{ product.price }}</span>
               <div class="button-group">
-                <el-button type="text" style="color: #E6A23C; margin-right: 10px;" @click="handleRedeem(product)">1000积分兑换</el-button>
+                <el-button type="text" style="color: #E6A23C;" @click="handleRedeem(product)">1000积分兑换</el-button>
                 <el-button type="primary" size="small" round @click="handleBuy(product)">立即购买</el-button>
                 <el-button v-if="isMonday" type="warning" size="small" round @click="handleStartGroup(product)">发起拼团</el-button>
               </div>
@@ -384,5 +384,11 @@ export default {
 .button-group {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.button-group .el-button {
+  margin: 0 !important;
 }
 </style>
