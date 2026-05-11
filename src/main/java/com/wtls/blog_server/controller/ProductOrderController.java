@@ -20,6 +20,8 @@ public class ProductOrderController {
 
     public static class CreateOrderRequest {
         public Long productId;
+        public String address;
+        public String type; // INDIVIDUAL, GROUP, etc.
     }
 
     private Long getUserIdFromToken(String authHeader) {
@@ -35,7 +37,7 @@ public class ProductOrderController {
     public ResponseEntity<?> createOrder(@RequestHeader("Authorization") String authHeader, @RequestBody CreateOrderRequest req) {
         try {
             Long userId = getUserIdFromToken(authHeader);
-            ProductOrder order = orderService.createOrder(userId, req.productId);
+            ProductOrder order = orderService.createOrder(userId, req.productId, req.address, req.type == null ? "INDIVIDUAL" : req.type);
             return ResponseEntity.ok(order);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -59,6 +61,46 @@ public class ProductOrderController {
             Long userId = getUserIdFromToken(authHeader);
             ProductOrder order = orderService.redeemWithPoints(userId, req.productId);
             return ResponseEntity.ok(order);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getMyOrders(@RequestHeader("Authorization") String authHeader) {
+        try {
+            Long userId = getUserIdFromToken(authHeader);
+            return ResponseEntity.ok(orderService.getUserOrders(userId));
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getAllOrders(@RequestHeader("Authorization") String authHeader) {
+        try {
+            String token = authHeader.substring(7);
+            Claims claims = JwtUtils.parseToken(token);
+            String role = claims.get("role", String.class);
+            if (!"ADMIN".equals(role)) {
+                return ResponseEntity.status(403).body(Map.of("error", "Access Denied"));
+            }
+            return ResponseEntity.ok(orderService.getAllOrders());
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{orderId}/ship")
+    public ResponseEntity<?> shipOrder(@RequestHeader("Authorization") String authHeader, @PathVariable String orderId) {
+        try {
+            String token = authHeader.substring(7);
+            Claims claims = JwtUtils.parseToken(token);
+            if (!"ADMIN".equals(claims.get("role", String.class))) {
+                return ResponseEntity.status(403).body(Map.of("error", "Access Denied"));
+            }
+            orderService.shipOrder(orderId);
+            return ResponseEntity.ok(Map.of("message", "Order shipped"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

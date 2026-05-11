@@ -92,6 +92,40 @@
           </el-table-column>
         </el-table>
       </el-tab-pane>
+
+      <!-- 订单管理 -->
+      <el-tab-pane label="订单/发货管理" name="orders">
+        <el-table :data="orders" style="width: 100%" v-loading="loadingOrders">
+          <el-table-column prop="id" label="订单号" width="120" show-overflow-tooltip></el-table-column>
+          <el-table-column prop="productId" label="商品ID" width="80"></el-table-column>
+          <el-table-column prop="amount" label="实付金额" width="100">
+            <template slot-scope="scope">¥{{ scope.row.amount }}</template>
+          </el-table-column>
+          <el-table-column label="状态" width="100">
+            <template slot-scope="scope">
+              <el-tag :type="scope.row.status === 1 ? 'success' : 'info'" size="mini">
+                {{ scope.row.status === 1 ? '已支付' : '待支付' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="orderType" label="类型" width="100">
+            <template slot-scope="scope">
+              <el-tag :type="scope.row.orderType === 'GROUP' ? 'warning' : 'primary'" size="mini" effect="plain">
+                {{ scope.row.orderType === 'GROUP' ? '拼团' : '个买' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="shippingAddress" label="配送地址" min-width="200" show-overflow-tooltip></el-table-column>
+          <el-table-column label="下单时间" width="160">
+            <template slot-scope="scope">{{ formatTime(scope.row.createTime) }}</template>
+          </el-table-column>
+          <el-table-column label="操作" width="120">
+            <template slot-scope="scope">
+              <el-button v-if="scope.row.status === 1" size="mini" type="success" plain @click="handleShip(scope.row)">标记发货</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-tab-pane>
     </el-tabs>
 
     <!-- 商品编辑/添加弹窗 -->
@@ -132,9 +166,11 @@ export default {
       loadingArticles: false,
       loadingProducts: false,
       loadingUsers: false,
+      loadingOrders: false,
       articles: [],
       products: [],
       users: [],
+      orders: [],
       productDialogVisible: false,
       isEditing: false,
       isMobile: window.innerWidth <= 768,
@@ -152,6 +188,7 @@ export default {
     this.fetchArticles();
     this.fetchProducts();
     this.fetchUsers();
+    this.fetchOrders();
     window.addEventListener('resize', this.handleResize);
   },
   beforeDestroy() {
@@ -195,6 +232,26 @@ export default {
         this.$message.error('加载用户列表失败');
       } finally {
         this.loadingUsers = false;
+      }
+    },
+    async fetchOrders() {
+      this.loadingOrders = true;
+      try {
+        const res = await axios.get('/api/orders', { headers: this.getAuthHeader() });
+        this.orders = res.data;
+      } catch (error) {
+        this.$message.error('加载订单列表失败');
+      } finally {
+        this.loadingOrders = false;
+      }
+    },
+    async handleShip(order) {
+      try {
+        await axios.post(`/api/orders/${order.id}/ship`, {}, { headers: this.getAuthHeader() });
+        this.$message.success('发货成功');
+        this.fetchOrders();
+      } catch (error) {
+        this.$message.error('操作失败');
       }
     },
     goToCreateArticle() {

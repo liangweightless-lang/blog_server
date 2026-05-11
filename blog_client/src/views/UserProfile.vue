@@ -89,6 +89,39 @@
         </div>
       </div>
     </el-card>
+    </el-card>
+
+    <!-- 我的订单 -->
+    <div class="user-orders" v-if="user">
+      <div class="orders-header">
+        <h3>我的订单记录</h3>
+        <el-button type="text" @click="fetchMyOrders">刷新 <i class="el-icon-refresh"></i></el-button>
+      </div>
+      <el-card class="order-list-card">
+        <div v-if="orders.length === 0" class="empty-orders">
+          <i class="el-icon-document" style="font-size: 40px; color: #DCDFE6;"></i>
+          <p>暂无购买记录</p>
+        </div>
+        <div v-else class="order-item" v-for="order in orders" :key="order.id">
+          <div class="order-main">
+            <div class="order-info">
+              <p class="order-id">订单号: {{ order.id.substring(0, 12) }}...</p>
+              <p class="order-date">{{ formatTime(order.createTime) }}</p>
+            </div>
+            <div class="order-status">
+              <el-tag :type="order.status === 1 ? 'success' : 'info'" size="mini">
+                {{ order.status === 1 ? '已完成' : '待支付' }}
+              </el-tag>
+              <el-tag v-if="order.orderType === 'GROUP'" type="warning" size="mini" plain style="margin-left: 5px;">拼团</el-tag>
+            </div>
+          </div>
+          <div class="order-footer">
+            <span class="order-amount">实付: ¥{{ order.amount }}</span>
+            <el-button v-if="order.status === 0" type="primary" size="mini" @click="$router.push('/store')">去支付</el-button>
+          </div>
+        </div>
+      </el-card>
+    </div>
   </div>
 </template>
 
@@ -109,11 +142,14 @@ export default {
         age: 18,
         gender: 'OTHER',
         address: ''
-      }
+      },
+      orders: [],
+      loadingOrders: false
     }
   },
   created() {
     this.fetchUser();
+    this.fetchMyOrders();
   },
   methods: {
     async fetchUser() {
@@ -141,6 +177,25 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+    async fetchMyOrders() {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      this.loadingOrders = true;
+      try {
+        const res = await axios.get('/api/orders/me', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        this.orders = res.data;
+      } catch (error) {
+        console.error('加载订单失败');
+      } finally {
+        this.loadingOrders = false;
+      }
+    },
+    formatTime(timeStr) {
+      if (!timeStr) return '';
+      return new Date(timeStr).toLocaleString();
     },
     async handleUpdate() {
       const token = localStorage.getItem('token');
@@ -295,8 +350,69 @@ export default {
   margin-top: 15px;
 }
 
+.user-orders {
+  max-width: 600px;
+  margin: 30px auto;
+}
+.orders-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 0 10px;
+}
+.orders-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #5C433B;
+}
+.order-list-card {
+  border-radius: 16px;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+.empty-orders {
+  text-align: center;
+  padding: 40px 0;
+  color: #909399;
+}
+.order-item {
+  padding: 15px 0;
+  border-bottom: 1px solid #F2F6FC;
+}
+.order-item:last-child {
+  border-bottom: none;
+}
+.order-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+.order-id {
+  font-size: 13px;
+  font-weight: bold;
+  color: #303133;
+  margin: 0 0 4px 0;
+}
+.order-date {
+  font-size: 11px;
+  color: #909399;
+  margin: 0;
+}
+.order-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.order-amount {
+  font-size: 14px;
+  font-weight: 800;
+  color: #FF7E67;
+}
+
 @media (max-width: 768px) {
-  .profile-card, .invite-card, .points-info {
+  .profile-card, .invite-card, .points-info, .user-orders {
     border-radius: 12px;
     margin: 10px;
   }

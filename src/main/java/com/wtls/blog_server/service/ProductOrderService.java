@@ -85,8 +85,21 @@ public class ProductOrderService {
         order.setAmount(java.math.BigDecimal.ZERO);
         order.setStatus(1); // Auto paid
         order.setPayTime(java.time.LocalDateTime.now());
+        order.setOrderType("INDIVIDUAL");
 
         orderMapper.insert(order);
         return order;
+    }
+
+    public java.util.List<ProductOrder> getAllOrders() {
+        return orderMapper.findAll();
+    }
+
+    public java.util.List<ProductOrder> getUserOrders(Long userId) {
+        return orderMapper.findByUserId(userId);
+    }
+
+    public void shipOrder(String orderId) {
+        orderMapper.updateStatus(orderId, 2); // 2: Shipped
     }
 }
