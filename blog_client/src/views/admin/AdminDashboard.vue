@@ -13,20 +13,40 @@
           <el-button type="primary" size="small" icon="el-icon-plus" @click="goToCreateArticle">发布新日常</el-button>
         </div>
 
-        <!-- 调试用：原生 HTML 列表 -->
-        <div v-if="articles.length > 0" style="margin: 10px 0; padding: 10px; background: #fffbe6; border: 1px solid #ffe58f;">
-          <p style="color: #856404; font-size: 12px;">正在直接渲染数据标题（排查表格组件故障）：</p>
-          <div v-for="article in articles" :key="'debug-' + article.id" style="font-size: 13px; margin-bottom: 5px; color: #333;">
-            ID: {{ article.id }} | 标题: {{ article.title }}
+        <!-- 弃用 el-table，改用手写响应式管理列表 -->
+        <div class="custom-admin-list">
+          <div class="list-header">
+            <div class="col-id">ID</div>
+            <div class="col-cover">封面</div>
+            <div class="col-info">文章信息</div>
+            <div class="col-stats">数据</div>
+            <div class="col-actions">操作</div>
+          </div>
+          
+          <div v-for="article in articles" :key="article.id" class="list-item">
+            <div class="col-id">#{{ article.id }}</div>
+            <div class="col-cover">
+              <el-image :src="article.coverUrl" fit="cover" class="item-img">
+                <div slot="error" class="image-slot"><i class="el-icon-picture-outline"></i></div>
+              </el-image>
+            </div>
+            <div class="col-info">
+              <div class="item-title">{{ article.title }}</div>
+              <div class="item-time">{{ formatTime(article.createTime) }}</div>
+            </div>
+            <div class="col-stats">
+              <span class="stat-badge"><i class="el-icon-sugar"></i> {{ article.likesCount || 0 }}</span>
+            </div>
+            <div class="col-actions">
+              <el-button size="mini" type="danger" plain @click="handleDeleteArticle(article)">删除</el-button>
+            </div>
+          </div>
+
+          <div v-if="articles.length === 0" class="empty-placeholder">
+            <i class="el-icon-document"></i>
+            <p>暂无数据</p>
           </div>
         </div>
-
-        <el-table :data="articles" border style="width: 100%; margin-top: 20px;" empty-text="正在努力加载组件...">
-          <el-table-column prop="id" label="ID" width="80"></el-table-column>
-          <el-table-column prop="title" label="标题 (测试列)"></el-table-column>
-          <el-table-column prop="likesCount" label="点赞数" width="100"></el-table-column>
-          <el-table-column prop="createTime" label="发布时间"></el-table-column>
-        </el-table>
       </el-tab-pane>
 
       <!-- 商品管理 -->
@@ -447,5 +467,100 @@ export default {
 ::v-deep .el-tabs__item.is-active {
   color: #FF7E67 !important;
   background-color: #FFF !important;
+}
+
+/* Custom Admin List Styles */
+.custom-admin-list {
+  margin-top: 20px;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #eee;
+}
+
+.list-header {
+  display: flex;
+  background: #f8f9fa;
+  padding: 12px 15px;
+  font-weight: bold;
+  font-size: 14px;
+  color: #5C433B;
+  border-bottom: 1px solid #eee;
+}
+
+.list-item {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 1px solid #f5f5f5;
+  transition: background 0.2s;
+}
+
+.list-item:hover {
+  background: #fffaf9;
+}
+
+.col-id { width: 60px; font-family: monospace; color: #999; }
+.col-cover { width: 80px; }
+.col-info { flex: 1; padding: 0 20px; }
+.col-stats { width: 100px; text-align: center; }
+.col-actions { width: 120px; text-align: right; }
+
+.item-img {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  background: #f0f0f0;
+}
+
+.image-slot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  color: #ccc;
+  font-size: 20px;
+}
+
+.item-title {
+  font-weight: bold;
+  font-size: 15px;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.item-time {
+  font-size: 12px;
+  color: #999;
+}
+
+.stat-badge {
+  background: #fff0ed;
+  color: #FF7E67;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.empty-placeholder {
+  padding: 60px 0;
+  text-align: center;
+  color: #ccc;
+}
+.empty-placeholder i {
+  font-size: 48px;
+  margin-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+  .list-header { display: none; }
+  .list-item { flex-wrap: wrap; padding: 12px; }
+  .col-id { width: 100%; margin-bottom: 8px; font-size: 12px; }
+  .col-cover { width: 60px; }
+  .col-info { width: calc(100% - 60px); padding-left: 12px; }
+  .col-stats { width: 50%; text-align: left; padding-top: 10px; }
+  .col-actions { width: 50%; padding-top: 10px; }
 }
 </style>
