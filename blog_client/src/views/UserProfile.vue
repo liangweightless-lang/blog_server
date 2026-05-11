@@ -26,6 +26,11 @@
           <el-input v-model="profileForm.nickname"></el-input>
         </el-form-item>
 
+        <el-form-item label="注册手机号">
+          <el-input :value="user ? user.username : ''" disabled placeholder="注册账号"></el-input>
+          <p class="upload-tip">注册账号不可修改</p>
+        </el-form-item>
+
         <el-form-item label="微信号">
           <el-input v-model="profileForm.wechatId" placeholder="方便后续沟通与发货通知"></el-input>
         </el-form-item>
