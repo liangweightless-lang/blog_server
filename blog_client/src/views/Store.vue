@@ -72,16 +72,40 @@ export default {
       }
     },
     handleBuy(product) {
+      if (!localStorage.getItem('token')) {
+        return this.$message.warning('请先登录后再进行购买');
+      }
       this.currentProduct = product;
       this.buyDialogVisible = true;
     },
-    confirmPurchase() {
+    async confirmPurchase() {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
       this.purchasing = true;
-      setTimeout(() => {
-        this.purchasing = false;
+      try {
+        // 1. 创建订单
+        const orderRes = await axios.post('/api/orders/create', 
+          { productId: this.currentProduct.id },
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
+        const orderId = orderRes.data.id;
+
+        // 2. 模拟支付
+        await axios.post(`/api/orders/${orderId}/pay`, {}, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        this.$message.success('支付成功！邀请人积分已同步更新。');
         this.buyDialogVisible = false;
-        this.$message.success('支付成功！感谢您的支持。');
-      }, 1500);
+        
+        // 刷新用户信息（更新积分展示）
+        window.dispatchEvent(new CustomEvent('refresh-user'));
+      } catch (error) {
+        this.$message.error(error.response?.data?.error || '购买失败');
+      } finally {
+        this.purchasing = false;
+      }
     }
   }
 }

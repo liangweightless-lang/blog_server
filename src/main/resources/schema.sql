@@ -44,3 +44,33 @@ INSERT IGNORE INTO `product` (`id`, `name`, `description`, `price`, `image`, `is
 (1, '法式经典黄油可颂', '采用法国进口发酵黄油，经过繁复折叠工艺，外层酥脆掉渣，内里柔软蜂巢组织。', 22.00, '/img/product_croissant.png', 1),
 (2, '意式特浓提拉米苏', '正宗马斯卡彭芝士搭配浓缩咖啡与少量朗姆酒，口感层次丰富，入口即化。', 38.00, '/img/product_tiramisu.png', 1),
 (3, '手冲澳白咖啡 Flat White', '精选埃塞俄比亚 SOE 咖啡豆，完美融合细腻奶泡，带来丝滑浓郁的温暖体验。', 28.00, '/img/product_coffee.png', 0);
+
+-- 6. 创建用户表
+CREATE TABLE IF NOT EXISTS `user` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `username` varchar(50) NOT NULL COMMENT '登录账号',
+  `password` varchar(100) NOT NULL COMMENT '登录密码',
+  `nickname` varchar(50) NOT NULL COMMENT '用户昵称',
+  `avatar_url` varchar(255) DEFAULT NULL COMMENT '头像',
+  `points` int(11) NOT NULL DEFAULT 0 COMMENT '积分',
+  `invite_code` varchar(20) NOT NULL COMMENT '专属邀请码',
+  `invited_by` bigint(20) DEFAULT NULL COMMENT '邀请人的ID',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '注册时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_username` (`username`),
+  UNIQUE KEY `uk_invite_code` (`invite_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
+
+-- 7. 创建订单表
+CREATE TABLE IF NOT EXISTS `product_order` (
+  `id` varchar(64) NOT NULL COMMENT '订单号(UUID或生成规则)',
+  `user_id` bigint(20) NOT NULL COMMENT '购买人ID',
+  `product_id` bigint(20) NOT NULL COMMENT '商品ID',
+  `amount` decimal(10,2) NOT NULL COMMENT '实付金额',
+  `status` tinyint(1) NOT NULL DEFAULT 0 COMMENT '状态(0:待支付, 1:已支付, 2:已取消)',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '下单时间',
+  `pay_time` datetime DEFAULT NULL COMMENT '支付时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_product_id` (`product_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商品订单表';
