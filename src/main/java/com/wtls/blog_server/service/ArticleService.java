@@ -28,4 +28,12 @@ public class ArticleService {
     public void likeArticle(Long id) {
         articleMapper.incrementLikes(id);
     }
+
+    public void updateArticle(Article article) {
+        articleMapper.update(article);
+    }
+
+    public void deleteArticle(Long id) {
+        articleMapper.delete(id);
+    }
 }

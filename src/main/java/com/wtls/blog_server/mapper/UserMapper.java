@@ -14,8 +14,8 @@ public interface UserMapper {
     @Select("SELECT * FROM user WHERE invite_code = #{inviteCode}")
     User findByInviteCode(String inviteCode);
 
-    @Insert("INSERT INTO user(username, password, nickname, avatar_url, points, invite_code, invited_by, create_time) " +
-            "VALUES(#{username}, #{password}, #{nickname}, #{avatarUrl}, #{points}, #{inviteCode}, #{invitedBy}, NOW())")
+    @Insert("INSERT INTO user(username, password, nickname, avatar_url, points, invite_code, invited_by, role, create_time) " +
+            "VALUES(#{username}, #{password}, #{nickname}, #{avatarUrl}, #{points}, #{inviteCode}, #{invitedBy}, #{role}, NOW())")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void insert(User user);
 

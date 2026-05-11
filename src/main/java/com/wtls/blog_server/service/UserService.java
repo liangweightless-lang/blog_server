@@ -26,6 +26,7 @@ public class UserService {
             user.setAvatarUrl("/img/avatar.png");
             user.setPoints(0);
             user.setInviteCode(UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+            user.setRole(username.equals("admin") ? "ADMIN" : "USER");
             
             // Handle invitation logic
             if (inviteCodeStr != null && !inviteCodeStr.isEmpty()) {

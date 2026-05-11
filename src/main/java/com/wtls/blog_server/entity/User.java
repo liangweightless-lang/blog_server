@@ -13,5 +13,6 @@ public class User {
     private Integer points;
     private String inviteCode;
     private Long invitedBy;
+    private String role;
     private LocalDateTime createTime;
 }

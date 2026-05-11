@@ -20,4 +20,16 @@ public class ProductService {
     public Product getProductById(Long id) {
         return productMapper.findById(id);
     }
+
+    public void createProduct(Product product) {
+        productMapper.insert(product);
+    }
+
+    public void updateProduct(Product product) {
+        productMapper.update(product);
+    }
+
+    public void deleteProduct(Long id) {
+        productMapper.delete(id);
+    }
 }

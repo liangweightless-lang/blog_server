@@ -1,6 +1,7 @@
 package com.wtls.blog_server.mapper;
 
 import com.wtls.blog_server.entity.Article;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Options;
@@ -24,4 +25,10 @@ public interface ArticleMapper {
 
     @Update("UPDATE article SET likes_count = likes_count + 1 WHERE id = #{id}")
     void incrementLikes(Long id);
+
+    @Update("UPDATE article SET title=#{title}, content=#{content}, cover_url=#{coverUrl}, media_urls=#{mediaUrls}, update_time=NOW() WHERE id=#{id}")
+    void update(Article article);
+
+    @Delete("DELETE FROM article WHERE id=#{id}")
+    void delete(Long id);
 }

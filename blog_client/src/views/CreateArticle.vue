@@ -63,6 +63,14 @@ export default {
       submitting: false
     }
   },
+  created() {
+    // Basic admin check
+    const token = localStorage.getItem('token');
+    if (!token) {
+      this.$message.warning('请先登录管理员账号');
+      this.$router.push('/');
+    }
+  },
   methods: {
     handleUploadSuccess(res, file, fileList) {
       file.url = res; // res is the URL string from FileController
@@ -90,15 +98,18 @@ export default {
 
       this.submitting = true
       try {
-        const res = await axios.post('/api/articles', this.form)
+        const token = localStorage.getItem('token');
+        const res = await axios.post('/api/articles', this.form, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
         if (res.data) {
           this.$message.success('日记发布成功！')
-          this.$router.push('/')
+          this.$router.push('/admin')
         } else {
           this.$message.error('日记发布失败，请稍后重试')
         }
       } catch (error) {
-        this.$message.error('日记发布失败，请稍后重试')
+        this.$message.error(error.response?.data?.error || '日记发布失败，无管理员权限')
       } finally {
         this.submitting = false
       }

@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS `user` (
   `points` int(11) NOT NULL DEFAULT 0 COMMENT '积分',
   `invite_code` varchar(20) NOT NULL COMMENT '专属邀请码',
   `invited_by` bigint(20) DEFAULT NULL COMMENT '邀请人的ID',
+  `role` varchar(20) NOT NULL DEFAULT 'USER' COMMENT '角色(USER/ADMIN)',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '注册时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_username` (`username`),

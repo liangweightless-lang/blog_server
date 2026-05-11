@@ -8,6 +8,7 @@
         active-text-color="#FF7E67" router>
         <el-menu-item index="/">品牌故事</el-menu-item>
         <el-menu-item index="/store">Ta的灵感橱窗</el-menu-item>
+        <el-menu-item v-if="user && user.role === 'ADMIN'" index="/admin">后台管理</el-menu-item>
       </el-menu>
     </div>
     <div class="user-info">
