@@ -66,11 +66,29 @@
       <el-alert
         title="当前积分状态"
         type="success"
-        :description="'您当前拥有 ' + user.points + ' 积分。通过邀请好友购买可获得更多积分奖励！'"
+        :description="'您当前拥有 ' + user.points + ' 积分。通过邀请好友注册并购买可获得更多积分奖励！'"
         show-icon
         :closable="false">
       </el-alert>
     </div>
+
+    <!-- 邀请好友 -->
+    <el-card class="invite-card" v-if="user">
+      <div slot="header" class="invite-header">
+        <span>邀请好友加入</span>
+        <el-tag size="small" type="warning">每一位好友注册双方均得50积分</el-tag>
+      </div>
+      <div class="invite-content">
+        <div class="invite-code-box">
+          <p class="label">您的专属邀请码</p>
+          <h2 class="invite-code">{{ user.inviteCode }}</h2>
+        </div>
+        <div class="share-actions">
+          <el-button type="primary" icon="el-icon-document-copy" round @click="copyInviteLink">复制邀请链接</el-button>
+          <p class="share-tip">将链接发给好友，注册时将自动填入您的邀请码</p>
+        </div>
+      </div>
+    </el-card>
   </div>
 </template>
 
@@ -154,6 +172,19 @@ export default {
         this.$message.error('上传头像图片大小不能超过 2MB!');
       }
       return isJPGorPNG && isLt2M;
+    },
+    copyInviteLink() {
+      const baseUrl = window.location.origin;
+      const link = `${baseUrl}/?invite=${this.user.inviteCode}`;
+      
+      const input = document.createElement('input');
+      input.value = link;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      document.body.removeChild(input);
+      
+      this.$message.success('邀请链接已复制到剪贴板，快去发给好友吧！');
     }
   }
 }
@@ -222,11 +253,52 @@ export default {
   max-width: 600px;
   margin: 20px auto;
 }
+.invite-card {
+  max-width: 600px;
+  margin: 20px auto;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #FFFDF8 0%, #FDF0E6 100%);
+  border: 1px solid #FFE4D6;
+}
+.invite-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+}
+.invite-content {
+  text-align: center;
+  padding: 10px 0;
+}
+.invite-code-box {
+  background: #FFFFFF;
+  padding: 15px;
+  border-radius: 12px;
+  display: inline-block;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+.invite-code-box .label {
+  font-size: 12px;
+  color: #909399;
+  margin-bottom: 5px;
+}
+.invite-code {
+  font-size: 32px;
+  letter-spacing: 4px;
+  color: #FF7E67;
+  margin: 0;
+}
+.share-tip {
+  font-size: 12px;
+  color: #8C6A5D;
+  margin-top: 15px;
+}
 
 @media (max-width: 768px) {
-  .profile-card {
+  .profile-card, .invite-card, .points-info {
     border-radius: 12px;
-    margin: 0 10px;
+    margin: 10px;
   }
 }
 </style>

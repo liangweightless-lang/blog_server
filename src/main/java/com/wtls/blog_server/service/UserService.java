@@ -41,8 +41,9 @@ public class UserService {
                 User inviter = userMapper.findByInviteCode(inviteCodeStr);
                 if (inviter != null) {
                     user.setInvitedBy(inviter.getId());
-                    // Reward inviter immediately or upon order (here we do upon registration for simplicity, 
-                    // but the spec says "points when buy". We will implement it when they buy).
+                    // Reward both inviter and invitee immediately with 50 points
+                    user.setPoints(50); // Invitee gets 50
+                    userMapper.addPoints(inviter.getId(), 50); // Inviter gets 50
                 }
             }
             userMapper.insert(user);
