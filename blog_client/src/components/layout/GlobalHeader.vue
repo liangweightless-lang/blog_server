@@ -32,78 +32,43 @@
       <el-button v-else type="primary" size="small" round @click="loginDialogVisible = true">登录 / 注册</el-button>
     </div>
 
-    <!-- 登录弹窗 -->
-    <el-dialog title="登录 / 注册" :visible.sync="loginDialogVisible" width="360px" center append-to-body>
-      <el-form :model="loginForm" label-position="top">
-        <el-form-item label="账号">
-          <el-input v-model="loginForm.username" placeholder="请输入任意账号名"></el-input>
-        </el-form-item>
-        <el-form-item label="密码">
-          <el-input v-model="loginForm.password" type="password" placeholder="请输入密码"></el-input>
-        </el-form-item>
-        <el-form-item label="邀请码 (可选)">
-          <el-input v-model="loginForm.inviteCode" placeholder="如果有邀请码请填写"></el-input>
-        </el-form-item>
-      </el-form>
-      <div style="font-size: 12px; color: #909399; margin-bottom: 20px;">
-        * 如果账号不存在，将自动为您创建新账号。
-      </div>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="loginDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="handleLogin" :loading="loading">立即进入</el-button>
-      </span>
-    </el-dialog>
+    <!-- 登录组件 (已抽离) -->
+    <LoginDialog :show.sync="loginDialogVisible" />
   </el-header>
 </template>
 
 <script>
 import axios from 'axios';
+import LoginDialog from '../auth/LoginDialog.vue';
 
 export default {
   name: 'GlobalHeader',
+  components: {
+    LoginDialog
+  },
   data() {
     return {
       loginDialogVisible: false,
-      loading: false,
-      user: null,
-      loginForm: {
-        username: '',
-        password: '',
-        inviteCode: ''
-      },
-      isMobile: window.innerWidth <= 768
-    }
-  },
-  computed: {
-    dialogWidth() {
-      return this.isMobile ? '90%' : '360px';
+      user: null
     }
   },
   created() {
     this.checkUser();
-    window.addEventListener('resize', this.handleResize);
     window.addEventListener('refresh-user', this.checkUser);
     window.addEventListener('open-login', this.showLogin);
     
-    // Check if there is an invite code in URL
+    // Check for invite code in URL
     const urlParams = new URLSearchParams(window.location.search);
     const invite = urlParams.get('invite');
-    if (invite) {
-      this.loginForm.inviteCode = invite;
-      if (!this.user) {
-        this.loginDialogVisible = true;
-      }
+    if (invite && !localStorage.getItem('token')) {
+      this.loginDialogVisible = true;
     }
   },
   beforeDestroy() {
-    window.removeEventListener('resize', this.handleResize);
     window.removeEventListener('refresh-user', this.checkUser);
     window.removeEventListener('open-login', this.showLogin);
   },
   methods: {
-    handleResize() {
-      this.isMobile = window.innerWidth <= 768;
-    },
     showLogin() {
       this.loginDialogVisible = true;
     },
@@ -119,24 +84,6 @@ export default {
           localStorage.removeItem('token');
           this.user = null;
         });
-      }
-    },
-    async handleLogin() {
-      if (!this.loginForm.username || !this.loginForm.password) {
-        return this.$message.warning('请填写完整信息');
-      }
-      this.loading = true;
-      try {
-        const res = await axios.post('/api/users/login', this.loginForm);
-        localStorage.setItem('token', res.data.token);
-        this.user = res.data.user;
-        this.loginDialogVisible = false;
-        this.$message.success('欢迎回来, ' + this.user.nickname);
-        window.dispatchEvent(new CustomEvent('user-updated', { detail: this.user }));
-      } catch (error) {
-        this.$message.error(error.response?.data?.error || '登录失败');
-      } finally {
-        this.loading = false;
       }
     },
     logout() {
