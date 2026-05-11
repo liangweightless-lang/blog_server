@@ -262,8 +262,10 @@ export default {
     async fetchProducts() {
       try {
         const res = await axios.get('/api/products');
-        this.products = res.data.data;
+        console.log('Fetched products:', res.data);
+        this.products = res.data.data || [];
       } catch (error) {
+        console.error('获取商品列表失败', error);
         this.$message.error('获取商品列表失败');
       }
     },
