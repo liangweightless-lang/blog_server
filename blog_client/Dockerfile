@@ -1,8 +1,9 @@
 # 第一阶段：构建 Vue 前端产物
 FROM node:18-alpine AS build
 WORKDIR /app
-RUN npm install -g pnpm
+RUN npm install -g pnpm --registry=https://registry.npmmirror.com
 COPY package.json pnpm-lock.yaml ./
+RUN pnpm config set registry https://registry.npmmirror.com
 RUN pnpm install
 COPY . .
 RUN pnpm run build

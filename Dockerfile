@@ -1,7 +1,10 @@
 # 第一阶段：使用 Maven 镜像进行打包构建
 FROM maven:3.9.6-eclipse-temurin-21 AS build
 WORKDIR /app
+COPY settings.xml /usr/share/maven/conf/settings.xml
 COPY pom.xml .
+# 利用 Docker 缓存，预先下载依赖
+RUN mvn dependency:go-offline -B
 COPY src ./src
 RUN mvn clean package -DskipTests
 
