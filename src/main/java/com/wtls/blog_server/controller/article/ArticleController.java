@@ -1,21 +1,21 @@
 package com.wtls.blog_server.controller.article;
 
+import com.wtls.blog_server.common.Result;
 import com.wtls.blog_server.entity.article.Article;
-import com.wtls.blog_server.entity.user.User;
 import com.wtls.blog_server.service.article.ArticleService;
 import com.wtls.blog_server.service.user.UserService;
 import com.wtls.blog_server.utils.JwtUtils;
 import io.jsonwebtoken.Claims;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/articles")
-@CrossOrigin(origins = "*")
+@Tag(name = "文章接口", description = "博客文章的查询与管理")
 public class ArticleController {
 
     @Autowired
@@ -29,59 +29,53 @@ public class ArticleController {
             throw new RuntimeException("Unauthorized");
         }
         Claims claims = JwtUtils.parseToken(authHeader.substring(7));
-        Long userId = claims.get("userId", Long.class);
-        User user = userService.getUserInfo(userId);
-        if (user == null || !"ADMIN".equals(user.getRole())) {
+        String role = claims.get("role", String.class);
+        if (!"ADMIN".equals(role)) {
             throw new RuntimeException("Admin access required");
         }
     }
 
     @GetMapping
-    public List<Article> getAll() {
-        return articleService.getAllArticles();
+    @Operation(summary = "获取所有文章")
+    public Result<List<Article>> getAll() {
+        return Result.success(articleService.getAllArticles());
     }
 
     @GetMapping("/{id}")
-    public Article getById(@PathVariable Long id) {
-        return articleService.getArticleById(id);
+    @Operation(summary = "根据ID获取文章详情")
+    public Result<Article> getById(@PathVariable Long id) {
+        return Result.success(articleService.getArticleById(id));
     }
 
     @PostMapping
-    public ResponseEntity<?> create(@RequestHeader("Authorization") String authHeader, @RequestBody Article article) {
-        try {
-            checkAdmin(authHeader);
-            articleService.createArticle(article);
-            return ResponseEntity.ok(article);
-        } catch (Exception e) {
-            return ResponseEntity.status(403).body(Map.of("error", e.getMessage()));
-        }
+    @Operation(summary = "发布文章 (Admin)")
+    public Result<Article> create(@RequestHeader("Authorization") String authHeader, @RequestBody Article article) {
+        checkAdmin(authHeader);
+        articleService.createArticle(article);
+        return Result.success(article);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@RequestHeader("Authorization") String authHeader, @PathVariable Long id, @RequestBody Article article) {
-        try {
-            checkAdmin(authHeader);
-            article.setId(id);
-            articleService.updateArticle(article);
-            return ResponseEntity.ok(Map.of("message", "Article updated"));
-        } catch (Exception e) {
-            return ResponseEntity.status(403).body(Map.of("error", e.getMessage()));
-        }
+    @Operation(summary = "更新文章 (Admin)")
+    public Result<String> update(@RequestHeader("Authorization") String authHeader, @PathVariable Long id, @RequestBody Article article) {
+        checkAdmin(authHeader);
+        article.setId(id);
+        articleService.updateArticle(article);
+        return Result.success("Article updated");
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@RequestHeader("Authorization") String authHeader, @PathVariable Long id) {
-        try {
-            checkAdmin(authHeader);
-            articleService.deleteArticle(id);
-            return ResponseEntity.ok(Map.of("message", "Article deleted"));
-        } catch (Exception e) {
-            return ResponseEntity.status(403).body(Map.of("error", e.getMessage()));
-        }
+    @Operation(summary = "删除文章 (Admin)")
+    public Result<String> delete(@RequestHeader("Authorization") String authHeader, @PathVariable Long id) {
+        checkAdmin(authHeader);
+        articleService.deleteArticle(id);
+        return Result.success("Article deleted");
     }
 
     @PostMapping("/{id}/like")
-    public void likeArticle(@PathVariable Long id) {
+    @Operation(summary = "点赞文章")
+    public Result<Void> likeArticle(@PathVariable Long id) {
         articleService.likeArticle(id);
+        return Result.success(null);
     }
 }
