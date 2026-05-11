@@ -27,7 +27,11 @@ public class GroupBuyController {
             throw new RuntimeException("Unauthorized");
         }
         Claims claims = JwtUtils.parseToken(authHeader.substring(7));
-        return claims.get("userId", Long.class);
+        Object userId = claims.get("userId");
+        if (userId == null) {
+            throw new RuntimeException("Invalid token: userId missing");
+        }
+        return Long.valueOf(userId.toString());
     }
 
     @GetMapping("/active")

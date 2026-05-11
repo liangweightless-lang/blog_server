@@ -46,7 +46,11 @@ public class ProductOrderController {
         }
         String token = authHeader.substring(7);
         Claims claims = JwtUtils.parseToken(token);
-        return claims.get("userId", Long.class);
+        Object userId = claims.get("userId");
+        if (userId == null) {
+            throw new RuntimeException("Invalid token: userId missing");
+        }
+        return Long.valueOf(userId.toString());
     }
 
     @PostMapping("/create")

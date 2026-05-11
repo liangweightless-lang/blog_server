@@ -32,9 +32,8 @@ public class ProductController {
             throw new RuntimeException("Unauthorized");
         }
         Claims claims = JwtUtils.parseToken(authHeader.substring(7));
-        Long userId = claims.get("userId", Long.class);
-        User user = userService.getUserInfo(userId);
-        if (user == null || !"ADMIN".equals(user.getRole())) {
+        String role = claims.get("role", String.class);
+        if (!"ADMIN".equals(role)) {
             throw new RuntimeException("Admin access required");
         }
     }

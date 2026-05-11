@@ -31,7 +31,13 @@ public class LogAspect {
         log.info("IP             : {}", request.getRemoteAddr());
         log.info("Request Args   : {}", Arrays.toString(joinPoint.getArgs()));
 
-        Object result = joinPoint.proceed();
+        Object result;
+        try {
+            result = joinPoint.proceed();
+        } catch (Throwable e) {
+            log.error("Exception in {}.{} : {}", joinPoint.getSignature().getDeclaringTypeName(), joinPoint.getSignature().getName(), e.getMessage());
+            throw e;
+        }
 
         log.info("Response Result : {}", result);
         log.info("Time-Consuming : {} ms", System.currentTimeMillis() - startTime);

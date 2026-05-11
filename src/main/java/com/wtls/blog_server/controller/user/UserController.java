@@ -53,7 +53,8 @@ public class UserController {
         }
         String token = authHeader.substring(7);
         Claims claims = JwtUtils.parseToken(token);
-        Long userId = claims.get("userId", Long.class);
+        Object userIdObj = claims.get("userId");
+        Long userId = userIdObj != null ? Long.valueOf(userIdObj.toString()) : null;
         User user = userService.getUserInfo(userId);
         return Result.success(user);
     }
@@ -62,7 +63,8 @@ public class UserController {
     @Operation(summary = "每日签到", description = "每天可签到一次，奖励10积分")
     public Result<String> checkin(@RequestHeader("Authorization") String authHeader) {
         Claims claims = JwtUtils.parseToken(authHeader.substring(7));
-        Long userId = claims.get("userId", Long.class);
+        Object userIdObj = claims.get("userId");
+        Long userId = userIdObj != null ? Long.valueOf(userIdObj.toString()) : null;
         userService.dailyCheckin(userId);
         return Result.success("签到成功，获得10积分！");
     }
@@ -74,7 +76,8 @@ public class UserController {
         }
         String token = authHeader.substring(7);
         Claims claims = JwtUtils.parseToken(token);
-        Long userId = claims.get("userId", Long.class);
+        Object userIdObj = claims.get("userId");
+        Long userId = userIdObj != null ? Long.valueOf(userIdObj.toString()) : null;
         
         // Fetch current user and update fields selectively
         User user = userService.getUserInfo(userId);
@@ -91,7 +94,8 @@ public class UserController {
         }
         String token = authHeader.substring(7);
         Claims claims = JwtUtils.parseToken(token);
-        Long userId = claims.get("userId", Long.class);
+        Object userIdObj = claims.get("userId");
+        Long userId = userIdObj != null ? Long.valueOf(userIdObj.toString()) : null;
         User admin = userService.getUserInfo(userId);
         if (!"ADMIN".equals(admin.getRole())) {
             throw new RuntimeException("Forbidden: Admin only");
