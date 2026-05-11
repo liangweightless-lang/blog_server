@@ -88,9 +88,10 @@ export default {
       this.loading = true;
       try {
         const res = await axios.post('/api/users/login', this.loginForm);
-        localStorage.setItem('token', res.data.token);
+        const data = res.data.data;
+        localStorage.setItem('token', data.token);
         this.visible = false;
-        this.$message.success('欢迎回来, ' + res.data.user.nickname);
+        this.$message.success('欢迎回来, ' + data.user.nickname);
         // Refresh globally
         window.dispatchEvent(new CustomEvent('refresh-user'));
       } catch (error) {

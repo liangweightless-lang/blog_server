@@ -101,7 +101,7 @@ export default {
     async fetchProducts() {
       try {
         const res = await axios.get('/api/products');
-        this.products = res.data;
+        this.products = (res.data && res.data.data) ? res.data.data : [];
       } catch (error) {
         console.error('获取商品列表失败');
       }
@@ -126,7 +126,7 @@ export default {
         const res = await axios.post('/api/articles', this.form, {
           headers: { 'Authorization': `Bearer ${token}` }
         })
-        if (res.data) {
+        if (res.data && res.data.data) {
           this.$message.success('日记发布成功！')
           this.$router.push('/admin')
         } else {

@@ -29,11 +29,11 @@ export default {
   methods: {
     checkUser() {
       const token = localStorage.getItem('token');
-      if (token) {
+      if (token && token !== 'undefined') {
         axios.get('/api/users/me', {
           headers: { 'Authorization': `Bearer ${token}` }
         }).then(res => {
-          this.user = res.data;
+          this.user = res.data.data;
         }).catch(() => {
           localStorage.removeItem('token');
           this.user = null;

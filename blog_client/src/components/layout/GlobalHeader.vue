@@ -77,12 +77,14 @@ export default {
   methods: {
     checkUser() {
       const token = localStorage.getItem('token');
-      if (token) {
+      if (token && token !== 'undefined' && token !== 'null') {
         axios.get('/api/users/me', {
           headers: { 'Authorization': `Bearer ${token}` }
         }).then(res => {
-          this.user = res.data;
-          window.dispatchEvent(new CustomEvent('user-updated', { detail: res.data }));
+          if (res.data && res.data.data) {
+            this.user = res.data.data;
+            window.dispatchEvent(new CustomEvent('user-updated', { detail: res.data.data }));
+          }
         }).catch(() => {
           localStorage.removeItem('token');
           this.user = null;

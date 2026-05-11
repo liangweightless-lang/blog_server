@@ -154,6 +154,7 @@ export default {
       groupProcessing: false,
       isJoiningGroup: false,
       currentProduct: {},
+      products: [],
       currentGroupId: null,
       orderAddress: '',
       activeGroups: [],

@@ -114,7 +114,7 @@ export default {
       const id = this.$route.params.id
       try {
         const res = await axios.get(`/api/articles/${id}`)
-        this.article = res.data || {}
+        this.article = (res.data && res.data.data) ? res.data.data : {}
         if (this.article.mediaUrls) {
           try {
             this.mediaUrls = JSON.parse(this.article.mediaUrls)
@@ -134,7 +134,7 @@ export default {
     async fetchProduct(productId) {
       try {
         const res = await axios.get(`/api/products/${productId}`)
-        this.product = res.data
+        this.product = (res.data && res.data.data) ? res.data.data : null;
       } catch (error) {
         console.error('获取商品详情失败', error)
       }
@@ -157,7 +157,7 @@ export default {
       const id = this.$route.params.id
       try {
         const res = await axios.get(`/api/comments/article/${id}`)
-        this.comments = res.data || []
+        this.comments = (res.data && res.data.data) ? res.data.data : []
       } catch (error) {
         console.error('获取评论失败', error)
       }
