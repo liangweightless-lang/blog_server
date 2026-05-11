@@ -4,13 +4,10 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class Article {
+public class Comment {
     private Long id;
-    private String title;
+    private Long articleId;
+    private String authorName;
     private String content;
-    private String coverUrl;
-    private String mediaUrls;
-    private Integer likesCount;
     private LocalDateTime createTime;
-    private LocalDateTime updateTime;
 }

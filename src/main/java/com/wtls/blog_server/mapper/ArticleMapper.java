@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Options;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
 
@@ -17,7 +18,10 @@ public interface ArticleMapper {
     @Select("SELECT * FROM article WHERE id = #{id}")
     Article findById(Long id);
 
-    @Insert("INSERT INTO article(title, content, create_time, update_time) VALUES(#{title}, #{content}, NOW(), NOW())")
+    @Insert("INSERT INTO article(title, content, cover_url, media_urls, create_time, update_time) VALUES(#{title}, #{content}, #{coverUrl}, #{mediaUrls}, NOW(), NOW())")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void insert(Article article);
+
+    @Update("UPDATE article SET likes_count = likes_count + 1 WHERE id = #{id}")
+    void incrementLikes(Long id);
 }

@@ -24,4 +24,8 @@ public class ArticleService {
     public void createArticle(Article article) {
         articleMapper.insert(article);
     }
+
+    public void likeArticle(Long id) {
+        articleMapper.incrementLikes(id);
+    }
 }

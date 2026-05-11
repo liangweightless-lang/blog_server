@@ -29,4 +29,9 @@ public class ArticleController {
         articleService.createArticle(article);
         return article;
     }
+
+    @PostMapping("/{id}/like")
+    public void likeArticle(@PathVariable Long id) {
+        articleService.likeArticle(id);
+    }
 }

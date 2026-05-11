@@ -1,25 +1,49 @@
 <template>
-  <el-card>
-    <div slot="header" class="clearfix">
-      <span>发布新文章</span>
-      <el-button style="float: right; padding: 3px 0" type="text" @click="$router.push('/')">返回列表</el-button>
+  <div class="xhs-create-container">
+    <!-- 顶部导航条 -->
+    <div class="xhs-create-header">
+      <div class="header-left" @click="$router.push('/')">
+        <i class="el-icon-arrow-left"></i>
+      </div>
+      <div class="header-title">发布日记</div>
+      <div class="header-right">
+        <el-button class="publish-btn" type="primary" round size="small" :loading="submitting" @click="onSubmit">
+          发布
+        </el-button>
+      </div>
     </div>
-    
-    <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-      <el-form-item label="标题" prop="title">
-        <el-input v-model="form.title" placeholder="请输入文章标题"></el-input>
-      </el-form-item>
-      
-      <el-form-item label="正文" prop="content">
-        <el-input type="textarea" :rows="10" v-model="form.content" placeholder="请输入文章正文..."></el-input>
-      </el-form-item>
-      
-      <el-form-item>
-        <el-button type="primary" @click="onSubmit" :loading="submitting">发布</el-button>
-        <el-button @click="$router.push('/')">取消</el-button>
-      </el-form-item>
-    </el-form>
-  </el-card>
+
+    <!-- 真实的上传照片区 -->
+    <div class="xhs-upload-area">
+      <el-upload
+        action="/api/files/upload"
+        list-type="picture-card"
+        :on-success="handleUploadSuccess"
+        :on-error="handleUploadError"
+        :on-remove="handleRemove"
+        :file-list="fileList"
+        multiple
+        accept="image/*,video/*"
+      >
+        <i class="el-icon-plus"></i>
+      </el-upload>
+      <div class="upload-tip" style="font-size: 12px; color: #D3C1BA; margin-top: 8px;">支持多张图片与短视频上传</div>
+    </div>
+
+    <!-- 标题与内容输入区 -->
+    <div class="xhs-editor-area">
+      <input class="xhs-title-input" v-model="form.title" placeholder="填写标题会有更多赞哦~" />
+      <div class="xhs-divider"></div>
+      <textarea class="xhs-content-input" v-model="form.content" placeholder="添加正文" rows="12"></textarea>
+    </div>
+
+    <!-- 小红书特色底部操作栏 -->
+    <div class="xhs-bottom-actions">
+      <div class="action-item"><span class="icon">#</span> 参与话题</div>
+      <div class="action-item"><span class="icon">@</span> 提醒谁看</div>
+      <div class="action-item"><i class="el-icon-location-outline"></i> 添加地点</div>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -29,34 +53,198 @@ export default {
   name: 'CreateArticle',
   data() {
     return {
+      fileList: [],
       form: {
         title: '',
-        content: ''
-      },
-      rules: {
-        title: [{ required: true, message: '请输入文章标题', trigger: 'blur' }],
-        content: [{ required: true, message: '请输入文章正文', trigger: 'blur' }]
+        content: '',
+        coverUrl: '',
+        mediaUrls: '[]'
       },
       submitting: false
     }
   },
   methods: {
-    onSubmit() {
-      this.$refs.form.validate(async (valid) => {
-        if (valid) {
-          this.submitting = true
-          try {
-            await axios.post('/api/articles', this.form)
-            this.$message.success('文章发布成功！')
-            this.$router.push('/')
-          } catch (error) {
-            this.$message.error('文章发布失败，请稍后重试')
-          } finally {
-            this.submitting = false
-          }
+    handleUploadSuccess(res, file, fileList) {
+      file.url = res; // res is the URL string from FileController
+      this.fileList = fileList;
+    },
+    handleRemove(file, fileList) {
+      this.fileList = fileList;
+    },
+    handleUploadError(err, file, fileList) {
+      this.$message.error('文件上传失败，请重试');
+    },
+    async onSubmit() {
+      if (!this.form.title.trim()) {
+        this.$message.warning('标题不能为空哦~')
+        return
+      }
+      if (!this.form.content.trim()) {
+        this.$message.warning('多写点正文吧~')
+        return
+      }
+      
+      const urls = this.fileList.map(f => f.response ? f.response : f.url);
+      this.form.mediaUrls = JSON.stringify(urls);
+      this.form.coverUrl = urls.length > 0 ? urls[0] : '';
+
+      this.submitting = true
+      try {
+        const res = await axios.post('/api/articles', this.form)
+        if (res.data) {
+          this.$message.success('日记发布成功！')
+          this.$router.push('/')
+        } else {
+          this.$message.error('日记发布失败，请稍后重试')
         }
-      })
+      } catch (error) {
+        this.$message.error('日记发布失败，请稍后重试')
+      } finally {
+        this.submitting = false
+      }
     }
   }
 }
 </script>
+
+<style scoped>
+.xhs-create-container {
+  background: #FFFFFF;
+  border-radius: 24px;
+  min-height: 80vh;
+  padding: 30px;
+  box-shadow: 0 8px 24px rgba(255, 126, 103, 0.08);
+}
+
+.xhs-create-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.header-left {
+  font-size: 20px;
+  cursor: pointer;
+  color: #5C433B;
+  width: 60px;
+}
+.header-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #5C433B;
+}
+.header-right {
+  width: 60px;
+  text-align: right;
+}
+.publish-btn {
+  background: #FF7E67;
+  border: none;
+  font-weight: bold;
+}
+.publish-btn:hover {
+  background: #E56A54;
+}
+
+.xhs-upload-area {
+  margin-bottom: 24px;
+}
+::v-deep .el-upload--picture-card {
+  background: #FFFDF8;
+  border: 1px dashed #FFC1B6;
+  border-radius: 12px;
+  width: 100px;
+  height: 100px;
+  line-height: 100px;
+  color: #FF7E67;
+  transition: all 0.3s;
+}
+::v-deep .el-upload--picture-card:hover {
+  background: #FFF0ED;
+}
+::v-deep .el-upload--picture-card i {
+  font-size: 24px;
+}
+::v-deep .el-upload-list--picture-card .el-upload-list__item {
+  width: 100px;
+  height: 100px;
+  border-radius: 12px;
+}
+
+.xhs-editor-area {
+  display: flex;
+  flex-direction: column;
+}
+
+.xhs-title-input {
+  border: none;
+  font-size: 20px;
+  font-weight: 700;
+  color: #5C433B;
+  padding: 10px 0;
+  outline: none;
+  background: transparent;
+}
+.xhs-title-input::placeholder {
+  color: #D3C1BA;
+  font-weight: 600;
+}
+
+.xhs-divider {
+  height: 1px;
+  background: #FDF0E6;
+  margin: 10px 0;
+}
+
+.xhs-content-input {
+  border: none;
+  font-size: 16px;
+  color: #8C6A5D;
+  line-height: 1.6;
+  padding: 10px 0;
+  outline: none;
+  resize: none;
+  font-family: inherit;
+  background: transparent;
+}
+.xhs-content-input::placeholder {
+  color: #D3C1BA;
+}
+
+.xhs-bottom-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 20px;
+  border-top: 1px solid #FDF0E6;
+  padding-top: 20px;
+  flex-wrap: wrap;
+}
+.action-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #FFFDF8;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  color: #8C6A5D;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid #FDF0E6;
+}
+.action-item .icon {
+  font-weight: 800;
+  color: #FF7E67;
+}
+.action-item i {
+  color: #FF7E67;
+  font-size: 15px;
+}
+
+@media (max-width: 768px) {
+  .xhs-create-container {
+    padding: 20px 15px;
+    border-radius: 16px;
+  }
+}
+</style>
