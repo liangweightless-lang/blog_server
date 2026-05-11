@@ -41,11 +41,11 @@ CREATE TABLE IF NOT EXISTS `product` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='小商城商品表';
 
--- 5. 插入初始商品数据 (由于 IF NOT EXISTS 不会影响现有表，但插入操作需要防重复，所以这里使用 INSERT IGNORE)
-INSERT IGNORE INTO `product` (`id`, `name`, `description`, `price`, `image`, `is_digital`) VALUES
-(1, '法式经典黄油可颂', '采用法国进口发酵黄油，经过繁复折叠工艺，外层酥脆掉渣，内里柔软蜂巢组织。', 22.00, '/img/product_croissant.png', 1),
-(2, '意式特浓提拉米苏', '正宗马斯卡彭芝士搭配浓缩咖啡与少量朗姆酒，口感层次丰富，入口即化。', 38.00, '/img/product_tiramisu.png', 1),
-(3, '手冲澳白咖啡 Flat White', '精选埃塞俄比亚 SOE 咖啡豆，完美融合细腻奶泡，带来丝滑浓郁的温暖体验。', 28.00, '/img/product_coffee.png', 0);
+-- 5. 插入初始商品数据
+INSERT IGNORE INTO `product` (`id`, `name`, `description`, `price`, `group_price`, `image`, `is_digital`) VALUES
+(1, '法式经典黄油可颂', '采用法国进口发酵黄油，外层酥脆掉渣，内里柔软蜂巢组织。', 22.00, 15.00, '/img/product_croissant.png', 1),
+(2, '意式特浓提拉米苏', '正宗马斯卡彭芝士搭配浓缩咖啡与少量朗姆酒，口感层次丰富，入口即化。', 38.00, 25.00, '/img/product_tiramisu.png', 1),
+(3, '手冲澳白咖啡 Flat White', '精选埃塞俄比亚 SOE 咖啡豆，完美融合细腻奶泡，带来丝滑浓郁的温暖体验。', 28.00, 18.00, '/img/product_coffee.png', 0);
 
 -- 6. 创建用户表
 CREATE TABLE IF NOT EXISTS `user` (
@@ -77,6 +77,7 @@ CREATE TABLE IF NOT EXISTS `product_order` (
   `status` tinyint(1) NOT NULL DEFAULT 0 COMMENT '状态(0:待支付, 1:已支付, 2:已取消)',
   `shipping_address` text COMMENT '配送地址',
   `order_type` varchar(20) DEFAULT 'INDIVIDUAL' COMMENT '订单类型: INDIVIDUAL/GROUP',
+  `points_used` int(11) DEFAULT 0 COMMENT '使用的积分',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '下单时间',
   `pay_time` datetime DEFAULT NULL COMMENT '支付时间',
   PRIMARY KEY (`id`),
