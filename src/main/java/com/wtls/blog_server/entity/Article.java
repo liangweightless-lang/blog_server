@@ -11,6 +11,7 @@ public class Article {
     private String coverUrl;
     private String mediaUrls;
     private Integer likesCount;
+    private Long productId;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 }

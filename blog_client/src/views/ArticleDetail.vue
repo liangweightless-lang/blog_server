@@ -33,6 +33,21 @@
         <span class="post-time">{{ formatDate(article.createTime) }}</span>
       </div>
 
+      <!-- 创作者推荐商品卡片 -->
+      <div class="recommended-product" v-if="product && product.id" @click="$router.push('/store')">
+        <div class="product-card-inner">
+          <div class="product-badge">创作者推荐</div>
+          <img :src="product.image" class="product-thumb" />
+          <div class="product-info-mini">
+            <h4 class="product-name-mini">{{ product.name }}</h4>
+            <div class="product-price-row">
+              <span class="product-price-mini">¥{{ product.price }}</span>
+              <el-button type="primary" size="mini" round class="buy-now-btn">立即去买</el-button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="comments-section">
         <h3 class="comments-title">共 {{ comments.length }} 条评论</h3>
         <div class="comment-list" v-if="comments.length > 0">
@@ -86,7 +101,8 @@ export default {
       mediaUrls: [],
       comments: [],
       newComment: '',
-      submitting: false
+      submitting: false,
+      product: null
     }
   },
   created() {
@@ -106,10 +122,21 @@ export default {
             this.mediaUrls = []
           }
         }
+        if (this.article.productId) {
+          this.fetchProduct(this.article.productId)
+        }
       } catch (error) {
         this.$message.error('无法加载日记详情')
       } finally {
         this.loading = false
+      }
+    },
+    async fetchProduct(productId) {
+      try {
+        const res = await axios.get(`/api/products/${productId}`)
+        this.product = res.data
+      } catch (error) {
+        console.error('获取商品详情失败', error)
       }
     },
     formatContent(content) {
@@ -395,6 +422,70 @@ export default {
   color: #D3C1BA;
   padding: 30px 0;
   font-size: 14px;
+}
+
+/* 推荐商品卡片样式 */
+.recommended-product {
+  margin: 30px 0;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+.recommended-product:hover {
+  transform: translateY(-2px);
+}
+.product-card-inner {
+  display: flex;
+  background: #FFFDF8;
+  border: 1px solid #FFE4D6;
+  border-radius: 16px;
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.product-badge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: #FF7E67;
+  color: white;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 0 0 12px 0;
+  font-weight: bold;
+}
+.product-thumb {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-right: 15px;
+}
+.product-info-mini {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.product-name-mini {
+  margin: 0 0 10px 0;
+  font-size: 15px;
+  color: #5C433B;
+  font-weight: 700;
+}
+.product-price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.product-price-mini {
+  font-size: 18px;
+  font-weight: 800;
+  color: #FF7E67;
+}
+.buy-now-btn {
+  background: #FF7E67;
+  border: none;
+  font-size: 12px;
 }
 
 @media (max-width: 768px) {

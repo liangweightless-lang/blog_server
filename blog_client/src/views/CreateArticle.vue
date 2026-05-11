@@ -43,6 +43,25 @@
       <div class="action-item"><span class="icon">@</span> 提醒谁看</div>
       <div class="action-item"><i class="el-icon-location-outline"></i> 添加地点</div>
     </div>
+
+    <!-- 关联商品选择 -->
+    <div class="xhs-product-link">
+      <div class="link-header">
+        <i class="el-icon-shopping-bag-2"></i>
+        <span>好物推荐</span>
+      </div>
+      <el-select v-model="form.productId" clearable placeholder="选择日记中提到的商品" style="width: 100%">
+        <el-option
+          v-for="item in products"
+          :key="item.id"
+          :label="item.name"
+          :value="item.id">
+          <span style="float: left">{{ item.name }}</span>
+          <span style="float: right; color: #8492a6; font-size: 13px">¥{{ item.price }}</span>
+        </el-option>
+      </el-select>
+      <p class="link-tip">关联后，读者将在文末直接看到购买入口</p>
+    </div>
   </div>
 </template>
 
@@ -58,18 +77,15 @@ export default {
         title: '',
         content: '',
         coverUrl: '',
-        mediaUrls: '[]'
+        mediaUrls: '[]',
+        productId: null
       },
+      products: [],
       submitting: false
     }
   },
   created() {
-    // Basic admin check
-    const token = localStorage.getItem('token');
-    if (!token) {
-      this.$message.warning('请先登录管理员账号');
-      this.$router.push('/');
-    }
+    this.fetchProducts();
   },
   methods: {
     handleUploadSuccess(res, file, fileList) {
@@ -81,6 +97,14 @@ export default {
     },
     handleUploadError(err, file, fileList) {
       this.$message.error('文件上传失败，请重试');
+    },
+    async fetchProducts() {
+      try {
+        const res = await axios.get('/api/products');
+        this.products = res.data;
+      } catch (error) {
+        console.error('获取商品列表失败');
+      }
     },
     async onSubmit() {
       if (!this.form.title.trim()) {
@@ -250,6 +274,25 @@ export default {
 .action-item i {
   color: #FF7E67;
   font-size: 15px;
+}
+
+.xhs-product-link {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px dashed #FDF0E6;
+}
+.link-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 15px;
+  font-weight: bold;
+  color: #FF7E67;
+}
+.link-tip {
+  font-size: 12px;
+  color: #D3C1BA;
+  margin-top: 10px;
 }
 
 @media (max-width: 768px) {
