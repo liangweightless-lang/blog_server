@@ -124,8 +124,8 @@ public class GroupBuyService {
         groupBuyMapper.updateById(gb);
         
         // Complete all orders
-        List<GroupMember> members = groupBuyMapper.findMembersByGroupId(groupId);
-        for (GroupMember member : members) {
+        List<GroupBuyMember> members = groupBuyMapper.findMembersByGroupId(groupId);
+        for (GroupBuyMember member : members) {
             ProductOrder order = orderMapper.findById(member.getOrderId());
             if (order != null && order.getStatus() == 1) { // Paid
                 order.setStatus(3); // Shipped or Finished
@@ -146,8 +146,8 @@ public class GroupBuyService {
         groupBuyMapper.updateById(gb);
         
         // Refund and cancel
-        List<GroupMember> members = groupBuyMapper.findMembersByGroupId(groupId);
-        for (GroupMember member : members) {
+        List<GroupBuyMember> members = groupBuyMapper.findMembersByGroupId(groupId);
+        for (GroupBuyMember member : members) {
             ProductOrder order = orderMapper.findById(member.getOrderId());
             if (order != null) {
                 orderMapper.updateStatus(order.getId(), 2); // Cancelled

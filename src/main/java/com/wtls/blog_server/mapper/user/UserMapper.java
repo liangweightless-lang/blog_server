@@ -4,7 +4,7 @@ import com.wtls.blog_server.entity.user.User;
 import org.apache.ibatis.annotations.*;
 
 @Mapper
-public interface UserMapper {
+public interface UserMapper extends BaseMapper<User> {
     @Select("SELECT * FROM user WHERE username = #{username}")
     User findByUsername(String username);
 
@@ -13,11 +13,6 @@ public interface UserMapper {
 
     @Select("SELECT * FROM user WHERE invite_code = #{inviteCode}")
     User findByInviteCode(String inviteCode);
-
-    @Insert("INSERT INTO user(username, password, nickname, avatar_url, points, invite_code, invited_by, role, create_time) " +
-            "VALUES(#{username}, #{password}, #{nickname}, #{avatarUrl}, #{points}, #{inviteCode}, #{invitedBy}, #{role}, NOW())")
-    @Options(useGeneratedKeys = true, keyProperty = "id")
-    void insert(User user);
 
     @Update("UPDATE user SET points = points + #{pointsToAdd} WHERE id = #{id}")
     void addPoints(@Param("id") Long id, @Param("pointsToAdd") int pointsToAdd);
@@ -35,3 +30,4 @@ public interface UserMapper {
     @Select("SELECT * FROM user ORDER BY id DESC")
     java.util.List<User> findAll();
 }
+
