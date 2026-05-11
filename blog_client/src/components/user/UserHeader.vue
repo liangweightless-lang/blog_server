@@ -11,6 +11,16 @@
         </div>
       </div>
       <div class="header-actions">
+        <el-button 
+          :type="isCheckedIn ? 'success' : 'warning'" 
+          size="small" 
+          round 
+          :disabled="isCheckedIn"
+          :loading="loading"
+          @click="handleCheckin"
+        >
+          {{ isCheckedIn ? '今日已签到' : '每日签到' }}
+        </el-button>
         <el-button icon="el-icon-edit-outline" circle size="small" @click="$emit('edit')"></el-button>
       </div>
     </div>
@@ -18,10 +28,47 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   name: 'UserHeader',
   props: {
     user: Object
+  },
+  data() {
+    return {
+      loading: false
+    }
+  },
+  computed: {
+    isCheckedIn() {
+      if (!this.user || !this.user.lastCheckinDate) return false;
+      const today = new Date().toISOString().split('T')[0];
+      // Handling both array [2026, 5, 11] and string formats
+      let dateStr = this.user.lastCheckinDate;
+      if (Array.isArray(dateStr)) {
+        dateStr = `${dateStr[0]}-${String(dateStr[1]).padStart(2, '0')}-${String(dateStr[2]).padStart(2, '0')}`;
+      }
+      return dateStr === today;
+    }
+  },
+  methods: {
+    async handleCheckin() {
+      if (this.isCheckedIn) return;
+      this.loading = true;
+      try {
+        const res = await axios.post('/api/users/checkin', {}, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        this.$message.success(res.data.message);
+        // Refresh globally to update points and lastCheckinDate
+        window.dispatchEvent(new CustomEvent('refresh-user'));
+      } catch (error) {
+        this.$message.error(error.response?.data?.error || '签到失败');
+      } finally {
+        this.loading = false;
+      }
+    }
   }
 }
 </script>

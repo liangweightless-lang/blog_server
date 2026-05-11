@@ -18,6 +18,13 @@
         </div>
         <i class="el-icon-arrow-right"></i>
       </div>
+      <div class="tool-cell" @click="$emit('groups')">
+        <div class="cell-left">
+          <i class="el-icon-user tool-icon" style="color: #67C23A"></i>
+          <span>我的拼团</span>
+        </div>
+        <i class="el-icon-arrow-right"></i>
+      </div>
       <div class="tool-cell" v-if="user && user.role === 'ADMIN'" @click="$router.push('/admin')">
         <div class="cell-left">
           <i class="el-icon-set-up tool-icon" style="color: #E6A23C"></i>

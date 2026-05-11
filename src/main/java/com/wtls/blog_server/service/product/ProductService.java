@@ -14,11 +14,11 @@ public class ProductService {
     private ProductMapper productMapper;
 
     public List<Product> getAllProducts() {
-        return productMapper.findAll();
+        return productMapper.selectList(null);
     }
 
     public Product getProductById(Long id) {
-        return productMapper.findById(id);
+        return productMapper.selectById(id);
     }
 
     public void createProduct(Product product) {
@@ -26,10 +26,10 @@ public class ProductService {
     }
 
     public void updateProduct(Product product) {
-        productMapper.update(product);
+        productMapper.updateById(product);
     }
 
     public void deleteProduct(Long id) {
-        productMapper.delete(id);
+        productMapper.deleteById(id);
     }
 }

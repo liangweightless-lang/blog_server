@@ -1,7 +1,7 @@
 <template>
   <div class="mobile-header">
     <div class="logo" @click="$router.push('/')">生活家</div>
-    <div class="user-avatar" v-if="user" @click="$router.push('/admin')">
+    <div class="user-avatar" v-if="user" @click="$router.push('/profile')">
       <el-avatar :size="32" :src="user.avatarUrl"></el-avatar>
     </div>
     <el-button v-else type="text" style="color: #FF7E67;" @click="triggerLogin">登录</el-button>
@@ -9,20 +9,40 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   name: 'MobileHeader',
   data() {
     return { user: null }
   },
   created() {
+    this.checkUser();
+    window.addEventListener('refresh-user', this.checkUser);
     window.addEventListener('user-updated', (e) => {
       this.user = e.detail;
     });
   },
+  beforeDestroy() {
+    window.removeEventListener('refresh-user', this.checkUser);
+  },
   methods: {
+    checkUser() {
+      const token = localStorage.getItem('token');
+      if (token) {
+        axios.get('/api/users/me', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }).then(res => {
+          this.user = res.data;
+        }).catch(() => {
+          localStorage.removeItem('token');
+          this.user = null;
+        });
+      } else {
+        this.user = null;
+      }
+    },
     triggerLogin() {
-      // Logic to trigger login dialog in GlobalHeader (since they share the same root mostly)
-      // or we can use a global event.
       window.dispatchEvent(new CustomEvent('open-login'));
     }
   }

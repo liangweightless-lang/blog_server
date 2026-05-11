@@ -30,7 +30,9 @@
       <div v-for="order in orders.slice(0, 2)" :key="order.id" class="mini-order-card">
         <div class="mini-order-info">
           <span class="mini-id">#{{ order.id.substring(0, 8) }}</span>
-          <span class="mini-status">{{ order.status === 1 ? '已完成' : '待支付' }}</span>
+          <span class="mini-status" :style="{ color: getStatusColor(order.status) }">
+            {{ getStatusText(order.status) }}
+          </span>
         </div>
         <div class="mini-order-price">¥{{ order.amount }}</div>
       </div>
@@ -47,6 +49,16 @@ export default {
   computed: {
     unpaidCount() {
       return this.orders.filter(o => o.status === 0).length;
+    }
+  },
+  methods: {
+    getStatusText(status) {
+      const texts = ['待支付', '已支付', '已取消', '已发货'];
+      return texts[status] || '未知';
+    },
+    getStatusColor(status) {
+      const colors = ['#909399', '#67C23A', '#F56C6C', '#409EFF'];
+      return colors[status] || '#909399';
     }
   }
 }

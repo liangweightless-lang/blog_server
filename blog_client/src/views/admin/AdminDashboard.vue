@@ -103,8 +103,8 @@
           </el-table-column>
           <el-table-column label="状态" width="100">
             <template slot-scope="scope">
-              <el-tag :type="scope.row.status === 1 ? 'success' : 'info'" size="mini">
-                {{ scope.row.status === 1 ? '已支付' : '待支付' }}
+              <el-tag :type="getOrderStatusType(scope.row.status)" size="mini">
+                {{ getOrderStatusText(scope.row.status) }}
               </el-tag>
             </template>
           </el-table-column>
@@ -122,6 +122,36 @@
           <el-table-column label="操作" width="120">
             <template slot-scope="scope">
               <el-button v-if="scope.row.status === 1" size="mini" type="success" plain @click="handleShip(scope.row)">标记发货</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-tab-pane>
+
+      <!-- 拼团管理 -->
+      <el-tab-pane label="拼团进度管理" name="groupbuys">
+        <el-table :data="groupbuys" style="width: 100%" v-loading="loadingGroups">
+          <el-table-column prop="id" label="ID" width="80"></el-table-column>
+          <el-table-column prop="productName" label="拼团商品"></el-table-column>
+          <el-table-column prop="initiatorNickname" label="发起人" width="120"></el-table-column>
+          <el-table-column label="进度" width="150">
+            <template slot-scope="scope">
+              {{ scope.row.currentNum }} / {{ scope.row.requiredNum }}
+            </template>
+          </el-table-column>
+          <el-table-column label="状态" width="100">
+            <template slot-scope="scope">
+              <el-tag :type="getStatusType(scope.row.status)" size="mini">
+                {{ getStatusText(scope.row.status) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="到期时间" width="180">
+            <template slot-scope="scope">{{ formatTime(scope.row.expireTime) }}</template>
+          </el-table-column>
+          <el-table-column label="管理操作" width="220" fixed="right">
+            <template slot-scope="scope" v-if="scope.row.status === 0">
+              <el-button size="mini" type="success" plain @click="handleForceSuccess(scope.row)">强制成团</el-button>
+              <el-button size="mini" type="danger" plain @click="handleForceFail(scope.row)">强制退款</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -168,12 +198,13 @@ export default {
       loadingUsers: false,
       loadingOrders: false,
       articles: [],
-      products: [],
       users: [],
       orders: [],
+      groupbuys: [],
       productDialogVisible: false,
       isEditing: false,
       isMobile: window.innerWidth <= 768,
+      loadingGroups: false,
       productForm: {
         id: null,
         name: '',
@@ -189,6 +220,7 @@ export default {
     this.fetchProducts();
     this.fetchUsers();
     this.fetchOrders();
+    this.fetchGroups();
     window.addEventListener('resize', this.handleResize);
   },
   beforeDestroy() {
@@ -205,7 +237,7 @@ export default {
       this.loadingArticles = true;
       try {
         const res = await axios.get('/api/articles');
-        this.articles = res.data;
+        this.articles = res.data.data;
       } catch (error) {
         this.$message.error('加载文章失败');
       } finally {
@@ -216,7 +248,7 @@ export default {
       this.loadingProducts = true;
       try {
         const res = await axios.get('/api/products');
-        this.products = res.data;
+        this.products = res.data.data;
       } catch (error) {
         this.$message.error('加载商品失败');
       } finally {
@@ -227,7 +259,7 @@ export default {
       this.loadingUsers = true;
       try {
         const res = await axios.get('/api/users', { headers: this.getAuthHeader() });
-        this.users = res.data;
+        this.users = res.data.data;
       } catch (error) {
         this.$message.error('加载用户列表失败');
       } finally {
@@ -238,12 +270,59 @@ export default {
       this.loadingOrders = true;
       try {
         const res = await axios.get('/api/orders', { headers: this.getAuthHeader() });
-        this.orders = res.data;
+        this.orders = res.data.data;
       } catch (error) {
         this.$message.error('加载订单列表失败');
       } finally {
         this.loadingOrders = false;
       }
+    },
+    async fetchGroups() {
+      this.loadingGroups = true;
+      try {
+        const res = await axios.get('/api/groups', { headers: this.getAuthHeader() });
+        this.groupbuys = res.data.data;
+      } catch (error) {
+        this.$message.error('加载拼团列表失败');
+      } finally {
+        this.loadingGroups = false;
+      }
+    },
+    async handleForceSuccess(group) {
+      try {
+        await this.$confirm('确定要手动强制该团【成团】吗？所有成员订单将变为待发货。', '危险操作', { type: 'warning' });
+        await axios.post(`/api/groups/${group.id}/force-success`, {}, { headers: this.getAuthHeader() });
+        this.$message.success('操作成功，已强制成团');
+        this.fetchGroups();
+      } catch (e) {
+        if (e !== 'cancel') this.$message.error(e.response?.data?.message || '操作失败');
+      }
+    },
+    async handleForceFail(group) {
+      try {
+        await this.$confirm('确定要【强制失败】该团吗？系统将自动取消订单并退回成员积分！', '危险操作', { type: 'error' });
+        await axios.post(`/api/groups/${group.id}/force-fail`, {}, { headers: this.getAuthHeader() });
+        this.$message.success('已强制失败并退款');
+        this.fetchGroups();
+      } catch (e) {
+        if (e !== 'cancel') this.$message.error(e.response?.data?.message || '操作失败');
+      }
+    },
+    getStatusType(status) {
+      const types = ['warning', 'success', 'danger'];
+      return types[status] || 'info';
+    },
+    getStatusText(status) {
+      const texts = ['拼团中', '拼团成功', '拼团失败'];
+      return texts[status] || '未知';
+    },
+    getOrderStatusType(status) {
+      const types = ['info', 'success', 'danger', 'primary'];
+      return types[status] || 'info';
+    },
+    getOrderStatusText(status) {
+      const texts = ['待支付', '已支付', '已取消', '已发货'];
+      return texts[status] || '未知';
     },
     async handleShip(order) {
       try {

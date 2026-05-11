@@ -1,4 +1,4 @@
-package com.wtls.blog_server.entity;
+package com.wtls.blog_server.entity.product;
 
 import lombok.Data;
 import java.time.LocalDateTime;

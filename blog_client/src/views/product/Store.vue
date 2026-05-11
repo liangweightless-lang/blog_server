@@ -18,7 +18,7 @@
                 <el-progress :percentage="(group.currentNum / group.requiredNum) * 100" :format="() => `${group.currentNum}/${group.requiredNum}`"></el-progress>
               </div>
             </div>
-            <el-button type="warning" size="mini" round @click="handleJoinGroup(group)">加入拼团</el-button>
+            <el-button type="warning" size="mini" round @click="$router.push(`/product/group/${group.id}`)">查看详情</el-button>
           </div>
         </el-col>
       </el-row>
@@ -57,7 +57,24 @@
       <div class="buy-dialog-content">
         <i class="el-icon-shopping-cart-2" style="font-size: 48px; color: #409EFF; margin-bottom: 15px;"></i>
         <h3>{{ currentProduct.name }}</h3>
-        <p class="buy-price">需支付：<span style="color: #F56C6C; font-size: 20px; font-weight: bold;">¥{{ currentProduct.price }}</span></p>
+        <p class="buy-price">原价：<span style="color: #909399; text-decoration: line-through;">¥{{ currentProduct.price }}</span></p>
+        
+        <div class="points-deduction-box" v-if="userPoints > 0">
+          <el-checkbox v-model="usePoints">使用积分抵扣 (100积分 = 1元)</el-checkbox>
+          <div v-if="usePoints" class="points-slider">
+            <el-slider 
+              v-model="pointsToUse" 
+              :max="maxPointsPossible" 
+              :step="100"
+              show-input
+              input-size="mini">
+            </el-slider>
+            <p class="deduction-tip">可用积分: {{ userPoints }} | 抵扣金额: ¥{{ (pointsToUse / 100).toFixed(2) }}</p>
+          </div>
+        </div>
+
+        <p class="final-price">实付金额：<span style="color: #F56C6C; font-size: 24px; font-weight: bold;">¥{{ finalPrice }}</span></p>
+        
         <p style="color: #909399; font-size: 14px; margin-top: 20px;">
           此功能为演示版本。在实际环境中，此处将接入微信支付/支付宝或 Stripe 的支付二维码。
         </p>
@@ -139,9 +156,25 @@ export default {
       currentProduct: {},
       currentGroupId: null,
       orderAddress: '',
-      products: [],
       activeGroups: [],
-      isMonday: new Date().getDay() === 1
+      isMonday: new Date().getDay() === 1,
+      userPoints: 0,
+      usePoints: false,
+      pointsToUse: 0,
+      isMobile: window.innerWidth <= 768
+    }
+  },
+  computed: {
+    maxPointsPossible() {
+      if (!this.currentProduct.price) return 0;
+      // Max deduction: points we have OR points to cover price (minus 0.01)
+      const pointsToCover = Math.floor((this.currentProduct.price - 0.01) * 100);
+      return Math.min(this.userPoints, pointsToCover);
+    },
+    finalPrice() {
+      if (!this.currentProduct.price) return 0;
+      const deduction = this.usePoints ? (this.pointsToUse / 100) : 0;
+      return (this.currentProduct.price - deduction).toFixed(2);
     }
   },
   created() {
@@ -152,7 +185,7 @@ export default {
     async fetchActiveGroups() {
       try {
         const res = await axios.get('/api/groups/active');
-        this.activeGroups = res.data;
+        this.activeGroups = res.data.data;
       } catch (error) {
         console.error('获取拼团列表失败');
       }
@@ -167,15 +200,7 @@ export default {
       this.groupDialogVisible = true;
     },
     async handleJoinGroup(group) {
-      if (!localStorage.getItem('token')) {
-        return this.$message.warning('请先登录再参加拼团');
-      }
-      // Find the product details
-      this.currentProduct = this.products.find(p => p.id === group.productId) || { id: group.productId, name: group.productName };
-      this.currentGroupId = group.id;
-      this.isJoiningGroup = true;
-      await this.prepareOrder();
-      this.groupDialogVisible = true;
+      this.$router.push(`/product/group/${group.id}`);
     },
     async prepareOrder() {
       // Fetch user's default address
@@ -183,8 +208,8 @@ export default {
         const res = await axios.get('/api/users/me', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
-        if (res.data.address) {
-          this.orderAddress = res.data.address;
+        if (res.data.data.address) {
+          this.orderAddress = res.data.data.address;
         }
       } catch (error) {
         console.error('获取默认地址失败');
@@ -203,9 +228,11 @@ export default {
         if (this.isJoiningGroup) {
           await axios.post(`/api/groups/${this.currentGroupId}/join`, { address: this.orderAddress }, { headers });
           this.$message.success('加入拼团成功！');
+          this.$router.push(`/product/group/${this.currentGroupId}`);
         } else {
-          await axios.post('/api/groups/start', { productId: this.currentProduct.id, address: this.orderAddress }, { headers });
-          this.$message.success('开团成功！快邀请好友来凑单吧 (满8人成团)');
+          const res = await axios.post('/api/groups/start', { productId: this.currentProduct.id, address: this.orderAddress }, { headers });
+          this.$message.success('开团成功！快邀请好友来凑单吧');
+          this.$router.push(`/product/group/${res.data.data.id}`);
         }
         
         this.groupDialogVisible = false;
@@ -234,16 +261,29 @@ export default {
     async fetchProducts() {
       try {
         const res = await axios.get('/api/products');
-        this.products = res.data;
+        this.products = res.data.data;
       } catch (error) {
         this.$message.error('获取商品列表失败');
       }
     },
-    handleBuy(product) {
+    async handleBuy(product) {
       if (!localStorage.getItem('token')) {
         return this.$message.warning('请先登录后再进行购买');
       }
       this.currentProduct = product;
+      this.usePoints = false;
+      this.pointsToUse = 0;
+      
+      // Fetch user points
+      try {
+        const res = await axios.get('/api/users/me', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        this.userPoints = res.data.data.points || 0;
+      } catch (e) {
+        console.error('Fetch points failed');
+      }
+      
       this.buyDialogVisible = true;
     },
     async confirmPurchase() {
@@ -254,10 +294,13 @@ export default {
       try {
         // 1. 创建订单
         const orderRes = await axios.post('/api/orders/create', 
-          { productId: this.currentProduct.id },
+          { 
+            productId: this.currentProduct.id,
+            pointsToUse: this.usePoints ? this.pointsToUse : 0
+          },
           { headers: { 'Authorization': `Bearer ${token}` } }
         );
-        const orderId = orderRes.data.id;
+        const orderId = orderRes.data.data.id;
 
         // 2. 模拟支付
         await axios.post(`/api/orders/${orderId}/pay`, {}, {
@@ -394,7 +437,28 @@ export default {
 
 .buy-dialog-content {
   text-align: center;
-  padding: 20px 0;
+  padding: 10px 0;
+}
+.points-deduction-box {
+  margin: 20px 0;
+  padding: 15px;
+  background: #FFFDF8;
+  border-radius: 12px;
+  border: 1px dashed #FF7E67;
+  text-align: left;
+}
+.points-slider {
+  margin-top: 10px;
+}
+.deduction-tip {
+  font-size: 12px;
+  color: #8C6A5D;
+  margin-top: 8px;
+}
+.final-price {
+  margin-top: 20px;
+  font-size: 16px;
+  color: #5C433B;
 }
 
 @media (max-width: 768px) {

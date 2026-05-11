@@ -6,6 +6,7 @@ import Store from '../views/product/Store.vue'
 import ArticleDetail from '../views/article/ArticleDetail.vue'
 import AdminDashboard from '../views/admin/AdminDashboard.vue'
 import UserProfile from '../views/user/UserProfile.vue'
+import GroupDetail from '../views/product/GroupDetail.vue'
 
 Vue.use(VueRouter)
 
@@ -13,7 +14,8 @@ const routes = [
   {
     path: '/',
     name: 'Home',
-    component: Home
+    component: Home,
+    meta: { hideHeaderMobile: true }
   },
   {
     path: '/create',
@@ -26,9 +28,16 @@ const routes = [
     component: Store
   },
   {
+    path: '/product/group/:id',
+    name: 'GroupDetail',
+    component: GroupDetail,
+    meta: { hideHeaderMobile: true }
+  },
+  {
     path: '/article/:id',
     name: 'ArticleDetail',
-    component: ArticleDetail
+    component: ArticleDetail,
+    meta: { hideHeaderMobile: true }
   },
   {
     path: '/admin',
@@ -38,7 +47,8 @@ const routes = [
   {
     path: '/profile',
     name: 'UserProfile',
-    component: UserProfile
+    component: UserProfile,
+    meta: { hideHeaderMobile: true }
   }
 ]
 

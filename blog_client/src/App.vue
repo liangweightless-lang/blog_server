@@ -1,8 +1,8 @@
 <template>
-  <div id="app">
+  <div id="app" :class="{ 'header-hidden': isMobile && $route.meta.hideHeaderMobile }">
     <el-container direction="vertical">
       <GlobalHeader v-if="!isMobile" />
-      <MobileHeader v-else />
+      <MobileHeader v-else-if="!$route.meta.hideHeaderMobile" />
       <el-main>
         <router-view></router-view>
       </el-main>
@@ -74,5 +74,8 @@ body {
   max-width: 1000px;
   margin: 0 auto;
   width: 100%;
+}
+.header-hidden .el-main {
+  padding-top: 0;
 }
 </style>

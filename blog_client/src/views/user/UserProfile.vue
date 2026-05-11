@@ -8,8 +8,46 @@
       :user="user" 
       @address="showAddressDialog" 
       @invite="showInviteDialog" 
+      @groups="showGroupsDialog"
       @logout="handleLogout" 
     />
+
+    <!-- 我的拼团弹窗 -->
+    <el-dialog title="我的拼团" :visible.sync="groupsDialogVisible" :width="isMobile ? '95%' : '600px'" round center>
+      <div v-loading="loadingGroups" style="min-height: 200px;">
+        <div v-if="myGroups.length === 0" class="empty-groups">
+          <i class="el-icon-warning-outline" style="font-size: 40px; color: #C0C4CC; margin-bottom: 10px;"></i>
+          <p>暂无拼团记录</p>
+        </div>
+        <div v-else class="groups-list">
+          <div v-for="group in myGroups" :key="group.id" class="group-item-card" @click="goToGroupDetail(group)">
+            <div class="group-main">
+              <div class="group-info">
+                <p class="group-pname">{{ group.productName }}</p>
+                <p class="group-time">{{ formatTime(group.createTime) }}</p>
+              </div>
+              <div class="group-status-box">
+                <el-tag :type="getStatusType(group.status)" size="small" effect="dark">
+                  {{ getStatusText(group.status) }}
+                </el-tag>
+                <i class="el-icon-arrow-right"></i>
+              </div>
+            </div>
+            <div class="group-progress">
+              <el-progress 
+                :percentage="Math.floor((group.currentNum / group.requiredNum) * 100)" 
+                :status="group.status === 1 ? 'success' : (group.status === 2 ? 'exception' : '')"
+                :stroke-width="10">
+              </el-progress>
+              <div class="progress-labels">
+                <span>当前: {{ group.currentNum }} / {{ group.requiredNum }} 人</span>
+                <span v-if="group.status === 0" class="click-tip">点击查看详情</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </el-dialog>
 
     <!-- 编辑资料弹窗 (保持在父组件以方便状态管理) -->
     <el-dialog title="修改个人信息" :visible.sync="editDialogVisible" :width="isMobile ? '90%' : '500px'" round>
@@ -87,6 +125,9 @@ export default {
       loadingOrders: false,
       editDialogVisible: false,
       inviteDialogVisible: false,
+      groupsDialogVisible: false,
+      myGroups: [],
+      loadingGroups: false,
       activeOrderTab: 'all',
       isMobile: window.innerWidth <= 768
     }
@@ -117,9 +158,41 @@ export default {
     showInviteDialog() {
       this.inviteDialogVisible = true;
     },
+    async showGroupsDialog() {
+      this.groupsDialogVisible = true;
+      this.fetchMyGroups();
+    },
+    async fetchMyGroups() {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      this.loadingGroups = true;
+      try {
+        const res = await axios.get('/api/groups/me', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        this.myGroups = res.data.data;
+      } catch (error) {
+        this.$message.error('加载拼团信息失败');
+      } finally {
+        this.loadingGroups = false;
+      }
+    },
+    getStatusType(status) {
+      const types = ['warning', 'success', 'danger'];
+      return types[status] || 'info';
+    },
+    getStatusText(status) {
+      const texts = ['拼团中', '拼团成功', '拼团失败'];
+      return texts[status] || '未知';
+    },
+    goToGroupDetail(group) {
+      this.groupsDialogVisible = false;
+      this.$router.push(`/product/group/${group.id}`);
+    },
     handleLogout() {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      window.dispatchEvent(new CustomEvent('user-updated', { detail: null }));
       this.$router.push('/');
       this.$message.success('已安全退出');
     },
@@ -134,7 +207,7 @@ export default {
         const res = await axios.get('/api/users/me', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        this.user = res.data;
+        this.user = res.data.data;
         this.profileForm = {
           nickname: this.user.nickname,
           avatarUrl: this.user.avatarUrl,
@@ -157,7 +230,7 @@ export default {
         const res = await axios.get('/api/orders/me', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        this.orders = res.data;
+        this.orders = res.data.data;
       } catch (error) {
         console.error('加载订单失败');
       } finally {
@@ -272,6 +345,68 @@ export default {
   font-size: 12px;
   color: #909399;
   margin-top: 15px;
+}
+
+/* My Groups Styles */
+.empty-groups {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 0;
+  color: #909399;
+}
+.group-item-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid #F2F6FC;
+}
+.group-item-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 126, 103, 0.1);
+  border-color: #FFE4D6;
+}
+.group-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.group-pname {
+  font-weight: 800;
+  font-size: 15px;
+  color: #5C433B;
+  margin-bottom: 4px;
+}
+.group-time {
+  font-size: 11px;
+  color: #909399;
+}
+.group-status-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.group-status-box i {
+  color: #C0C4CC;
+  font-size: 14px;
+}
+.group-progress {
+  padding: 0 2px;
+}
+.progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #8C6A5D;
+  margin-top: 10px;
+}
+.click-tip {
+  color: #FF7E67;
+  font-weight: bold;
 }
 
 @media (max-width: 768px) {

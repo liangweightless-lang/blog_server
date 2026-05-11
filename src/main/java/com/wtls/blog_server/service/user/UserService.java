@@ -54,7 +54,7 @@ public class UserService {
             }
         }
 
-        String token = JwtUtils.generateToken(user.getId(), user.getUsername());
+        String token = JwtUtils.generateToken(user.getId(), user.getUsername(), user.getRole());
         Map<String, Object> result = new HashMap<>();
         result.put("token", token);
         result.put("user", user);
@@ -71,5 +71,20 @@ public class UserService {
 
     public java.util.List<User> getAllUsers() {
         return userMapper.findAll();
+    }
+
+    @Transactional
+    public void dailyCheckin(Long userId) {
+        User user = userMapper.findById(userId);
+        if (user == null) throw new RuntimeException("User not found");
+        
+        java.time.LocalDate today = java.time.LocalDate.now();
+        if (today.equals(user.getLastCheckinDate())) {
+            throw new RuntimeException("今天已经签到过了哦");
+        }
+        
+        // Award 10 points
+        userMapper.addPoints(userId, 10);
+        userMapper.updateCheckinDate(userId);
     }
 }

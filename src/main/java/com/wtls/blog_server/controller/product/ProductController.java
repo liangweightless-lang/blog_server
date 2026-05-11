@@ -1,13 +1,15 @@
 package com.wtls.blog_server.controller.product;
 
+import com.wtls.blog_server.common.Result;
 import com.wtls.blog_server.entity.product.Product;
 import com.wtls.blog_server.entity.user.User;
 import com.wtls.blog_server.service.product.ProductService;
 import com.wtls.blog_server.service.user.UserService;
 import com.wtls.blog_server.utils.JwtUtils;
 import io.jsonwebtoken.Claims;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,6 +18,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/products")
 @CrossOrigin(origins = "*")
+@Tag(name = "商品管理", description = "管理商城的实物与虚拟商品")
 public class ProductController {
 
     @Autowired
@@ -37,46 +40,39 @@ public class ProductController {
     }
 
     @GetMapping
-    public List<Product> getAll() {
-        return productService.getAllProducts();
+    @Operation(summary = "获取所有商品列表")
+    public Result<List<Product>> getAll() {
+        return Result.success(productService.getAllProducts());
     }
 
     @GetMapping("/{id}")
-    public Product getById(@PathVariable Long id) {
-        return productService.getProductById(id);
+    @Operation(summary = "根据ID获取商品详情")
+    public Result<Product> getById(@PathVariable Long id) {
+        return Result.success(productService.getProductById(id));
     }
 
     @PostMapping
-    public ResponseEntity<?> create(@RequestHeader("Authorization") String authHeader, @RequestBody Product product) {
-        try {
-            checkAdmin(authHeader);
-            productService.createProduct(product);
-            return ResponseEntity.ok(Map.of("message", "Product created"));
-        } catch (Exception e) {
-            return ResponseEntity.status(403).body(Map.of("error", e.getMessage()));
-        }
+    @Operation(summary = "新增商品 (Admin)")
+    public Result<String> create(@RequestHeader("Authorization") String authHeader, @RequestBody Product product) {
+        checkAdmin(authHeader);
+        productService.createProduct(product);
+        return Result.success("Product created");
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@RequestHeader("Authorization") String authHeader, @PathVariable Long id, @RequestBody Product product) {
-        try {
-            checkAdmin(authHeader);
-            product.setId(id);
-            productService.updateProduct(product);
-            return ResponseEntity.ok(Map.of("message", "Product updated"));
-        } catch (Exception e) {
-            return ResponseEntity.status(403).body(Map.of("error", e.getMessage()));
-        }
+    @Operation(summary = "更新商品信息 (Admin)")
+    public Result<String> update(@RequestHeader("Authorization") String authHeader, @PathVariable Long id, @RequestBody Product product) {
+        checkAdmin(authHeader);
+        product.setId(id);
+        productService.updateProduct(product);
+        return Result.success("Product updated");
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@RequestHeader("Authorization") String authHeader, @PathVariable Long id) {
-        try {
-            checkAdmin(authHeader);
-            productService.deleteProduct(id);
-            return ResponseEntity.ok(Map.of("message", "Product deleted"));
-        } catch (Exception e) {
-            return ResponseEntity.status(403).body(Map.of("error", e.getMessage()));
-        }
+    @Operation(summary = "删除商品 (Admin)")
+    public Result<String> delete(@RequestHeader("Authorization") String authHeader, @PathVariable Long id) {
+        checkAdmin(authHeader);
+        productService.deleteProduct(id);
+        return Result.success("Product deleted");
     }
 }

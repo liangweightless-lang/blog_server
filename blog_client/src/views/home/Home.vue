@@ -7,8 +7,8 @@
 
 <script>
 import axios from 'axios'
-import ProfileHero from '../components/home/ProfileHero.vue'
-import ArticleGrid from '../components/home/ArticleGrid.vue'
+import ProfileHero from '@/components/home/ProfileHero.vue'
+import ArticleGrid from '@/components/home/ArticleGrid.vue'
 
 export default {
   name: 'Home',
@@ -30,7 +30,7 @@ export default {
       this.loading = true
       try {
         const res = await axios.get('/api/articles')
-        this.articles = res.data
+        this.articles = res.data.data
       } catch (error) {
         this.$message.error('获取故事列表失败')
       } finally {

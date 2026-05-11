@@ -29,6 +29,9 @@ public interface UserMapper {
             "wechat_id = #{wechatId}, age = #{age}, gender = #{gender} WHERE id = #{id}")
     void updateProfile(User user);
 
+    @Update("UPDATE user SET last_checkin_date = CURRENT_DATE WHERE id = #{id}")
+    void updateCheckinDate(Long id);
+
     @Select("SELECT * FROM user ORDER BY id DESC")
     java.util.List<User> findAll();
 }

@@ -11,6 +11,14 @@ RUN mvn clean package -DskipTests
 # 第二阶段：使用轻量级 JRE 运行构建好的 jar 包
 FROM eclipse-temurin:21-jre
 WORKDIR /app
-COPY --from=build /app/target/blog_server-0.0.1-SNAPSHOT.jar app.jar
+# 使用通配符拷贝 jar 包，增强对版本变动的兼容性
+COPY --from=build /app/target/*.jar app.jar
+
 EXPOSE 8081
-ENTRYPOINT ["java", "-jar", "app.jar"]
+
+# JVM 优化参数：
+# -XX:+UseContainerSupport: 确保 JVM 正确感知 Docker 容器的内存限制
+# -Duser.timezone: 统一容器时区为上海
+# -Xmx: 建议在 docker-compose 中通过 environment 设置，或者此处给个保守值
+ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-Duser.timezone=Asia/Shanghai", "-jar", "app.jar"]
+

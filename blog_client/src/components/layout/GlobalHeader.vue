@@ -50,6 +50,9 @@ export default {
   created() {
     this.checkUser();
     window.addEventListener('refresh-user', this.checkUser);
+    window.addEventListener('user-updated', (e) => {
+      this.user = e.detail;
+    });
 
     // Check for invite code in URL
     const urlParams = new URLSearchParams(window.location.search);
