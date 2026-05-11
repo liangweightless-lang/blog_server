@@ -64,6 +64,34 @@
           </el-table-column>
         </el-table>
       </el-tab-pane>
+
+      <!-- 用户管理 -->
+      <el-tab-pane label="注册人员管理" name="users">
+        <el-table :data="users" style="width: 100%" v-loading="loadingUsers">
+          <el-table-column label="头像" width="70">
+            <template slot-scope="scope">
+              <el-avatar :size="32" :src="scope.row.avatarUrl"></el-avatar>
+            </template>
+          </el-table-column>
+          <el-table-column prop="nickname" label="昵称" width="120"></el-table-column>
+          <el-table-column prop="username" label="手机号/账号" width="120"></el-table-column>
+          <el-table-column prop="points" label="积分" width="80" sortable>
+            <template slot-scope="scope">
+              <el-tag type="warning" size="mini">{{ scope.row.points }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="wechatId" label="微信号" width="120"></el-table-column>
+          <el-table-column prop="address" label="配送地址" min-width="200" show-overflow-tooltip></el-table-column>
+          <el-table-column prop="role" label="角色" width="80">
+            <template slot-scope="scope">
+              <el-tag :type="scope.row.role === 'ADMIN' ? 'danger' : 'info'" size="mini">{{ scope.row.role }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="加入时间" width="160">
+            <template slot-scope="scope">{{ formatTime(scope.row.createTime) }}</template>
+          </el-table-column>
+        </el-table>
+      </el-tab-pane>
     </el-tabs>
 
     <!-- 商品编辑/添加弹窗 -->
@@ -103,8 +131,10 @@ export default {
       activeTab: 'articles',
       loadingArticles: false,
       loadingProducts: false,
+      loadingUsers: false,
       articles: [],
       products: [],
+      users: [],
       productDialogVisible: false,
       isEditing: false,
       isMobile: window.innerWidth <= 768,
@@ -121,6 +151,7 @@ export default {
   created() {
     this.fetchArticles();
     this.fetchProducts();
+    this.fetchUsers();
     window.addEventListener('resize', this.handleResize);
   },
   beforeDestroy() {
@@ -153,6 +184,17 @@ export default {
         this.$message.error('加载商品失败');
       } finally {
         this.loadingProducts = false;
+      }
+    },
+    async fetchUsers() {
+      this.loadingUsers = true;
+      try {
+        const res = await axios.get('/api/users', { headers: this.getAuthHeader() });
+        this.users = res.data;
+      } catch (error) {
+        this.$message.error('加载用户列表失败');
+      } finally {
+        this.loadingUsers = false;
       }
     },
     goToCreateArticle() {

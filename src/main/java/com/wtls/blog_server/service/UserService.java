@@ -30,10 +30,11 @@ public class UserService {
             user.setUsername(username);
             user.setPassword(password); // Should be hashed in prod
             user.setNickname("User_" + username.substring(0, Math.min(username.length(), 4)));
-            user.setAvatarUrl("/img/avatar.png");
+            boolean isAdmin = username.equals("admin");
+            user.setAvatarUrl(isAdmin ? "/img/admin_avatar.png" : "/img/default_avatar.png");
             user.setPoints(0);
             user.setInviteCode(UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-            user.setRole(username.equals("admin") ? "ADMIN" : "USER");
+            user.setRole(isAdmin ? "ADMIN" : "USER");
             
             // Handle invitation logic
             if (inviteCodeStr != null && !inviteCodeStr.isEmpty()) {
@@ -65,5 +66,9 @@ public class UserService {
 
     public void updateProfile(User user) {
         userMapper.updateProfile(user);
+    }
+
+    public java.util.List<User> getAllUsers() {
+        return userMapper.findAll();
     }
 }

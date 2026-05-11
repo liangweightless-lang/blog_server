@@ -8,9 +8,17 @@
     <el-card class="profile-card">
       <el-form :model="profileForm" label-width="100px" v-loading="loading">
         <el-form-item label="头像">
-          <div class="avatar-uploader">
-            <el-avatar :size="80" :src="profileForm.avatarUrl"></el-avatar>
-            <el-input v-model="profileForm.avatarUrl" placeholder="头像URL" style="margin-top: 10px;"></el-input>
+          <div class="avatar-uploader-container">
+            <el-upload
+              class="avatar-uploader"
+              action="/api/files/upload"
+              :show-file-list="false"
+              :on-success="handleAvatarSuccess"
+              :before-upload="beforeAvatarUpload">
+              <img v-if="profileForm.avatarUrl" :src="profileForm.avatarUrl" class="avatar">
+              <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+            </el-upload>
+            <p class="upload-tip">点击预览图上传新头像</p>
           </div>
         </el-form-item>
         
@@ -125,6 +133,22 @@ export default {
       } finally {
         this.updating = false;
       }
+    },
+    handleAvatarSuccess(res) {
+      this.profileForm.avatarUrl = res.url;
+      this.$message.success('头像上传成功');
+    },
+    beforeAvatarUpload(file) {
+      const isJPGorPNG = file.type === 'image/jpeg' || file.type === 'image/png';
+      const isLt2M = file.size / 1024 / 1024 < 2;
+
+      if (!isJPGorPNG) {
+        this.$message.error('上传头像图片只能是 JPG 或 PNG 格式!');
+      }
+      if (!isLt2M) {
+        this.$message.error('上传头像图片大小不能超过 2MB!');
+      }
+      return isJPGorPNG && isLt2M;
     }
   }
 }
@@ -153,10 +177,41 @@ export default {
   margin: 0 auto;
   box-shadow: 0 4px 20px rgba(255, 126, 103, 0.05);
 }
-.avatar-uploader {
+.avatar-uploader-container {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+.avatar-uploader {
+  border: 1px dashed #d9d9d9;
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: border-color 0.3s;
+}
+.avatar-uploader:hover {
+  border-color: #FF7E67;
+}
+.avatar-uploader-icon {
+  font-size: 28px;
+  color: #8c939d;
+}
+.avatar {
+  width: 100px;
+  height: 100px;
+  display: block;
+  object-fit: cover;
+}
+.upload-tip {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 8px;
 }
 .points-info {
   max-width: 600px;

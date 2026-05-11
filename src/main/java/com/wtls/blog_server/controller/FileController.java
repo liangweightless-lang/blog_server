@@ -9,14 +9,15 @@ import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/files")
+@CrossOrigin(origins = "*")
 public class FileController {
 
     private final String uploadDir = System.getProperty("user.dir") + "/uploads/";
 
     @PostMapping("/upload")
-    public String upload(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> upload(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
-            return "Failed to upload empty file";
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", "文件为空"));
         }
         try {
             String originalFilename = file.getOriginalFilename();
@@ -32,10 +33,10 @@ public class FileController {
             }
             File dest = new File(dir, newFilename);
             file.transferTo(dest);
-            return "/uploads/" + datePath + newFilename;
+            String url = "/uploads/" + datePath + newFilename;
+            return ResponseEntity.ok(java.util.Map.of("url", url));
         } catch (IOException e) {
-            e.printStackTrace();
-            return "Upload failed";
+            return ResponseEntity.status(500).body(java.util.Map.of("error", "上传失败: " + e.getMessage()));
         }
     }
 }

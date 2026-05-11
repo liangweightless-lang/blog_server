@@ -74,4 +74,23 @@ public class UserController {
             return ResponseEntity.status(401).body(Map.of("error", "Invalid Token or Update Failed"));
         }
     }
+
+    @GetMapping
+    public ResponseEntity<?> getAllUsers(@RequestHeader("Authorization") String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
+        }
+        String token = authHeader.substring(7);
+        try {
+            Claims claims = JwtUtils.parseToken(token);
+            Long userId = claims.get("userId", Long.class);
+            User admin = userService.getUserInfo(userId);
+            if (!"ADMIN".equals(admin.getRole())) {
+                return ResponseEntity.status(403).body(Map.of("error", "Forbidden: Admin only"));
+            }
+            return ResponseEntity.ok(userService.getAllUsers());
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid Token"));
+        }
+    }
 }

@@ -28,4 +28,7 @@ public interface UserMapper {
     @Update("UPDATE user SET nickname = #{nickname}, avatar_url = #{avatarUrl}, address = #{address}, " +
             "wechat_id = #{wechatId}, age = #{age}, gender = #{gender} WHERE id = #{id}")
     void updateProfile(User user);
+
+    @Select("SELECT * FROM user ORDER BY id DESC")
+    java.util.List<User> findAll();
 }
