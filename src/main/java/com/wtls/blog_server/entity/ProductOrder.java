@@ -11,6 +11,8 @@ public class ProductOrder {
     private Long productId;
     private BigDecimal amount;
     private Integer status; // 0: pending, 1: paid
+    private String shippingAddress;
+    private String orderType; // "INDIVIDUAL" or "GROUP"
     private LocalDateTime createTime;
     private LocalDateTime payTime;
 }

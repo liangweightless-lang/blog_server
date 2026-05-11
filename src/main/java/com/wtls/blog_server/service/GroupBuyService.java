@@ -31,7 +31,7 @@ public class GroupBuyService {
     }
 
     @Transactional
-    public GroupBuy startGroup(Long userId, Long productId) {
+    public GroupBuy startGroup(Long userId, Long productId, String address) {
         // Logic: Monday only (Optional: comment out if you want to test any day)
         // LocalDateTime now = LocalDateTime.now();
         // if (now.getDayOfWeek() != DayOfWeek.MONDAY) {
@@ -39,7 +39,7 @@ public class GroupBuyService {
         // }
 
         // Create the initiator's order first
-        ProductOrder order = orderService.createOrder(userId, productId);
+        ProductOrder order = orderService.createOrder(userId, productId, address, "GROUP");
         // Note: For initiator, we might want to charge them later or mark as 'Pending Group'
         
         GroupBuy gb = new GroupBuy();
@@ -60,7 +60,7 @@ public class GroupBuyService {
     }
 
     @Transactional
-    public GroupBuy joinGroup(Long userId, Long groupId) {
+    public GroupBuy joinGroup(Long userId, Long groupId, String address) {
         GroupBuy gb = groupBuyMapper.findById(groupId);
         if (gb == null || gb.getStatus() != 0 || gb.getExpireTime().isBefore(LocalDateTime.now())) {
             throw new RuntimeException("该拼团已失效或已结束");
@@ -71,7 +71,7 @@ public class GroupBuyService {
         }
 
         // Create the participant's order
-        ProductOrder order = orderService.createOrder(userId, gb.getProductId());
+        ProductOrder order = orderService.createOrder(userId, gb.getProductId(), address, "GROUP");
         
         GroupBuyMember member = new GroupBuyMember();
         member.setGroupId(groupId);

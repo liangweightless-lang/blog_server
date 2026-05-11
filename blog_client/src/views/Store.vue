@@ -48,6 +48,7 @@
     </el-row>
 
     <!-- 模拟购买弹窗 -->
+    <!-- 模拟购买弹窗 (略，见下文或保持原样) -->
     <el-dialog
       title="订单确认"
       :visible.sync="buyDialogVisible"
@@ -66,6 +67,60 @@
         <el-button type="primary" @click="confirmPurchase" :loading="purchasing">模拟支付</el-button>
       </span>
     </el-dialog>
+
+    <!-- 拼团确认弹窗 -->
+    <el-dialog
+      :title="isJoiningGroup ? '加入拼团确认' : '发起拼团确认'"
+      :visible.sync="groupDialogVisible"
+      :width="isMobile ? '95%' : '450px'"
+      center>
+      <div class="group-dialog-content" v-if="currentProduct.id">
+        <div class="product-mini-info">
+          <img :src="currentProduct.image" class="mini-img">
+          <div class="mini-text">
+            <h4>{{ currentProduct.name }}</h4>
+            <p class="price-row">
+              <span class="label">拼团特惠:</span>
+              <span class="group-price">¥{{ currentProduct.groupPrice || (currentProduct.price * 0.8).toFixed(2) }}</span>
+              <span class="origin-price">¥{{ currentProduct.price }}</span>
+            </p>
+          </div>
+        </div>
+        
+        <div class="order-form">
+          <div class="form-item">
+            <p class="form-label">配送地址 <span class="required">*</span></p>
+            <el-input 
+              type="textarea" 
+              v-model="orderAddress" 
+              placeholder="请输入详细收货地址" 
+              :rows="3">
+            </el-input>
+            <p class="address-tip" v-if="!orderAddress">建议前往“个人资料”设置默认地址</p>
+          </div>
+          
+          <div class="form-item">
+            <p class="form-label">预计配送时间</p>
+            <el-tag type="info" size="medium">成团后 3 个工作日内发货</el-tag>
+          </div>
+
+          <div class="rule-box">
+            <p><i class="el-icon-info"></i> 拼团须知：</p>
+            <ul>
+              <li>需满 8 人方可成团</li>
+              <li>24小时内未成团将自动退款</li>
+              <li>成团后不支持取消订单</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="groupDialogVisible = false">取 消</el-button>
+        <el-button type="warning" @click="confirmGroupAction" :loading="groupProcessing">
+          {{ isJoiningGroup ? '立即加入' : '立即开团' }}
+        </el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -77,8 +132,13 @@ export default {
   data() {
     return {
       buyDialogVisible: false,
+      groupDialogVisible: false,
       purchasing: false,
+      groupProcessing: false,
+      isJoiningGroup: false,
       currentProduct: {},
+      currentGroupId: null,
+      orderAddress: '',
       products: [],
       activeGroups: [],
       isMonday: new Date().getDay() === 1
@@ -101,29 +161,60 @@ export default {
       if (!localStorage.getItem('token')) {
         return this.$message.warning('请先登录再发起拼团');
       }
-      try {
-        await axios.post('/api/groups/start', { productId: product.id }, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        });
-        this.$message.success('开团成功！快邀请好友来凑单吧 (满8人成团)');
-        this.fetchActiveGroups();
-      } catch (error) {
-        this.$message.error(error.response?.data?.error || '开团失败');
-      }
+      this.currentProduct = product;
+      this.isJoiningGroup = false;
+      await this.prepareOrder();
+      this.groupDialogVisible = true;
     },
     async handleJoinGroup(group) {
       if (!localStorage.getItem('token')) {
         return this.$message.warning('请先登录再参加拼团');
       }
+      // Find the product details
+      this.currentProduct = this.products.find(p => p.id === group.productId) || { id: group.productId, name: group.productName };
+      this.currentGroupId = group.id;
+      this.isJoiningGroup = true;
+      await this.prepareOrder();
+      this.groupDialogVisible = true;
+    },
+    async prepareOrder() {
+      // Fetch user's default address
       try {
-        await axios.post(`/api/groups/${group.id}/join`, {}, {
+        const res = await axios.get('/api/users/me', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
-        this.$message.success('加入拼团成功！');
+        if (res.data.address) {
+          this.orderAddress = res.data.address;
+        }
+      } catch (error) {
+        console.error('获取默认地址失败');
+      }
+    },
+    async confirmGroupAction() {
+      if (!this.orderAddress) {
+        return this.$message.warning('请填写配送地址');
+      }
+      
+      this.groupProcessing = true;
+      try {
+        const token = localStorage.getItem('token');
+        const headers = { 'Authorization': `Bearer ${token}` };
+        
+        if (this.isJoiningGroup) {
+          await axios.post(`/api/groups/${this.currentGroupId}/join`, { address: this.orderAddress }, { headers });
+          this.$message.success('加入拼团成功！');
+        } else {
+          await axios.post('/api/groups/start', { productId: this.currentProduct.id, address: this.orderAddress }, { headers });
+          this.$message.success('开团成功！快邀请好友来凑单吧 (满8人成团)');
+        }
+        
+        this.groupDialogVisible = false;
         this.fetchActiveGroups();
         window.dispatchEvent(new CustomEvent('refresh-user'));
       } catch (error) {
-        this.$message.error(error.response?.data?.error || '加入失败');
+        this.$message.error(error.response?.data?.error || '操作失败');
+      } finally {
+        this.groupProcessing = false;
       }
     },
     async handleRedeem(product) {
@@ -390,5 +481,87 @@ export default {
 }
 .button-group .el-button {
   margin: 0 !important;
+}
+/* 拼团对话框样式 */
+.group-dialog-content {
+  padding: 10px 0;
+}
+.product-mini-info {
+  display: flex;
+  background: #FFFDF8;
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  border: 1px solid #FFE4D6;
+}
+.mini-img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-right: 12px;
+}
+.mini-text h4 {
+  margin: 0 0 5px 0;
+  font-size: 15px;
+  color: #5C433B;
+}
+.price-row {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.price-row .label {
+  font-size: 12px;
+  color: #8C6A5D;
+}
+.group-price {
+  color: #FF7E67;
+  font-weight: 800;
+  font-size: 18px;
+}
+.origin-price {
+  text-decoration: line-through;
+  color: #C0C4CC;
+  font-size: 12px;
+}
+.form-item {
+  margin-bottom: 20px;
+}
+.form-label {
+  font-size: 14px;
+  font-weight: 800;
+  color: #5C433B;
+  margin-bottom: 8px;
+}
+.required {
+  color: #F56C6C;
+}
+.address-tip {
+  font-size: 11px;
+  color: #FF7E67;
+  margin-top: 5px;
+}
+.rule-box {
+  background: #F2F6FC;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+.rule-box p {
+  margin: 0 0 8px 0;
+  font-size: 12px;
+  font-weight: 800;
+  color: #409EFF;
+}
+.rule-box ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 11px;
+  color: #909399;
+}
+.rule-box li {
+  margin-bottom: 4px;
 }
 </style>

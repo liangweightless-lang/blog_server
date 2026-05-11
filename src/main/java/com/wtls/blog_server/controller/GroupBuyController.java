@@ -32,11 +32,12 @@ public class GroupBuyController {
     }
 
     @PostMapping("/start")
-    public ResponseEntity<?> startGroup(@RequestHeader("Authorization") String authHeader, @RequestBody Map<String, Long> body) {
+    public ResponseEntity<?> startGroup(@RequestHeader("Authorization") String authHeader, @RequestBody Map<String, Object> body) {
         try {
             Long userId = getUserId(authHeader);
-            Long productId = body.get("productId");
-            GroupBuy gb = groupBuyService.startGroup(userId, productId);
+            Long productId = Long.valueOf(body.get("productId").toString());
+            String address = body.getOrDefault("address", "").toString();
+            GroupBuy gb = groupBuyService.startGroup(userId, productId, address);
             return ResponseEntity.ok(gb);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -44,10 +45,11 @@ public class GroupBuyController {
     }
 
     @PostMapping("/{groupId}/join")
-    public ResponseEntity<?> joinGroup(@RequestHeader("Authorization") String authHeader, @PathVariable Long groupId) {
+    public ResponseEntity<?> joinGroup(@RequestHeader("Authorization") String authHeader, @PathVariable Long groupId, @RequestBody(required = false) Map<String, Object> body) {
         try {
             Long userId = getUserId(authHeader);
-            GroupBuy gb = groupBuyService.joinGroup(userId, groupId);
+            String address = (body != null && body.containsKey("address")) ? body.get("address").toString() : "";
+            GroupBuy gb = groupBuyService.joinGroup(userId, groupId, address);
             return ResponseEntity.ok(gb);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

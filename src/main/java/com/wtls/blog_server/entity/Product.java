@@ -8,12 +8,20 @@ public class Product {
     private String name;
     private String description;
     private BigDecimal price;
+    private BigDecimal groupPrice;
     private String image;
     private Boolean isDigital;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 
     // Getters and Setters
+    public BigDecimal getGroupPrice() {
+        return groupPrice;
+    }
+
+    public void setGroupPrice(BigDecimal groupPrice) {
+        this.groupPrice = groupPrice;
+    }
     public Long getId() {
         return id;
     }

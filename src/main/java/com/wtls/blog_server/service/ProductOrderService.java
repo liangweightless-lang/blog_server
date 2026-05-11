@@ -25,7 +25,7 @@ public class ProductOrderService {
     private UserMapper userMapper;
 
     @Transactional
-    public ProductOrder createOrder(Long userId, Long productId) {
+    public ProductOrder createOrder(Long userId, Long productId, String address, String type) {
         Product product = productMapper.findById(productId);
         if (product == null) {
             throw new RuntimeException("Product not found");
@@ -35,8 +35,11 @@ public class ProductOrderService {
         order.setId(UUID.randomUUID().toString().replace("-", ""));
         order.setUserId(userId);
         order.setProductId(productId);
-        order.setAmount(product.getPrice());
+        // Use group price if it's a group order
+        order.setAmount("GROUP".equals(type) && product.getGroupPrice() != null ? product.getGroupPrice() : product.getPrice());
         order.setStatus(0); // Pending
+        order.setShippingAddress(address);
+        order.setOrderType(type);
 
         orderMapper.insert(order);
         return order;
