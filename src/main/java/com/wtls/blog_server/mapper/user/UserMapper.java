@@ -1,5 +1,6 @@
 package com.wtls.blog_server.mapper.user;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.wtls.blog_server.entity.user.User;
 import org.apache.ibatis.annotations.*;
 
