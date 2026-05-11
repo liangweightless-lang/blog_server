@@ -89,7 +89,8 @@ export default {
   },
   methods: {
     handleUploadSuccess(res, file, fileList) {
-      file.url = res; // res is the URL string from FileController
+      // FileController returns { url: '/uploads/...' }, extract the string
+      file.uploadedUrl = (res && res.url) ? res.url : res;
       this.fileList = fileList;
     },
     handleRemove(file, fileList) {
@@ -116,7 +117,12 @@ export default {
         return
       }
       
-      const urls = this.fileList.map(f => f.response ? f.response : f.url);
+      const urls = this.fileList.map(f => {
+        // f.uploadedUrl is set by handleUploadSuccess; fallback to f.response.url or f.url
+        if (f.uploadedUrl) return f.uploadedUrl;
+        const r = f.response;
+        return r ? (typeof r === 'string' ? r : r.url) : f.url;
+      }).filter(Boolean);
       this.form.mediaUrls = JSON.stringify(urls);
       this.form.coverUrl = urls.length > 0 ? urls[0] : '';
 
