@@ -15,7 +15,13 @@ public class UserService {
     @Autowired
     private UserMapper userMapper;
 
+    @Transactional
     public Map<String, Object> registerOrLogin(String username, String password, String inviteCodeStr) {
+        // Validation: Must be 11 digits or 'admin'
+        if (!username.equals("admin") && !username.matches("^1[3-9]\\d{9}$")) {
+            throw new RuntimeException("请输入有效的手机号");
+        }
+
         User user = userMapper.findByUsername(username);
         if (user == null) {
             // Register new user

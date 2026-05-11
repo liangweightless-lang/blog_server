@@ -1,8 +1,8 @@
 <template>
   <el-dialog title="登录 / 注册" :visible.sync="visible" :width="dialogWidth" center append-to-body>
     <el-form :model="loginForm" label-position="top">
-      <el-form-item label="账号">
-        <el-input v-model="loginForm.username" placeholder="请输入任意账号名"></el-input>
+      <el-form-item label="手机号">
+        <el-input v-model="loginForm.username" placeholder="请输入11位手机号" maxlength="11"></el-input>
       </el-form-item>
       <el-form-item label="密码">
         <el-input v-model="loginForm.password" type="password" placeholder="请输入密码"></el-input>
@@ -74,9 +74,17 @@ export default {
       this.isMobile = window.innerWidth <= 768;
     },
     async handleLogin() {
-      if (!this.loginForm.username || !this.loginForm.password) {
+      const { username, password } = this.loginForm;
+      if (!username || !password) {
         return this.$message.warning('请填写完整信息');
       }
+      
+      // Phone number validation (11 digits), allow 'admin' for backend access
+      const phoneRegex = /^1[3-9]\d{9}$/;
+      if (username !== 'admin' && !phoneRegex.test(username)) {
+        return this.$message.error('请输入正确的11位手机号');
+      }
+
       this.loading = true;
       try {
         const res = await axios.post('/api/users/login', this.loginForm);
