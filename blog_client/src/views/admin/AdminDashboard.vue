@@ -21,25 +21,11 @@
           </div>
         </div>
 
-        <el-table :data="articles" :key="'table-' + articles.length" style="width: 100%">
+        <el-table :data="articles" border style="width: 100%; margin-top: 20px;" empty-text="正在努力加载组件...">
           <el-table-column prop="id" label="ID" width="80"></el-table-column>
-          <el-table-column label="封面" width="120">
-            <template slot-scope="scope">
-              <el-image :src="scope.row.coverUrl" fit="cover" style="width: 50px; height: 50px; border-radius: 8px;"></el-image>
-            </template>
-          </el-table-column>
-          <el-table-column prop="title" label="标题"></el-table-column>
+          <el-table-column prop="title" label="标题 (测试列)"></el-table-column>
           <el-table-column prop="likesCount" label="点赞数" width="100"></el-table-column>
-          <el-table-column prop="createTime" label="发布时间" width="180">
-            <template slot-scope="scope">
-              {{ formatTime(scope.row.createTime) }}
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="150">
-            <template slot-scope="scope">
-              <el-button size="mini" type="danger" plain @click="handleDeleteArticle(scope.row)">删除</el-button>
-            </template>
-          </el-table-column>
+          <el-table-column prop="createTime" label="发布时间"></el-table-column>
         </el-table>
       </el-tab-pane>
 
