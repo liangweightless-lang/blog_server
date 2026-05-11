@@ -2,7 +2,8 @@
   <div class="article-grid-container">
     <div class="section-header">
       <span class="section-title">📖 创作者日记</span>
-      <el-button class="hidden-xs-only" round size="small" style="background: #FF7E67; color: white; border: none; font-weight: bold;" @click="$router.push('/create')">
+      <el-button class="hidden-xs-only" round size="small"
+        style="background: #FF7E67; color: white; border: none; font-weight: bold;" @click="$router.push('/create')">
         <i class="el-icon-edit"></i> 记录新日常
       </el-button>
     </div>
@@ -11,7 +12,8 @@
       <el-empty v-if="articles.length === 0 && !loading" description="暂无内容，快来书写第一篇日记吧"></el-empty>
       <el-col :xs="12" :sm="8" :md="8" v-for="article in articles" :key="article.id">
         <div class="xhs-card" @click="viewArticle(article)">
-          <div class="xhs-cover" :style="article.coverUrl ? { backgroundImage: 'url(' + article.coverUrl + ')', backgroundSize: 'cover', backgroundPosition: 'center' } : { background: getGradient(article.id) }">
+          <div class="xhs-cover"
+            :style="article.coverUrl ? { backgroundImage: 'url(' + article.coverUrl + ')', backgroundSize: 'cover', backgroundPosition: 'center' } : { background: getGradient(article.id) }">
             <span class="cover-icon" v-if="!article.coverUrl">✨</span>
           </div>
           <div class="xhs-info">
@@ -19,7 +21,7 @@
             <div class="xhs-bottom">
               <div class="xhs-author">
                 <img src="/img/avatar.png" class="xhs-author-avatar" />
-                <span class="xhs-author-name">Weightless</span>
+                <span class="xhs-author-name">生活家</span>
               </div>
               <div class="xhs-likes">
                 <i class="el-icon-sugar"></i> {{ article.likesCount || 0 }}
@@ -80,6 +82,7 @@ export default {
   margin-top: 15px;
   margin-bottom: 20px;
 }
+
 .section-title {
   font-size: 22px;
   font-weight: 800;
@@ -99,6 +102,7 @@ export default {
   cursor: pointer;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
+
 .xhs-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 24px rgba(255, 126, 103, 0.15);
@@ -111,6 +115,7 @@ export default {
   align-items: center;
   justify-content: center;
 }
+
 .cover-icon {
   font-size: 40px;
   opacity: 0.8;
@@ -179,9 +184,11 @@ export default {
   .xhs-cover {
     height: 140px;
   }
+
   .xhs-title {
     font-size: 14px;
   }
+
   .xhs-info {
     padding: 10px;
   }

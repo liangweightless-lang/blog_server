@@ -6,7 +6,7 @@
       </div>
       <div class="header-author">
         <img src="/img/avatar.png" class="author-avatar" />
-        <span class="author-name">Weightless</span>
+        <span class="author-name">生活家</span>
       </div>
       <div class="header-right">
         <el-button round size="mini" class="follow-btn">关注</el-button>
@@ -17,7 +17,7 @@
       <el-carousel trigger="click" height="400px" :autoplay="false">
         <el-carousel-item v-for="(url, index) in mediaUrls" :key="index">
           <div class="carousel-image-wrapper">
-             <img :src="url" class="carousel-image" />
+            <img :src="url" class="carousel-image" />
           </div>
         </el-carousel-item>
       </el-carousel>
@@ -51,13 +51,8 @@
 
     <div class="xhs-detail-footer">
       <div class="footer-input-box">
-        <el-input 
-          v-model="newComment" 
-          placeholder="说点什么..." 
-          size="small"
-          class="custom-input"
-          @keyup.enter.native="submitComment"
-        >
+        <el-input v-model="newComment" placeholder="说点什么..." size="small" class="custom-input"
+          @keyup.enter.native="submitComment">
           <el-button slot="append" icon="el-icon-position" @click="submitComment"></el-button>
         </el-input>
       </div>
@@ -172,7 +167,7 @@ export default {
       }
     },
     getGradient(id) {
-      if(!id) return '#FFF0E6';
+      if (!id) return '#FFF0E6';
       const gradients = [
         'linear-gradient(135deg, #FFE1D9 0%, #FFC1B6 100%)',
         'linear-gradient(135deg, #FFF0E6 0%, #FFD1A9 100%)',
@@ -202,32 +197,38 @@ export default {
   padding: 15px 20px;
   background: #FFFFFF;
 }
+
 .header-left {
   font-size: 24px;
   color: #5C433B;
   cursor: pointer;
   width: 60px;
 }
+
 .header-author {
   display: flex;
   align-items: center;
   gap: 10px;
 }
+
 .author-avatar {
   width: 36px;
   height: 36px;
   border-radius: 50%;
   object-fit: cover;
 }
+
 .author-name {
   font-weight: 700;
   color: #5C433B;
   font-size: 15px;
 }
+
 .header-right {
   width: 60px;
   text-align: right;
 }
+
 .follow-btn {
   border-color: #FF7E67;
   color: #FF7E67;
@@ -238,6 +239,7 @@ export default {
   width: 100%;
   background: #FDF0E6;
 }
+
 .carousel-image-wrapper {
   width: 100%;
   height: 100%;
@@ -245,11 +247,13 @@ export default {
   align-items: center;
   justify-content: center;
 }
+
 .carousel-image {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
 }
+
 .xhs-media-placeholder {
   width: 100%;
   height: 300px;
@@ -257,6 +261,7 @@ export default {
   align-items: center;
   justify-content: center;
 }
+
 .cover-icon {
   font-size: 60px;
   opacity: 0.8;
@@ -265,6 +270,7 @@ export default {
 .xhs-detail-content {
   padding: 24px;
 }
+
 .article-title {
   font-size: 22px;
   font-weight: 800;
@@ -273,12 +279,14 @@ export default {
   margin-top: 0;
   line-height: 1.4;
 }
+
 .article-text {
   font-size: 16px;
   color: #8C6A5D;
   line-height: 1.8;
   margin-bottom: 20px;
 }
+
 .article-meta {
   font-size: 13px;
   color: #D3C1BA;
@@ -293,26 +301,31 @@ export default {
   padding: 16px 24px;
   background: #FFFFFF;
 }
+
 .footer-input-box {
   flex: 1;
   margin-right: 20px;
 }
+
 ::v-deep .custom-input .el-input__inner {
   border-radius: 20px 0 0 20px;
   background: #FFFDF8;
   border-color: #FDF0E6;
   color: #5C433B;
 }
+
 ::v-deep .custom-input .el-input-group__append {
   border-radius: 0 20px 20px 0;
   background: #FF7E67;
   color: white;
   border-color: #FF7E67;
 }
+
 .footer-actions {
   display: flex;
   gap: 20px;
 }
+
 .action-btn {
   display: flex;
   align-items: center;
@@ -322,6 +335,7 @@ export default {
   font-weight: 600;
   cursor: pointer;
 }
+
 .action-btn i {
   font-size: 22px;
   color: #FF7E67;
@@ -333,15 +347,18 @@ export default {
   border-top: 1px solid #FDF0E6;
   padding-top: 20px;
 }
+
 .comments-title {
   font-size: 14px;
   color: #8C6A5D;
   margin-bottom: 20px;
 }
+
 .comment-item {
   display: flex;
   margin-bottom: 20px;
 }
+
 .comment-avatar {
   width: 32px;
   height: 32px;
@@ -349,25 +366,30 @@ export default {
   object-fit: cover;
   margin-right: 12px;
 }
+
 .comment-body {
   flex: 1;
 }
+
 .comment-author {
   font-size: 13px;
   color: #8C6A5D;
   font-weight: 600;
   margin-bottom: 4px;
 }
+
 .comment-content {
   font-size: 14px;
   color: #5C433B;
   line-height: 1.5;
   margin-bottom: 6px;
 }
+
 .comment-time {
   font-size: 12px;
   color: #D3C1BA;
 }
+
 .no-comments {
   text-align: center;
   color: #D3C1BA;
@@ -379,18 +401,23 @@ export default {
   .xhs-detail-container {
     border-radius: 16px;
   }
+
   .xhs-detail-content {
     padding: 16px;
   }
+
   .article-title {
     font-size: 18px;
   }
+
   .xhs-detail-footer {
     padding: 12px 16px;
   }
+
   .footer-actions {
     gap: 12px;
   }
+
   .footer-input-box {
     margin-right: 12px;
   }

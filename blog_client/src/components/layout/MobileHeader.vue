@@ -1,6 +1,6 @@
 <template>
   <div class="mobile-header">
-    <div class="logo" @click="$router.push('/')">Weightless</div>
+    <div class="logo" @click="$router.push('/')">生活家</div>
     <div class="user-avatar" v-if="user" @click="$router.push('/admin')">
       <el-avatar :size="32" :src="user.avatarUrl"></el-avatar>
     </div>
@@ -42,6 +42,7 @@ export default {
   top: 0;
   z-index: 1000;
 }
+
 .logo {
   font-weight: 800;
   color: #FF7E67;

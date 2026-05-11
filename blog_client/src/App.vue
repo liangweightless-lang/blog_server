@@ -1,16 +1,18 @@
 <template>
   <div id="app">
     <el-container direction="vertical">
-      <GlobalHeader class="hidden-xs-only" />
-      <MobileHeader class="visible-xs-only" />
+      <GlobalHeader v-if="!isMobile" />
+      <MobileHeader v-else />
       <el-main>
         <router-view></router-view>
       </el-main>
-      <GlobalFooter class="hidden-xs-only" />
-      <div class="bottom-nav-spacer visible-xs-only"></div>
-      <MobileBottomNav class="visible-xs-only" />
+      <GlobalFooter v-if="!isMobile" />
+      <template v-else>
+        <div class="bottom-nav-spacer"></div>
+        <MobileBottomNav />
+      </template>
       
-      <!-- 全局登录组件 (抽离到根组件，确保唯一性) -->
+      <!-- 全局登录组件 -->
       <LoginDialog :show.sync="loginDialogVisible" />
     </el-container>
   </div>
@@ -34,18 +36,25 @@ export default {
   },
   data() {
     return {
-      loginDialogVisible: false
+      loginDialogVisible: false,
+      isMobile: window.innerWidth <= 768
     }
   },
   created() {
-    window.addEventListener('open-login', () => {
-      this.loginDialogVisible = true;
-    });
+    window.addEventListener('resize', this.handleResize);
+    window.addEventListener('open-login', this.showLogin);
   },
   beforeDestroy() {
-    window.removeEventListener('open-login', () => {
+    window.removeEventListener('resize', this.handleResize);
+    window.removeEventListener('open-login', this.showLogin);
+  },
+  methods: {
+    handleResize() {
+      this.isMobile = window.innerWidth <= 768;
+    },
+    showLogin() {
       this.loginDialogVisible = true;
-    });
+    }
   }
 }
 </script>

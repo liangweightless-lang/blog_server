@@ -1,7 +1,7 @@
 <template>
   <el-header>
     <div class="logo" @click="$router.push('/')">
-      <i class="el-icon-sunny" style="margin-right: 8px;"></i>Weightless
+      <i class="el-icon-sunny" style="margin-right: 8px;"></i>生活家
     </div>
     <div class="nav-menu">
       <el-menu :default-active="$route.path" mode="horizontal" background-color="transparent" text-color="#8C6A5D"
@@ -18,7 +18,8 @@
             <i class="el-icon-coin"></i> {{ user.points }} 积分
           </div>
         </el-tooltip>
-        <el-button type="text" icon="el-icon-share" style="margin-right: 15px; color: #8C6A5D;" @click="copyInviteLink">邀请有礼</el-button>
+        <el-button type="text" icon="el-icon-share" style="margin-right: 15px; color: #8C6A5D;"
+          @click="copyInviteLink">邀请有礼</el-button>
         <el-dropdown>
           <span class="el-dropdown-link">
             <el-avatar :size="32" :src="user.avatarUrl" style="margin-right: 8px; vertical-align: middle;"></el-avatar>
@@ -48,7 +49,7 @@ export default {
   created() {
     this.checkUser();
     window.addEventListener('refresh-user', this.checkUser);
-    
+
     // Check for invite code in URL
     const urlParams = new URLSearchParams(window.location.search);
     const invite = urlParams.get('invite');
