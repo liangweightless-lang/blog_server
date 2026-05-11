@@ -1,11 +1,11 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import Home from '../views/Home.vue'
-import CreateArticle from '../views/CreateArticle.vue'
-import Store from '../views/Store.vue'
-import ArticleDetail from '../views/ArticleDetail.vue'
-import AdminDashboard from '../views/AdminDashboard.vue'
-import UserProfile from '../views/UserProfile.vue'
+import Home from '../views/home/Home.vue'
+import CreateArticle from '../views/article/CreateArticle.vue'
+import Store from '../views/product/Store.vue'
+import ArticleDetail from '../views/article/ArticleDetail.vue'
+import AdminDashboard from '../views/admin/AdminDashboard.vue'
+import UserProfile from '../views/user/UserProfile.vue'
 
 Vue.use(VueRouter)
 
