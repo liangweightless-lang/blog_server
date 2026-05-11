@@ -54,123 +54,141 @@
         <div class="tab-header">
           <el-button type="success" size="small" icon="el-icon-plus" @click="showAddProductDialog">上架新商品</el-button>
         </div>
-        <el-table :data="products" :key="'table-p-' + products.length" style="width: 100%">
-          <el-table-column prop="id" label="ID" width="80"></el-table-column>
-          <el-table-column label="商品图" width="120">
-            <template slot-scope="scope">
-              <el-image :src="scope.row.image" fit="cover" style="width: 50px; height: 50px; border-radius: 8px;"></el-image>
-            </template>
-          </el-table-column>
-          <el-table-column prop="name" label="名称"></el-table-column>
-          <el-table-column prop="price" label="价格" width="100">
-            <template slot-scope="scope">¥{{ scope.row.price }}</template>
-          </el-table-column>
-          <el-table-column label="类型" width="100">
-            <template slot-scope="scope">
-              <el-tag :type="scope.row.isDigital ? 'success' : 'info'" size="small">
-                {{ scope.row.isDigital ? '数字商品' : '实体商品' }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="180">
-            <template slot-scope="scope">
-              <el-button size="mini" type="primary" plain @click="handleEditProduct(scope.row)">编辑</el-button>
-              <el-button size="mini" type="danger" plain @click="handleDeleteProduct(scope.row)">删除</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+        <!-- 商品管理自定义列表 -->
+        <div class="custom-admin-list">
+          <div class="list-header">
+            <div class="col-id">ID</div>
+            <div class="col-cover">商品图</div>
+            <div class="col-info">商品详情</div>
+            <div class="col-stats">价格</div>
+            <div class="col-actions">操作</div>
+          </div>
+          <div v-for="product in products" :key="product.id" class="list-item">
+            <div class="col-id">#{{ product.id }}</div>
+            <div class="col-cover">
+              <el-image :src="product.image" fit="cover" class="item-img"></el-image>
+            </div>
+            <div class="col-info">
+              <div class="item-title">
+                {{ product.name }}
+                <el-tag :type="product.isDigital ? 'success' : 'info'" size="mini" style="margin-left: 8px;">
+                  {{ product.isDigital ? '数字' : '实体' }}
+                </el-tag>
+              </div>
+              <div class="item-time">{{ product.description }}</div>
+            </div>
+            <div class="col-stats">
+              <div style="font-weight: bold; color: #FF7E67;">¥{{ product.price }}</div>
+              <div style="font-size: 11px; color: #999;">团: ¥{{ product.groupPrice }}</div>
+            </div>
+            <div class="col-actions">
+              <el-button size="mini" type="text" @click="handleEditProduct(product)">编辑</el-button>
+              <el-button size="mini" type="text" style="color: #F56C6C;" @click="handleDeleteProduct(product)">删除</el-button>
+            </div>
+          </div>
+        </div>
       </el-tab-pane>
 
       <!-- 用户管理 -->
       <el-tab-pane label="注册人员管理" name="users">
-        <el-table :data="users" :key="'table-u-' + users.length" style="width: 100%">
-          <el-table-column label="头像" width="70">
-            <template slot-scope="scope">
-              <el-avatar :size="32" :src="scope.row.avatarUrl"></el-avatar>
-            </template>
-          </el-table-column>
-          <el-table-column prop="nickname" label="昵称" width="120"></el-table-column>
-          <el-table-column prop="username" label="手机号/账号" width="120"></el-table-column>
-          <el-table-column prop="points" label="积分" width="80" sortable>
-            <template slot-scope="scope">
-              <el-tag type="warning" size="mini">{{ scope.row.points }}</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="wechatId" label="微信号" width="120"></el-table-column>
-          <el-table-column prop="address" label="配送地址" min-width="200" show-overflow-tooltip></el-table-column>
-          <el-table-column prop="role" label="角色" width="80">
-            <template slot-scope="scope">
-              <el-tag :type="scope.row.role === 'ADMIN' ? 'danger' : 'info'" size="mini">{{ scope.row.role }}</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column label="加入时间" width="160">
-            <template slot-scope="scope">{{ formatTime(scope.row.createTime) }}</template>
-          </el-table-column>
-        </el-table>
+        <!-- 用户管理自定义列表 -->
+        <div class="custom-admin-list">
+          <div class="list-header">
+            <div class="col-cover" style="width: 60px;">头像</div>
+            <div class="col-info">用户信息</div>
+            <div class="col-stats" style="width: 140px;">角色/积分</div>
+            <div class="col-actions" style="width: 180px;">加入时间</div>
+          </div>
+          <div v-for="user in users" :key="user.id" class="list-item">
+            <div class="col-cover" style="width: 60px;">
+              <el-avatar :size="32" :src="user.avatarUrl"></el-avatar>
+            </div>
+            <div class="col-info">
+              <div class="item-title">{{ user.nickname }} ({{ user.username }})</div>
+              <div class="item-time">微信: {{ user.wechatId || '未设置' }} | 地址: {{ user.address || '未设置' }}</div>
+            </div>
+            <div class="col-stats" style="width: 140px;">
+              <el-tag size="mini" :type="user.role === 'ADMIN' ? 'danger' : 'info'">{{ user.role }}</el-tag>
+              <div style="font-size: 12px; margin-top: 4px; color: #E6A23C; font-weight: bold;">{{ user.points }} 积分</div>
+            </div>
+            <div class="col-actions" style="width: 180px; font-size: 12px; color: #999;">
+              {{ formatTime(user.createTime) }}
+            </div>
+          </div>
+        </div>
       </el-tab-pane>
 
       <!-- 订单管理 -->
       <el-tab-pane label="订单/发货管理" name="orders">
-        <el-table :data="orders" :key="'table-o-' + orders.length" style="width: 100%">
-          <el-table-column prop="id" label="订单号" width="120" show-overflow-tooltip></el-table-column>
-          <el-table-column prop="productId" label="商品ID" width="80"></el-table-column>
-          <el-table-column prop="amount" label="实付金额" width="100">
-            <template slot-scope="scope">¥{{ scope.row.amount }}</template>
-          </el-table-column>
-          <el-table-column label="状态" width="100">
-            <template slot-scope="scope">
-              <el-tag :type="getOrderStatusType(scope.row.status)" size="mini">
-                {{ getOrderStatusText(scope.row.status) }}
+        <!-- 订单管理自定义列表 -->
+        <div class="custom-admin-list">
+          <div class="list-header">
+            <div class="col-id" style="width: 100px;">订单号</div>
+            <div class="col-info">详情/地址</div>
+            <div class="col-stats">实付</div>
+            <div class="col-actions">状态/操作</div>
+          </div>
+          <div v-for="order in orders" :key="order.id" class="list-item">
+            <div class="col-id" style="width: 100px; font-size: 11px;">#{{ order.id }}</div>
+            <div class="col-info">
+              <div class="item-title" style="font-size: 13px;">
+                商品ID: {{ order.productId }}
+                <el-tag :type="order.orderType === 'GROUP' ? 'warning' : 'primary'" size="mini" effect="plain" style="margin-left: 8px;">
+                  {{ order.orderType === 'GROUP' ? '拼团' : '个买' }}
+                </el-tag>
+              </div>
+              <div class="item-time">地址: {{ order.shippingAddress || '无' }} | 时间: {{ formatTime(order.createTime) }}</div>
+            </div>
+            <div class="col-stats">
+              <div style="font-weight: bold; color: #F56C6C;">¥{{ order.amount }}</div>
+              <div style="font-size: 11px; color: #999;" v-if="order.pointsUsed">抵扣: {{ order.pointsUsed }}</div>
+            </div>
+            <div class="col-actions" style="width: 150px;">
+              <el-tag :type="getOrderStatusType(order.status)" size="mini" style="margin-bottom: 5px;">
+                {{ getOrderStatusText(order.status) }}
               </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="orderType" label="类型" width="100">
-            <template slot-scope="scope">
-              <el-tag :type="scope.row.orderType === 'GROUP' ? 'warning' : 'primary'" size="mini" effect="plain">
-                {{ scope.row.orderType === 'GROUP' ? '拼团' : '个买' }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="shippingAddress" label="配送地址" min-width="200" show-overflow-tooltip></el-table-column>
-          <el-table-column label="下单时间" width="160">
-            <template slot-scope="scope">{{ formatTime(scope.row.createTime) }}</template>
-          </el-table-column>
-          <el-table-column label="操作" width="120">
-            <template slot-scope="scope">
-              <el-button v-if="scope.row.status === 1" size="mini" type="success" plain @click="handleShip(scope.row)">标记发货</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+              <div v-if="order.status === 1">
+                <el-button size="mini" type="success" plain @click="handleShip(order)">标记发货</el-button>
+              </div>
+            </div>
+          </div>
+        </div>
       </el-tab-pane>
 
       <!-- 拼团管理 -->
       <el-tab-pane label="拼团进度管理" name="groupbuys">
-        <el-table :data="groupbuys" :key="'table-g-' + groupbuys.length" style="width: 100%">
-          <el-table-column prop="id" label="ID" width="80"></el-table-column>
-          <el-table-column prop="productName" label="拼团商品"></el-table-column>
-          <el-table-column prop="initiatorNickname" label="发起人" width="120"></el-table-column>
-          <el-table-column label="进度" width="150">
-            <template slot-scope="scope">
-              {{ scope.row.currentNum }} / {{ scope.row.requiredNum }}
-            </template>
-          </el-table-column>
-          <el-table-column label="状态" width="100">
-            <template slot-scope="scope">
-              <el-tag :type="getStatusType(scope.row.status)" size="mini">
-                {{ getStatusText(scope.row.status) }}
+        <!-- 拼团管理自定义列表 -->
+        <div class="custom-admin-list">
+          <div class="list-header">
+            <div class="col-info">商品/发起人</div>
+            <div class="col-stats" style="width: 150px;">进度</div>
+            <div class="col-actions" style="width: 180px;">状态/操作</div>
+          </div>
+          <div v-for="group in groupbuys" :key="group.id" class="list-item">
+            <div class="col-info">
+              <div class="item-title">{{ group.productName }}</div>
+              <div class="item-time">发起人: {{ group.initiatorNickname }} | 截止: {{ formatTime(group.expireTime) }}</div>
+            </div>
+            <div class="col-stats" style="width: 150px;">
+              <div style="font-size: 13px; margin-bottom: 5px;">{{ group.currentNum }} / {{ group.requiredNum }} 人</div>
+              <el-progress 
+                :percentage="Math.min((group.currentNum / group.requiredNum) * 100, 100)" 
+                :status="group.status === 1 ? 'success' : ''"
+                :show-text="false" 
+                stroke-width="8"
+              ></el-progress>
+            </div>
+            <div class="col-actions" style="width: 180px;">
+              <el-tag :type="getStatusType(group.status)" size="mini" style="margin-bottom: 5px;">
+                {{ getStatusText(group.status) }}
               </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column label="到期时间" width="180">
-            <template slot-scope="scope">{{ formatTime(scope.row.expireTime) }}</template>
-          </el-table-column>
-          <el-table-column label="管理操作" width="220" fixed="right">
-            <template slot-scope="scope" v-if="scope.row.status === 0">
-              <el-button size="mini" type="success" plain @click="handleForceSuccess(scope.row)">强制成团</el-button>
-              <el-button size="mini" type="danger" plain @click="handleForceFail(scope.row)">强制退款</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+              <div v-if="group.status === 0">
+                <el-button size="mini" type="success" plain @click="handleForceSuccess(group)">成团</el-button>
+                <el-button size="mini" type="danger" plain @click="handleForceFail(group)">解散</el-button>
+              </div>
+            </div>
+          </div>
+        </div>
       </el-tab-pane>
     </el-tabs>
 
