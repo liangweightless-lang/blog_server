@@ -31,21 +31,14 @@
       </template>
       <el-button v-else type="primary" size="small" round @click="loginDialogVisible = true">登录 / 注册</el-button>
     </div>
-
-    <!-- 登录组件 (已抽离) -->
-    <LoginDialog :show.sync="loginDialogVisible" />
   </el-header>
 </template>
 
 <script>
 import axios from 'axios';
-import LoginDialog from '../auth/LoginDialog.vue';
 
 export default {
   name: 'GlobalHeader',
-  components: {
-    LoginDialog
-  },
   data() {
     return {
       loginDialogVisible: false,
@@ -55,7 +48,6 @@ export default {
   created() {
     this.checkUser();
     window.addEventListener('refresh-user', this.checkUser);
-    window.addEventListener('open-login', this.showLogin);
     
     // Check for invite code in URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -64,14 +56,20 @@ export default {
       this.loginDialogVisible = true;
     }
   },
+  watch: {
+    // Sync local loginDialogVisible with global one if needed
+    // But since we use events, we can just dispatch open-login
+    loginDialogVisible(val) {
+      if (val) {
+        window.dispatchEvent(new CustomEvent('open-login'));
+        this.loginDialogVisible = false; // Reset local state
+      }
+    }
+  },
   beforeDestroy() {
     window.removeEventListener('refresh-user', this.checkUser);
-    window.removeEventListener('open-login', this.showLogin);
   },
   methods: {
-    showLogin() {
-      this.loginDialogVisible = true;
-    },
     checkUser() {
       const token = localStorage.getItem('token');
       if (token) {

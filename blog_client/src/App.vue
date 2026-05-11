@@ -9,6 +9,9 @@
       <GlobalFooter class="hidden-xs-only" />
       <div class="bottom-nav-spacer visible-xs-only"></div>
       <MobileBottomNav class="visible-xs-only" />
+      
+      <!-- 全局登录组件 (抽离到根组件，确保唯一性) -->
+      <LoginDialog :show.sync="loginDialogVisible" />
     </el-container>
   </div>
 </template>
@@ -18,6 +21,7 @@ import GlobalHeader from './components/layout/GlobalHeader.vue'
 import MobileHeader from './components/layout/MobileHeader.vue'
 import MobileBottomNav from './components/layout/MobileBottomNav.vue'
 import GlobalFooter from './components/layout/GlobalFooter.vue'
+import LoginDialog from './components/auth/LoginDialog.vue'
 
 export default {
   name: 'App',
@@ -25,7 +29,23 @@ export default {
     GlobalHeader,
     MobileHeader,
     MobileBottomNav,
-    GlobalFooter
+    GlobalFooter,
+    LoginDialog
+  },
+  data() {
+    return {
+      loginDialogVisible: false
+    }
+  },
+  created() {
+    window.addEventListener('open-login', () => {
+      this.loginDialogVisible = true;
+    });
+  },
+  beforeDestroy() {
+    window.removeEventListener('open-login', () => {
+      this.loginDialogVisible = true;
+    });
   }
 }
 </script>
