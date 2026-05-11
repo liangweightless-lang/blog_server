@@ -129,7 +129,11 @@
             <div class="col-actions">状态/操作</div>
           </div>
           <div v-for="order in orders" :key="order.id" class="list-item">
-            <div class="col-id" style="width: 100px; font-size: 11px;">#{{ order.id }}</div>
+            <div class="col-id" style="width: 100px;">
+              <el-tooltip :content="order.id" placement="top" :open-delay="300">
+                <span class="truncate-id">#{{ order.id }}</span>
+              </el-tooltip>
+            </div>
             <div class="col-info">
               <div class="item-title" style="font-size: 13px;">
                 商品ID: {{ order.productId }}
@@ -523,6 +527,16 @@ export default {
 .col-info { flex: 1; padding: 0 20px; }
 .col-stats { width: 100px; text-align: center; }
 .col-actions { width: 120px; text-align: right; }
+
+.truncate-id {
+  display: inline-block;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  cursor: help;
+}
 
 .item-img {
   width: 50px;
