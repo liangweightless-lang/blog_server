@@ -25,6 +25,8 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
     ports:
       - "8081:8081"
+    volumes:
+      - ./uploads:/app/uploads
     depends_on:
       - mysql_server
 
