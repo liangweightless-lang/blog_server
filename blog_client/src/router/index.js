@@ -5,6 +5,7 @@ import CreateArticle from '../views/CreateArticle.vue'
 import Store from '../views/Store.vue'
 import ArticleDetail from '../views/ArticleDetail.vue'
 import AdminDashboard from '../views/AdminDashboard.vue'
+import UserProfile from '../views/UserProfile.vue'
 
 Vue.use(VueRouter)
 
@@ -33,6 +34,11 @@ const routes = [
     path: '/admin',
     name: 'AdminDashboard',
     component: AdminDashboard
+  },
+  {
+    path: '/profile',
+    name: 'UserProfile',
+    component: UserProfile
   }
 ]
 

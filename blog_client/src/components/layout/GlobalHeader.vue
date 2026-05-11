@@ -26,6 +26,7 @@
             <span class="nickname">{{ user.nickname }}</span>
           </span>
           <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item @click.native="$router.push('/profile')">个人资料</el-dropdown-item>
             <el-dropdown-item @click.native="logout">退出登录</el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>

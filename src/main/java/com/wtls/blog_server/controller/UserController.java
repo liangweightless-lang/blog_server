@@ -49,4 +49,29 @@ public class UserController {
             return ResponseEntity.status(401).body(Map.of("error", "Invalid Token"));
         }
     }
+    @PutMapping("/profile")
+    public ResponseEntity<?> updateProfile(@RequestHeader("Authorization") String authHeader, @RequestBody User profileData) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
+        }
+        String token = authHeader.substring(7);
+        try {
+            Claims claims = JwtUtils.parseToken(token);
+            Long userId = claims.get("userId", Long.class);
+            
+            // Fetch current user and update fields
+            User user = userService.getUserInfo(userId);
+            user.setNickname(profileData.getNickname());
+            user.setAvatarUrl(profileData.getAvatarUrl());
+            user.setAddress(profileData.getAddress());
+            user.setWechatId(profileData.getWechatId());
+            user.setAge(profileData.getAge());
+            user.setGender(profileData.getGender());
+            
+            userService.updateProfile(user);
+            return ResponseEntity.ok(user);
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid Token or Update Failed"));
+        }
+    }
 }

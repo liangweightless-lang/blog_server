@@ -62,4 +62,8 @@ public class UserService {
     public User getUserInfo(Long id) {
         return userMapper.findById(id);
     }
+
+    public void updateProfile(User user) {
+        userMapper.updateProfile(user);
+    }
 }

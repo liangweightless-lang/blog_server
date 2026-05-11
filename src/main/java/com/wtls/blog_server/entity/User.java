@@ -14,5 +14,9 @@ public class User {
     private String inviteCode;
     private Long invitedBy;
     private String role;
+    private String address;
+    private String wechatId;
+    private Integer age;
+    private String gender;
     private LocalDateTime createTime;
 }

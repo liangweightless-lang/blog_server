@@ -24,4 +24,8 @@ public interface UserMapper {
 
     @Update("UPDATE user SET points = points - #{pointsToDeduct} WHERE id = #{id} AND points >= #{pointsToDeduct}")
     int deductPoints(@Param("id") Long id, @Param("pointsToDeduct") int pointsToDeduct);
+
+    @Update("UPDATE user SET nickname = #{nickname}, avatar_url = #{avatarUrl}, address = #{address}, " +
+            "wechat_id = #{wechatId}, age = #{age}, gender = #{gender} WHERE id = #{id}")
+    void updateProfile(User user);
 }

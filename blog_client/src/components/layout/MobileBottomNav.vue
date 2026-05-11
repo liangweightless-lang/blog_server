@@ -8,7 +8,7 @@
       <i class="el-icon-shopping-bag-2"></i>
       <span>灵感</span>
     </div>
-    <div class="nav-item" :class="{ active: $route.path === '/admin' }" @click="handleAdminClick">
+    <div class="nav-item" :class="{ active: $route.path === '/profile' }" @click="handleProfileClick">
       <i class="el-icon-user"></i>
       <span>我的</span>
     </div>
@@ -19,10 +19,10 @@
 export default {
   name: 'MobileBottomNav',
   methods: {
-    handleAdminClick() {
+    handleProfileClick() {
       const token = localStorage.getItem('token');
       if (token) {
-        this.$router.push('/admin');
+        this.$router.push('/profile');
       } else {
         window.dispatchEvent(new CustomEvent('open-login'));
       }
