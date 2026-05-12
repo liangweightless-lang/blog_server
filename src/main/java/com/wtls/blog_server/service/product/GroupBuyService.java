@@ -44,7 +44,7 @@ public class GroupBuyService {
         // }
 
         // Create the initiator's order first
-        ProductOrder order = orderService.createOrder(userId, productId, address, "GROUP", 0);
+        ProductOrder order = orderService.createOrder(userId, productId, address, "GROUP", 0, null);
         // Note: For initiator, we might want to charge them later or mark as 'Pending Group'
         
         GroupBuy gb = new GroupBuy();
@@ -77,7 +77,7 @@ public class GroupBuyService {
         }
 
         // Create the participant's order
-        ProductOrder order = orderService.createOrder(userId, gb.getProductId(), address, "GROUP", 0);
+        ProductOrder order = orderService.createOrder(userId, gb.getProductId(), address, "GROUP", 0, null);
         
         GroupBuyMember member = new GroupBuyMember();
         member.setGroupId(groupId);

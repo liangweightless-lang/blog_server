@@ -3,7 +3,29 @@
     <!-- 使用抽离的子组件 -->
     <UserHeader :user="user" @edit="showEditDialog" />
     <UserStats :user="user" />
-    <UserOrderGrid :orders="orders" />
+    
+    <div class="user-tabs-section">
+      <el-tabs v-model="activeTab" @tab-click="handleTabClick">
+        <el-tab-pane name="favorites">
+          <span slot="label"><i class="el-icon-star-off"></i> 我的收藏</span>
+          <div class="tab-content-wrapper">
+            <ArticleGrid :articles="favoriteArticles" :loading="loadingFavorites" />
+            <div v-if="!loadingFavorites && favoriteArticles.length === 0" class="empty-placeholder">
+              <i class="el-icon-collection-tag"></i>
+              <p>还没有收藏任何灵感，快去首页逛逛吧</p>
+            </div>
+          </div>
+        </el-tab-pane>
+        
+        <el-tab-pane name="orders">
+          <span slot="label"><i class="el-icon-s-order"></i> 我的订单</span>
+          <div class="tab-content-wrapper">
+            <UserOrderGrid :orders="orders" />
+          </div>
+        </el-tab-pane>
+      </el-tabs>
+    </div>
+
     <UserToolList 
       :user="user" 
       @address="showAddressDialog" 
@@ -99,6 +121,7 @@ import UserHeader from '@/components/user/UserHeader.vue';
 import UserStats from '@/components/user/UserStats.vue';
 import UserOrderGrid from '@/components/user/UserOrderGrid.vue';
 import UserToolList from '@/components/user/UserToolList.vue';
+import ArticleGrid from '@/components/home/ArticleGrid.vue';
 
 export default {
   name: 'UserProfile',
@@ -106,7 +129,8 @@ export default {
     UserHeader,
     UserStats,
     UserOrderGrid,
-    UserToolList
+    UserToolList,
+    ArticleGrid
   },
   data() {
     return {
@@ -128,12 +152,15 @@ export default {
       groupsDialogVisible: false,
       myGroups: [],
       loadingGroups: false,
-      activeOrderTab: 'all',
+      activeTab: 'favorites',
+      favoriteArticles: [],
+      loadingFavorites: false,
       isMobile: window.innerWidth <= 768
     }
   },
   created() {
     this.fetchUser();
+    this.fetchMyFavorites();
     this.fetchMyOrders();
     window.addEventListener('resize', this.handleResize);
   },
@@ -148,6 +175,28 @@ export default {
   methods: {
     handleResize() {
       this.isMobile = window.innerWidth <= 768;
+    },
+    handleTabClick(tab) {
+      if (tab.name === 'favorites') {
+        this.fetchMyFavorites();
+      } else if (tab.name === 'orders') {
+        this.fetchMyOrders();
+      }
+    },
+    async fetchMyFavorites() {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      this.loadingFavorites = true;
+      try {
+        const res = await axios.get('/api/favorites/me', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        this.favoriteArticles = res.data.data;
+      } catch (error) {
+        console.error('获取收藏失败');
+      } finally {
+        this.loadingFavorites = false;
+      }
     },
     showEditDialog() {
       this.editDialogVisible = true;
@@ -296,6 +345,56 @@ export default {
   background: #F7F8FA;
   min-height: 100vh;
   padding-bottom: 80px;
+}
+
+.user-tabs-section {
+  background: #FFFFFF;
+  margin: 15px 0;
+  padding: 10px 15px;
+}
+
+::v-deep .el-tabs__nav-wrap::after {
+  height: 1px;
+  background-color: #FDF0E6;
+}
+
+::v-deep .el-tabs__active-bar {
+  background-color: #FF7E67;
+}
+
+::v-deep .el-tabs__item.is-active {
+  color: #FF7E67;
+  font-weight: 800;
+}
+
+::v-deep .el-tabs__item {
+  color: #8C6A5D;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.tab-content-wrapper {
+  padding: 15px 0;
+  min-height: 200px;
+}
+
+.empty-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0;
+  color: #D3C1BA;
+}
+
+.empty-placeholder i {
+  font-size: 48px;
+  margin-bottom: 15px;
+  opacity: 0.5;
+}
+
+.empty-placeholder p {
+  font-size: 14px;
 }
 
 /* Edit Dialog Styles */

@@ -16,6 +16,10 @@ public interface ArticleMapper {
     @Select("SELECT * FROM article ORDER BY create_time DESC")
     List<Article> findAll();
 
+    @Select("SELECT * FROM article WHERE title LIKE CONCAT('%', #{keyword}, '%') " +
+            "OR content LIKE CONCAT('%', #{keyword}, '%') ORDER BY create_time DESC")
+    List<Article> search(String keyword);
+
     @Select("SELECT * FROM article WHERE id = #{id}")
     Article findById(Long id);
 

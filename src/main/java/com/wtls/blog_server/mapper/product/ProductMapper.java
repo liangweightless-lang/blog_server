@@ -14,5 +14,8 @@ public interface ProductMapper extends BaseMapper<Product> {
 
     @Select("SELECT * FROM product WHERE id = #{id}")
     Product findById(Long id);
+
+    @Update("UPDATE product SET stock = stock - #{count} WHERE id = #{id} AND stock >= #{count}")
+    int reduceStock(@Param("id") Long id, @Param("count") int count);
 }
 

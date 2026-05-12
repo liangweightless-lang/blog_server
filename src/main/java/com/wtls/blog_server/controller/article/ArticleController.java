@@ -41,6 +41,12 @@ public class ArticleController {
         return Result.success(articleService.getAllArticles());
     }
 
+    @GetMapping("/search")
+    @Operation(summary = "搜索文章")
+    public Result<List<Article>> search(@RequestParam String keyword) {
+        return Result.success(articleService.searchArticles(keyword));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "根据ID获取文章详情")
     public Result<Article> getById(@PathVariable Long id) {

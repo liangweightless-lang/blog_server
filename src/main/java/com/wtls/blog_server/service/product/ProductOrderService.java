@@ -28,10 +28,15 @@ public class ProductOrderService {
     private UserMapper userMapper;
 
     @Transactional
-    public ProductOrder createOrder(Long userId, Long productId, String address, String type, Integer pointsToUse) {
+    public ProductOrder createOrder(Long userId, Long productId, String address, String type, Integer pointsToUse, String spec) {
         Product product = productMapper.selectById(productId);
         if (product == null) {
             throw new RuntimeException("Product not found");
+        }
+        
+        // 校验库存
+        if (product.getStock() != null && product.getStock() <= 0) {
+            throw new RuntimeException("商品库存不足");
         }
 
         java.math.BigDecimal originalAmount = "GROUP".equals(type) && product.getGroupPrice() != null ? product.getGroupPrice() : product.getPrice();
@@ -65,6 +70,7 @@ public class ProductOrderService {
         order.setStatus(0); // Pending
         order.setShippingAddress(address);
         order.setOrderType(type);
+        order.setSelectedSpec(spec);
 
         if (actualPointsToUse > 0) {
             userMapper.deductPoints(userId, actualPointsToUse);
@@ -79,6 +85,12 @@ public class ProductOrderService {
         ProductOrder order = orderMapper.selectById(orderId);
         if (order == null || order.getStatus() != 0) {
             throw new RuntimeException("Invalid order or already paid");
+        }
+
+        // 扣减库存
+        int rows = productMapper.reduceStock(order.getProductId(), 1);
+        if (rows == 0) {
+            throw new RuntimeException("支付失败：商品库存不足");
         }
 
         // Update order status
@@ -100,12 +112,19 @@ public class ProductOrderService {
             throw new RuntimeException("Product not found");
         }
 
+        if (product.getStock() != null && product.getStock() <= 0) {
+            throw new RuntimeException("商品库存不足，无法兑换");
+        }
+
         // 1000 points for a free item
         int pointsNeeded = 1000;
         int rows = userMapper.deductPoints(userId, pointsNeeded);
         if (rows == 0) {
             throw new RuntimeException("积分不足，兑换失败 (需1000积分)");
         }
+        
+        // 扣减库存
+        productMapper.reduceStock(productId, 1);
 
         ProductOrder order = new ProductOrder();
         order.setId("POINTS_" + IdUtil.fastSimpleUUID().substring(0, 10));

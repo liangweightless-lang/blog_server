@@ -17,6 +17,10 @@ public class ArticleService {
         return articleMapper.findAll();
     }
 
+    public List<Article> searchArticles(String keyword) {
+        return articleMapper.search(keyword);
+    }
+
     public Article getArticleById(Long id) {
         return articleMapper.findById(id);
     }

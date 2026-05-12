@@ -21,7 +21,7 @@
             <div class="xhs-bottom">
               <div class="xhs-author">
                 <img src="/img/avatar.png" class="xhs-author-avatar" />
-                <span class="xhs-author-name">生活家</span>
+                <span class="xhs-author-name">焙刻生活</span>
               </div>
               <div class="xhs-likes">
                 <i class="el-icon-sugar"></i> {{ article.likesCount || 0 }}

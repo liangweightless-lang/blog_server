@@ -1,7 +1,7 @@
 <template>
   <el-header>
     <div class="logo" @click="$router.push('/')">
-      <i class="el-icon-sunny" style="margin-right: 8px;"></i>生活家
+      <i class="el-icon-sunny" style="margin-right: 8px;"></i>焙刻生活
     </div>
     <div class="nav-menu">
       <el-menu :default-active="$route.path" mode="horizontal" background-color="transparent" text-color="#8C6A5D"

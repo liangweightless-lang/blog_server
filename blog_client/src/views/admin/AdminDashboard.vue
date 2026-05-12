@@ -1,8 +1,8 @@
 <template>
   <div class="admin-container">
     <div class="admin-header">
-      <h1 class="admin-title">超级管理员后台</h1>
-      <p class="admin-subtitle">管理日常发布、文章列表以及商品橱窗。</p>
+      <h1 class="admin-title">焙刻生活</h1>
+      <p class="admin-subtitle">管理烘焙新品、精品咖啡菜单以及品牌日常动态。</p>
     </div>
 
     <el-tabs v-model="activeTab" type="border-card">
@@ -60,7 +60,7 @@
             <div class="col-id">ID</div>
             <div class="col-cover">商品图</div>
             <div class="col-info">商品详情</div>
-            <div class="col-stats">价格</div>
+            <div class="col-stats">库存/价格</div>
             <div class="col-actions">操作</div>
           </div>
           <div v-for="product in products" :key="product.id" class="list-item">
@@ -78,6 +78,9 @@
               <div class="item-time">{{ product.description }}</div>
             </div>
             <div class="col-stats">
+              <div :style="{ fontWeight: 'bold', color: product.stock <= 10 ? '#F56C6C' : '#67C23A', marginBottom: '4px' }">
+                库存: {{ product.stock || 0 }}
+              </div>
               <div style="font-weight: bold; color: #FF7E67;">¥{{ product.price }}</div>
               <div style="font-size: 11px; color: #999;">团: ¥{{ product.groupPrice }}</div>
             </div>
@@ -196,24 +199,66 @@
       </el-tab-pane>
     </el-tabs>
 
-    <!-- 商品编辑/添加弹窗 -->
-    <el-dialog :title="isEditing ? '编辑商品' : '上架新商品'" :visible.sync="productDialogVisible" :width="isMobile ? '90%' : '500px'">
-      <el-form :model="productForm" label-width="80px">
-        <el-form-item label="名称">
-          <el-input v-model="productForm.name"></el-input>
-        </el-form-item>
-        <el-form-item label="描述">
-          <el-input type="textarea" v-model="productForm.description"></el-input>
-        </el-form-item>
-        <el-form-item label="价格">
-          <el-input-number v-model="productForm.price" :precision="2" :step="0.1"></el-input-number>
-        </el-form-item>
-        <el-form-item label="图片链接">
-          <el-input v-model="productForm.image" placeholder="/img/product_xxx.png"></el-input>
-        </el-form-item>
-        <el-form-item label="数字商品">
-          <el-switch v-model="productForm.isDigital" active-text="是" inactive-text="否"></el-switch>
-        </el-form-item>
+    <el-dialog :title="isEditing ? '编辑商品' : '上架新商品'" :visible.sync="productDialogVisible" :width="isMobile ? '95%' : '600px'" top="5vh">
+      <el-form :model="productForm" label-width="80px" size="small">
+        <el-tabs value="basic">
+          <el-tab-pane label="基本信息" name="basic">
+            <el-form-item label="名称">
+              <el-input v-model="productForm.name"></el-input>
+            </el-form-item>
+            <el-form-item label="描述">
+              <el-input type="textarea" v-model="productForm.description"></el-input>
+            </el-form-item>
+            <el-form-item label="价格">
+              <el-input-number v-model="productForm.price" :precision="2" :step="0.1" style="width: 150px;"></el-input-number>
+            </el-form-item>
+            <el-form-item label="库存">
+              <el-input-number v-model="productForm.stock" :min="0" style="width: 150px;"></el-input-number>
+            </el-form-item>
+            <el-form-item label="图片链接">
+              <el-input v-model="productForm.image" placeholder="/img/product_xxx.png"></el-input>
+            </el-form-item>
+            <el-form-item label="数字商品">
+              <el-switch v-model="productForm.isDigital" active-text="是" inactive-text="否"></el-switch>
+            </el-form-item>
+          </el-tab-pane>
+          
+          <el-tab-pane label="规格配置" name="specs">
+            <div class="specs-config-container">
+              <div v-for="(spec, sIdx) in productForm.specsList" :key="sIdx" class="spec-group-item">
+                <div class="spec-group-header">
+                  <el-input v-model="spec.name" placeholder="规格名 (如: 尺寸)" size="mini" style="width: 120px;"></el-input>
+                  <el-button type="text" icon="el-icon-delete" style="color: #F56C6C;" @click="removeSpecGroup(sIdx)">删除</el-button>
+                </div>
+                <div class="spec-options-list">
+                  <el-tag
+                    v-for="(opt, oIdx) in spec.options"
+                    :key="oIdx"
+                    closable
+                    size="small"
+                    @close="removeSpecOption(sIdx, oIdx)"
+                    style="margin-right: 8px; margin-bottom: 8px;"
+                  >
+                    {{ opt }}
+                  </el-tag>
+                  <el-input
+                    class="input-new-tag"
+                    v-if="spec.inputVisible"
+                    v-model="spec.inputValue"
+                    ref="saveTagInput"
+                    size="mini"
+                    style="width: 80px;"
+                    @keyup.enter.native="handleInputConfirm(sIdx)"
+                    @blur="handleInputConfirm(sIdx)"
+                  >
+                  </el-input>
+                  <el-button v-else class="button-new-tag" size="mini" @click="showInput(sIdx)">+ 新增选项</el-button>
+                </div>
+              </div>
+              <el-button type="dashed" icon="el-icon-plus" style="width: 100%; border: 1px dashed #DCDFE6; margin-top: 10px;" @click="addSpecGroup">添加规格组 (如: 甜度、分量)</el-button>
+            </div>
+          </el-tab-pane>
+        </el-tabs>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="productDialogVisible = false">取 消</el-button>
@@ -250,7 +295,9 @@ export default {
         description: '',
         price: 0,
         image: '',
-        isDigital: true
+        isDigital: true,
+        stock: 0,
+        specsList: []
       }
     }
   },
@@ -266,6 +313,39 @@ export default {
     window.removeEventListener('resize', this.handleResize);
   },
   methods: {
+    addSpecGroup() {
+      this.productForm.specsList.push({
+        name: '',
+        options: [],
+        inputVisible: false,
+        inputValue: ''
+      });
+    },
+    removeSpecGroup(index) {
+      this.productForm.specsList.splice(index, 1);
+    },
+    showInput(index) {
+      const spec = this.productForm.specsList[index];
+      spec.inputVisible = true;
+      this.$nextTick(() => {
+        const inputs = this.$refs.saveTagInput;
+        if (inputs && inputs[index]) {
+          inputs[index].$refs.input.focus();
+        }
+      });
+    },
+    handleInputConfirm(index) {
+      const spec = this.productForm.specsList[index];
+      let inputValue = spec.inputValue;
+      if (inputValue) {
+        spec.options.push(inputValue);
+      }
+      spec.inputVisible = false;
+      spec.inputValue = '';
+    },
+    removeSpecOption(sIdx, oIdx) {
+      this.productForm.specsList[sIdx].options.splice(oIdx, 1);
+    },
     handleResize() {
       this.isMobile = window.innerWidth <= 768;
     },
@@ -388,20 +468,51 @@ export default {
     },
     showAddProductDialog() {
       this.isEditing = false;
-      this.productForm = { id: null, name: '', description: '', price: 0, image: '', isDigital: true };
+      this.productForm = { 
+        id: null, 
+        name: '', 
+        description: '', 
+        price: 0, 
+        image: '', 
+        isDigital: true,
+        stock: 99,
+        specsList: [] 
+      };
       this.productDialogVisible = true;
     },
     handleEditProduct(product) {
       this.isEditing = true;
-      this.productForm = { ...product };
+      let specsList = [];
+      try {
+        if (product.specs) {
+          specsList = JSON.parse(product.specs).map(s => ({
+            ...s,
+            inputVisible: false,
+            inputValue: ''
+          }));
+        }
+      } catch (e) {
+        console.error('Parse specs error', e);
+      }
+      this.productForm = { 
+        ...product,
+        specsList: specsList
+      };
       this.productDialogVisible = true;
     },
     async saveProduct() {
       try {
+        const submitData = { ...this.productForm };
+        submitData.specs = JSON.stringify(this.productForm.specsList.map(s => ({
+          name: s.name,
+          options: s.options
+        })));
+        delete submitData.specsList;
+
         if (this.isEditing) {
-          await axios.put(`/api/products/${this.productForm.id}`, this.productForm, { headers: this.getAuthHeader() });
+          await axios.put(`/api/products/${this.productForm.id}`, submitData, { headers: this.getAuthHeader() });
         } else {
-          await axios.post('/api/products', this.productForm, { headers: this.getAuthHeader() });
+          await axios.post('/api/products', submitData, { headers: this.getAuthHeader() });
         }
         this.$message.success('保存成功');
         this.productDialogVisible = false;
@@ -594,5 +705,38 @@ export default {
   .col-info { width: calc(100% - 60px); padding-left: 12px; }
   .col-stats { width: 50%; text-align: left; padding-top: 10px; }
   .col-actions { width: 50%; padding-top: 10px; }
+}
+/* Specs Config Styles */
+.specs-config-container {
+  padding: 10px 0;
+}
+.spec-group-item {
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 15px;
+  border: 1px solid #eee;
+}
+.spec-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  border-bottom: 1px dashed #ddd;
+  padding-bottom: 8px;
+}
+.spec-options-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.button-new-tag {
+  height: 24px;
+  line-height: 22px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.input-new-tag {
+  vertical-align: bottom;
 }
 </style>

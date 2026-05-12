@@ -1,8 +1,8 @@
 <template>
-  <div id="app" :class="{ 'header-hidden': isMobile && $route.meta.hideHeaderMobile }">
+  <div id="app" :class="{ 'header-hidden': isMobile && (isLoggedIn || $route.meta.hideHeaderMobile) }">
     <el-container direction="vertical">
       <GlobalHeader v-if="!isMobile" />
-      <MobileHeader v-else-if="!$route.meta.hideHeaderMobile" />
+      <MobileHeader v-else-if="!isLoggedIn && !$route.meta.hideHeaderMobile" />
       <el-main>
         <router-view></router-view>
       </el-main>
@@ -37,18 +37,45 @@ export default {
   data() {
     return {
       loginDialogVisible: false,
-      isMobile: window.innerWidth <= 768
+      isMobile: window.innerWidth <= 768,
+      user: null
+    }
+  },
+  computed: {
+    isLoggedIn() {
+      return !!this.user
     }
   },
   created() {
     window.addEventListener('resize', this.handleResize);
     window.addEventListener('open-login', this.showLogin);
+    window.addEventListener('user-updated', (e) => {
+      this.user = e.detail
+    });
+    this.checkUser();
   },
   beforeDestroy() {
     window.removeEventListener('resize', this.handleResize);
     window.removeEventListener('open-login', this.showLogin);
+    window.removeEventListener('user-updated', this.handleUserUpdate);
   },
   methods: {
+    checkUser() {
+      const token = localStorage.getItem('token');
+      if (token) {
+        import('axios').then(axios => {
+          axios.default.get('/api/users/me', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          }).then(res => {
+            if (res.data && res.data.data) {
+              this.user = res.data.data;
+            }
+          }).catch(() => {
+            this.user = null;
+          });
+        });
+      }
+    },
     handleResize() {
       this.isMobile = window.innerWidth <= 768;
     },

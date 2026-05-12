@@ -47,43 +47,11 @@
       </el-col>
     </el-row>
 
-    <!-- 模拟购买弹窗 -->
-    <!-- 模拟购买弹窗 (略，见下文或保持原样) -->
-    <el-dialog
-      title="订单确认"
-      :visible.sync="buyDialogVisible"
-      width="400px"
-      center>
-      <div class="buy-dialog-content">
-        <i class="el-icon-shopping-cart-2" style="font-size: 48px; color: #409EFF; margin-bottom: 15px;"></i>
-        <h3>{{ currentProduct.name }}</h3>
-        <p class="buy-price">原价：<span style="color: #909399; text-decoration: line-through;">¥{{ currentProduct.price }}</span></p>
-        
-        <div class="points-deduction-box" v-if="userPoints > 0">
-          <el-checkbox v-model="usePoints">使用积分抵扣 (100积分 = 1元)</el-checkbox>
-          <div v-if="usePoints" class="points-slider">
-            <el-slider 
-              v-model="pointsToUse" 
-              :max="maxPointsPossible" 
-              :step="100"
-              show-input
-              input-size="mini">
-            </el-slider>
-            <p class="deduction-tip">可用积分: {{ userPoints }} | 抵扣金额: ¥{{ (pointsToUse / 100).toFixed(2) }}</p>
-          </div>
-        </div>
-
-        <p class="final-price">实付金额：<span style="color: #F56C6C; font-size: 24px; font-weight: bold;">¥{{ finalPrice }}</span></p>
-        
-        <p style="color: #909399; font-size: 14px; margin-top: 20px;">
-          此功能为演示版本。在实际环境中，此处将接入微信支付/支付宝或 Stripe 的支付二维码。
-        </p>
-      </div>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="buyDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="confirmPurchase" :loading="purchasing">模拟支付</el-button>
-      </span>
-    </el-dialog>
+    <!-- 订单确认业务组件 (已封装) -->
+    <ProductBuyModal 
+      :show.sync="buyDialogVisible" 
+      :product="currentProduct"
+      @success="fetchActiveGroups" />
 
     <!-- 拼团确认弹窗 -->
     <el-dialog
@@ -143,14 +111,17 @@
 
 <script>
 import axios from 'axios';
+import ProductBuyModal from '@/components/product/ProductBuyModal.vue';
 
 export default {
   name: 'Store',
+  components: {
+    ProductBuyModal
+  },
   data() {
     return {
       buyDialogVisible: false,
       groupDialogVisible: false,
-      purchasing: false,
       groupProcessing: false,
       isJoiningGroup: false,
       currentProduct: {},
@@ -159,27 +130,22 @@ export default {
       orderAddress: '',
       activeGroups: [],
       isMonday: new Date().getDay() === 1,
-      userPoints: 0,
-      usePoints: false,
-      pointsToUse: 0,
       isMobile: window.innerWidth <= 768
     }
   },
   computed: {
-    maxPointsPossible() {
-      if (!this.currentProduct.price) return 0;
-      // Max deduction: points we have OR points to cover price (minus 0.01)
-      const pointsToCover = Math.floor((this.currentProduct.price - 0.01) * 100);
-      return Math.min(this.userPoints, pointsToCover);
-    },
-    finalPrice() {
-      if (!this.currentProduct.price) return 0;
-      const deduction = this.usePoints ? (this.pointsToUse / 100) : 0;
-      return (this.currentProduct.price - deduction).toFixed(2);
-    }
   },
   created() {
-    this.fetchProducts();
+    this.fetchProducts().then(() => {
+      // 检查是否有直达购买请求
+      const buyId = this.$route.query.buyProductId;
+      if (buyId) {
+        const product = this.products.find(p => p.id == buyId);
+        if (product) {
+          this.handleBuy(product);
+        }
+      }
+    });
     this.fetchActiveGroups();
   },
   methods: {
@@ -269,57 +235,12 @@ export default {
         this.$message.error('获取商品列表失败');
       }
     },
-    async handleBuy(product) {
+    handleBuy(product) {
       if (!localStorage.getItem('token')) {
         return this.$message.warning('请先登录后再进行购买');
       }
       this.currentProduct = product;
-      this.usePoints = false;
-      this.pointsToUse = 0;
-      
-      // Fetch user points
-      try {
-        const res = await axios.get('/api/users/me', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        });
-        this.userPoints = res.data.data.points || 0;
-      } catch (e) {
-        console.error('Fetch points failed');
-      }
-      
       this.buyDialogVisible = true;
-    },
-    async confirmPurchase() {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
-      this.purchasing = true;
-      try {
-        // 1. 创建订单
-        const orderRes = await axios.post('/api/orders/create', 
-          { 
-            productId: this.currentProduct.id,
-            pointsToUse: this.usePoints ? this.pointsToUse : 0
-          },
-          { headers: { 'Authorization': `Bearer ${token}` } }
-        );
-        const orderId = orderRes.data.data.id;
-
-        // 2. 模拟支付
-        await axios.post(`/api/orders/${orderId}/pay`, {}, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        this.$message.success('支付成功！邀请人积分已同步更新。');
-        this.buyDialogVisible = false;
-        
-        // 刷新用户信息（更新积分展示）
-        window.dispatchEvent(new CustomEvent('refresh-user'));
-      } catch (error) {
-        this.$message.error(error.response?.data?.error || '购买失败');
-      } finally {
-        this.purchasing = false;
-      }
     }
   }
 }

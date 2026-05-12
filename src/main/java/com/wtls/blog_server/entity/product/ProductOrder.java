@@ -19,6 +19,7 @@ public class ProductOrder {
     private String shippingAddress;
     private String orderType; // "INDIVIDUAL" or "GROUP"
     private Integer pointsUsed;
+    private String selectedSpec;
     private LocalDateTime createTime;
     private LocalDateTime payTime;
 }

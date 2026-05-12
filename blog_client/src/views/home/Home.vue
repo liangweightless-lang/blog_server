@@ -1,7 +1,19 @@
 <template>
   <div class="home-container">
     <ProfileHero />
+    
+    <!-- 搜索功能区 -->
+    <div class="home-search-wrapper">
+      <SearchBar @search="handleSearch" />
+    </div>
+
     <ArticleGrid :articles="articles" :loading="loading" />
+    
+    <!-- 管理员专属悬浮按钮 -->
+    <div v-if="isAdmin" class="admin-fab" @click="$router.push('/create')">
+      <i class="el-icon-plus"></i>
+      <span class="fab-text">发布日常</span>
+    </div>
   </div>
 </template>
 
@@ -9,30 +21,67 @@
 import axios from 'axios'
 import ProfileHero from '@/components/home/ProfileHero.vue'
 import ArticleGrid from '@/components/home/ArticleGrid.vue'
+import SearchBar from '@/components/common/SearchBar.vue'
 
 export default {
   name: 'Home',
   components: {
     ProfileHero,
-    ArticleGrid
+    ArticleGrid,
+    SearchBar
   },
   data() {
     return {
       articles: [],
-      loading: false
+      loading: false,
+      user: null,
+      searchQuery: ''
+    }
+  },
+  computed: {
+    isAdmin() {
+      return this.user && this.user.role === 'ADMIN'
     }
   },
   created() {
     this.fetchArticles()
+    this.checkUser()
+    window.addEventListener('user-updated', (e) => {
+      this.user = e.detail
+    })
   },
   methods: {
+    handleSearch(query) {
+      this.searchQuery = query
+      // 防抖处理：500ms 内没有新输入则发起请求
+      clearTimeout(this.searchTimer)
+      this.searchTimer = setTimeout(() => {
+        this.fetchArticles()
+      }, 500)
+    },
+    async checkUser() {
+      const token = localStorage.getItem('token')
+      if (token) {
+        axios.get('/api/users/me', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }).then(res => {
+          if (res.data && res.data.data) {
+            this.user = res.data.data
+          }
+        })
+      }
+    },
     async fetchArticles() {
       this.loading = true
       try {
-        const res = await axios.get('/api/articles')
+        let url = '/api/articles'
+        if (this.searchQuery) {
+          url = `/api/articles/search?keyword=${encodeURIComponent(this.searchQuery)}`
+        }
+        const res = await axios.get(url)
         this.articles = res.data.data
       } catch (error) {
-        this.$message.error('获取故事列表失败')
+        this.$message.error('搜索日记失败')
       } finally {
         this.loading = false
       }
@@ -46,10 +95,57 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  position: relative;
+  min-height: 100vh;
 }
+
+.home-search-wrapper {
+  padding: 0 10px;
+  margin-top: -10px;
+  margin-bottom: 10px;
+  z-index: 10;
+}
+
+.admin-fab {
+  position: fixed;
+  right: 24px;
+  bottom: 40px;
+  background: linear-gradient(135deg, #FF7E67 0%, #FF5A44 100%);
+  color: white;
+  width: 120px;
+  height: 48px;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 8px 20px rgba(255, 126, 103, 0.4);
+  cursor: pointer;
+  z-index: 1000;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.admin-fab:hover {
+  transform: scale(1.05) translateY(-2px);
+  box-shadow: 0 12px 24px rgba(255, 126, 103, 0.5);
+}
+
+.admin-fab:active {
+  transform: scale(0.95);
+}
+
 @media (max-width: 768px) {
   .home-container {
     gap: 16px;
+  }
+  .admin-fab {
+    right: 20px;
+    bottom: 90px; /* 调高位置，避开底部菜单栏 */
+    width: 110px;
+    height: 44px;
+    font-size: 13px;
   }
 }
 </style>

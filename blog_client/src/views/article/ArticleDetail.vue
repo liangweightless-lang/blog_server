@@ -6,10 +6,10 @@
       </div>
       <div class="header-author">
         <img src="/img/avatar.png" class="author-avatar" />
-        <span class="author-name">生活家</span>
+        <span class="author-name">焙刻生活</span>
       </div>
       <div class="header-right">
-        <el-button round size="mini" class="follow-btn">关注</el-button>
+        <el-button type="text" icon="el-icon-share" style="color: #FF7E67; font-size: 20px;" @click="shareArticle"></el-button>
       </div>
     </div>
 
@@ -33,20 +33,8 @@
         <span class="post-time">{{ formatDate(article.createTime) }}</span>
       </div>
 
-      <!-- 创作者推荐商品卡片 -->
-      <div class="recommended-product" v-if="product && product.id" @click="$router.push('/store')">
-        <div class="product-card-inner">
-          <div class="product-badge">创作者推荐</div>
-          <img :src="product.image" class="product-thumb" />
-          <div class="product-info-mini">
-            <h4 class="product-name-mini">{{ product.name }}</h4>
-            <div class="product-price-row">
-              <span class="product-price-mini">¥{{ product.price }}</span>
-              <el-button type="primary" size="mini" round class="buy-now-btn">立即去买</el-button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <!-- 创作者推荐商品卡片 (已封装组件) -->
+      <ArticleProductCard :product="product" @click="goToProduct" />
 
       <div class="comments-section">
         <h3 class="comments-title">共 {{ comments.length }} 条评论</h3>
@@ -76,13 +64,17 @@
           <i class="el-icon-sugar"></i>
           <span>{{ article.likesCount || '赞' }}</span>
         </div>
-        <div class="action-btn">
-          <i class="el-icon-star-off"></i>
-          <span>收藏</span>
+        <div class="action-btn" @click="toggleFavorite">
+          <i :class="isFavorited ? 'el-icon-star-on' : 'el-icon-star-off'" :style="{ color: isFavorited ? '#FF7E67' : '' }"></i>
+          <span :style="{ color: isFavorited ? '#FF7E67' : '' }">{{ isFavorited ? '已收藏' : '收藏' }}</span>
         </div>
         <div class="action-btn">
           <i class="el-icon-chat-dot-round"></i>
           <span>{{ comments.length || '评论' }}</span>
+        </div>
+        <div class="action-btn" @click="shareArticle">
+          <i class="el-icon-share"></i>
+          <span>分享</span>
         </div>
       </div>
     </div>
@@ -91,9 +83,13 @@
 
 <script>
 import axios from 'axios'
+import ArticleProductCard from '@/components/article/ArticleProductCard.vue'
 
 export default {
   name: 'ArticleDetail',
+  components: {
+    ArticleProductCard
+  },
   data() {
     return {
       loading: true,
@@ -102,14 +98,48 @@ export default {
       comments: [],
       newComment: '',
       submitting: false,
-      product: null
+      product: null,
+      isFavorited: false
     }
   },
   created() {
     this.fetchArticle()
     this.fetchComments()
+    this.checkFavoriteStatus()
   },
   methods: {
+    async checkFavoriteStatus() {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const id = this.$route.params.id;
+      try {
+        const res = await axios.get(`/api/favorites/status/${id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        this.isFavorited = res.data.data;
+      } catch (e) {
+        console.error('获取收藏状态失败');
+      }
+    },
+    async toggleFavorite() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        this.$message.warning('请先登录后收藏');
+        return;
+      }
+      const id = this.$route.params.id;
+      try {
+        await axios.post('/api/favorites/toggle', { articleId: id }, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        this.isFavorited = !this.isFavorited;
+        this.$message.success(this.isFavorited ? '收藏成功' : '已取消收藏');
+        // 通知主页或 Profile 页刷新状态（可选）
+        window.dispatchEvent(new CustomEvent('favorites-updated'));
+      } catch (e) {
+        this.$message.error('操作失败');
+      }
+    },
     async fetchArticle() {
       const id = this.$route.params.id
       try {
@@ -191,6 +221,28 @@ export default {
         this.$message.success('点赞成功');
       } catch (error) {
         this.$message.error('点赞失败');
+      }
+    },
+    shareArticle() {
+      const url = window.location.href
+      navigator.clipboard.writeText(url).then(() => {
+        this.$confirm('文章链接已复制到剪贴板！可以直接粘贴转发给好友，他们打开后就能看见您推荐的商品。', '分享成功', {
+          confirmButtonText: '知道了',
+          type: 'success',
+          showCancelButton: false,
+          roundButton: true
+        })
+      }).catch(() => {
+        this.$message.error('复制失败，请手动复制浏览器地址栏链接分享')
+      })
+    },
+    goToProduct() {
+      if (this.product) {
+        // 跳转到商店，并带上直达下单参数
+        this.$router.push({
+          path: '/store',
+          query: { buyProductId: this.product.id }
+        })
       }
     },
     getGradient(id) {
@@ -424,69 +476,6 @@ export default {
   font-size: 14px;
 }
 
-/* 推荐商品卡片样式 */
-.recommended-product {
-  margin: 30px 0;
-  cursor: pointer;
-  transition: transform 0.3s;
-}
-.recommended-product:hover {
-  transform: translateY(-2px);
-}
-.product-card-inner {
-  display: flex;
-  background: #FFFDF8;
-  border: 1px solid #FFE4D6;
-  border-radius: 16px;
-  padding: 16px;
-  position: relative;
-  overflow: hidden;
-}
-.product-badge {
-  position: absolute;
-  top: 0;
-  left: 0;
-  background: #FF7E67;
-  color: white;
-  font-size: 10px;
-  padding: 2px 8px;
-  border-radius: 0 0 12px 0;
-  font-weight: bold;
-}
-.product-thumb {
-  width: 80px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: 12px;
-  margin-right: 15px;
-}
-.product-info-mini {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-.product-name-mini {
-  margin: 0 0 10px 0;
-  font-size: 15px;
-  color: #5C433B;
-  font-weight: 700;
-}
-.product-price-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.product-price-mini {
-  font-size: 18px;
-  font-weight: 800;
-  color: #FF7E67;
-}
-.buy-now-btn {
-  background: #FF7E67;
-  border: none;
-  font-size: 12px;
-}
 
 @media (max-width: 768px) {
   .xhs-detail-container {
