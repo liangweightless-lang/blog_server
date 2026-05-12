@@ -23,14 +23,30 @@
         <el-tab-pane name="orders">
           <span slot="label"><i class="el-icon-s-order"></i> 我的订单</span>
           <div class="tab-content-wrapper">
-            <!-- 这里可以放更详细的订单列表，目前复用 Grid -->
             <div v-if="orders.length === 0" class="empty-placeholder">
               <i class="el-icon-shopping-cart-2"></i>
               <p>暂无订单记录</p>
             </div>
             <div v-else class="order-full-list">
-              <!-- 这里可以后续美化订单列表 -->
-              <p style="text-align: center; color: #999; font-size: 13px;">已展示全部 {{ orders.length }} 个订单</p>
+              <div v-for="order in orders" :key="order.id" class="order-card-item">
+                <div class="order-card-header">
+                  <span class="order-id">订单号: {{ order.id.substring(0, 12) }}...</span>
+                  <el-tag :type="getOrderStatusType(order.status)" size="mini" effect="plain">
+                    {{ getOrderStatusText(order.status) }}
+                  </el-tag>
+                </div>
+                <div class="order-card-body">
+                  <div class="order-main-info">
+                    <p class="order-pname">商品ID: {{ order.productId }}</p>
+                    <p class="order-spec" v-if="order.selectedSpec">规格: {{ order.selectedSpec }}</p>
+                    <p class="order-time">{{ formatTime(order.createTime) }}</p>
+                  </div>
+                  <div class="order-price-info">
+                    <span class="price-val">¥{{ order.amount }}</span>
+                  </div>
+                </div>
+              </div>
+              <p class="list-end-tip">已展示全部 {{ orders.length }} 个订单</p>
             </div>
           </div>
         </el-tab-pane>
@@ -297,6 +313,14 @@ export default {
         this.loadingOrders = false;
       }
     },
+    getOrderStatusType(status) {
+      const types = ['info', 'success', 'danger', 'primary'];
+      return types[status] || 'info';
+    },
+    getOrderStatusText(status) {
+      const texts = ['待支付', '已支付', '已取消', '已发货'];
+      return texts[status] || '未知';
+    },
     formatTime(timeStr) {
       if (!timeStr) return '';
       return new Date(timeStr).toLocaleString();
@@ -517,6 +541,62 @@ export default {
 .click-tip {
   color: #FF7E67;
   font-weight: bold;
+}
+
+/* Order Card Styles */
+.order-card-item {
+  background: white;
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 12px;
+  border: 1px solid #f0f0f0;
+}
+.order-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #eee;
+}
+.order-id {
+  font-size: 11px;
+  color: #999;
+}
+.order-card-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.order-pname {
+  font-weight: bold;
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 4px;
+}
+.order-spec {
+  font-size: 11px;
+  color: #FF7E67;
+  background: #FFF0ED;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 4px;
+}
+.order-time {
+  font-size: 11px;
+  color: #bbb;
+}
+.price-val {
+  font-weight: bold;
+  font-size: 16px;
+  color: #F56C6C;
+}
+.list-end-tip {
+  text-align: center;
+  color: #ccc;
+  font-size: 12px;
+  padding: 20px 0;
 }
 
 @media (max-width: 768px) {
