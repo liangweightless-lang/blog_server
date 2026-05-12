@@ -98,10 +98,36 @@ export default {
       window.dispatchEvent(new CustomEvent('user-updated', { detail: null }));
     },
     copyInviteLink() {
-      const link = `${window.location.origin}/?invite=${this.user.inviteCode}`;
-      navigator.clipboard.writeText(link).then(() => {
-        this.$message.success('邀请链接已复制到剪贴板！发给好友购买，您可获得积分奖励。');
-      });
+      const link = `${window.location.origin}/register?invite=${this.user.inviteCode}`;
+      
+      const fallbackCopy = (text) => {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        textArea.style.top = "-9999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+          this.$message.success('邀请链接已复制');
+        } catch (err) {
+          document.body.removeChild(textArea);
+          this.$message.error('复制失败，请手动复制');
+        }
+      };
+
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(link).then(() => {
+          this.$message.success('邀请链接已复制，快去发给好友吧！');
+        }).catch(() => {
+          fallbackCopy(link);
+        });
+      } else {
+        fallbackCopy(link);
+      }
     }
   }
 }

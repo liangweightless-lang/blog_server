@@ -224,17 +224,41 @@ export default {
       }
     },
     shareArticle() {
-      const url = window.location.href
-      navigator.clipboard.writeText(url).then(() => {
+      const url = window.location.href;
+      const copyToClipboard = (text) => {
+        if (navigator.clipboard && window.isSecureContext) {
+          return navigator.clipboard.writeText(text);
+        } else {
+          // Fallback for non-HTTPS
+          const textArea = document.createElement("textarea");
+          textArea.value = text;
+          textArea.style.position = "fixed";
+          textArea.style.left = "-9999px";
+          textArea.style.top = "-9999px";
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          try {
+            const successful = document.execCommand('copy');
+            document.body.removeChild(textArea);
+            return successful ? Promise.resolve() : Promise.reject();
+          } catch (err) {
+            document.body.removeChild(textArea);
+            return Promise.reject(err);
+          }
+        }
+      };
+
+      copyToClipboard(url).then(() => {
         this.$confirm('文章链接已复制到剪贴板！可以直接粘贴转发给好友，他们打开后就能看见您推荐的商品。', '分享成功', {
           confirmButtonText: '知道了',
           type: 'success',
           showCancelButton: false,
           roundButton: true
-        })
+        });
       }).catch(() => {
-        this.$message.error('复制失败，请手动复制浏览器地址栏链接分享')
-      })
+        this.$message.error('复制失败，请手动复制浏览器地址栏链接分享');
+      });
     },
     goToProduct() {
       if (this.product) {
