@@ -9,9 +9,13 @@ public class Result<T> {
     private T data;
 
     public static <T> Result<T> success(T data) {
+        return success(data, "success");
+    }
+
+    public static <T> Result<T> success(T data, String message) {
         Result<T> result = new Result<>();
         result.setCode(200);
-        result.setMessage("success");
+        result.setMessage(message);
         result.setData(data);
         return result;
     }

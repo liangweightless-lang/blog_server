@@ -66,7 +66,7 @@ public class UserController {
         Object userIdObj = claims.get("userId");
         Long userId = userIdObj != null ? Long.valueOf(userIdObj.toString()) : null;
         userService.dailyCheckin(userId);
-        return Result.success("签到成功，获得10积分！");
+        return Result.success(null, "签到成功，获得10积分！");
     }
 
     @PutMapping("/profile")
