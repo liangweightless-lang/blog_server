@@ -215,8 +215,19 @@
             <el-form-item label="库存">
               <el-input-number v-model="productForm.stock" :min="0" style="width: 150px;"></el-input-number>
             </el-form-item>
-            <el-form-item label="图片链接">
-              <el-input v-model="productForm.image" placeholder="/img/product_xxx.png"></el-input>
+            <el-form-item label="商品图片">
+              <el-upload
+                class="product-image-uploader"
+                action="/api/files/upload"
+                :show-file-list="false"
+                :on-success="handleProductImageSuccess"
+                :before-upload="beforeProductImageUpload">
+                <img v-if="productForm.image" :src="productForm.image" class="product-upload-preview">
+                <div v-else class="product-upload-placeholder">
+                  <i class="el-icon-plus"></i>
+                  <span>点击上传</span>
+                </div>
+              </el-upload>
             </el-form-item>
             <el-form-item label="数字商品">
               <el-switch v-model="productForm.isDigital" active-text="是" inactive-text="否"></el-switch>
@@ -313,6 +324,17 @@ export default {
     window.removeEventListener('resize', this.handleResize);
   },
   methods: {
+    handleProductImageSuccess(res) {
+      this.productForm.image = res.url;
+      this.$message.success('图片上传成功');
+    },
+    beforeProductImageUpload(file) {
+      const isImg = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/webp';
+      const isLt2M = file.size / 1024 / 1024 < 2;
+      if (!isImg) this.$message.error('只能上传 JPG/PNG/WebP 格式图片!');
+      if (!isLt2M) this.$message.error('图片大小不能超过 2MB!');
+      return isImg && isLt2M;
+    },
     addSpecGroup() {
       this.productForm.specsList.push({
         name: '',
@@ -738,5 +760,38 @@ export default {
 }
 .input-new-tag {
   vertical-align: bottom;
+}
+/* Product Image Uploader */
+.product-image-uploader {
+  border: 1px dashed #d9d9d9;
+  border-radius: 12px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  width: 120px;
+  height: 120px;
+  transition: border-color 0.3s;
+  background: #fafafa;
+}
+.product-image-uploader:hover {
+  border-color: #FF7E67;
+}
+.product-upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  color: #8c939d;
+}
+.product-upload-placeholder i {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+.product-upload-preview {
+  width: 120px;
+  height: 120px;
+  display: block;
+  object-fit: cover;
 }
 </style>
