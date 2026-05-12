@@ -4,6 +4,9 @@
     <UserHeader :user="user" @edit="showEditDialog" />
     <UserStats :user="user" />
     
+    <!-- 订单快捷状态栏，点击切换到订单 Tab -->
+    <UserOrderGrid :orders="orders" @view-all="activeTab = 'orders'" />
+    
     <div class="user-tabs-section">
       <el-tabs v-model="activeTab" @tab-click="handleTabClick">
         <el-tab-pane name="favorites">
@@ -20,7 +23,15 @@
         <el-tab-pane name="orders">
           <span slot="label"><i class="el-icon-s-order"></i> 我的订单</span>
           <div class="tab-content-wrapper">
-            <UserOrderGrid :orders="orders" />
+            <!-- 这里可以放更详细的订单列表，目前复用 Grid -->
+            <div v-if="orders.length === 0" class="empty-placeholder">
+              <i class="el-icon-shopping-cart-2"></i>
+              <p>暂无订单记录</p>
+            </div>
+            <div v-else class="order-full-list">
+              <!-- 这里可以后续美化订单列表 -->
+              <p style="text-align: center; color: #999; font-size: 13px;">已展示全部 {{ orders.length }} 个订单</p>
+            </div>
           </div>
         </el-tab-pane>
       </el-tabs>

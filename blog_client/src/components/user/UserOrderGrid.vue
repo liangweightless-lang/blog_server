@@ -2,24 +2,24 @@
   <div class="section-card order-section">
     <div class="section-header">
       <span class="section-title">我的订单</span>
-      <el-button type="text" class="view-all">全部订单 <i class="el-icon-arrow-right"></i></el-button>
+      <el-button type="text" class="view-all" @click="$emit('view-all')">全部订单 <i class="el-icon-arrow-right"></i></el-button>
     </div>
     <div class="order-status-grid">
-      <div class="status-item">
+      <div class="status-item" @click="$emit('view-all')">
         <el-badge :value="unpaidCount" :hidden="unpaidCount === 0" class="badge-item">
           <i class="el-icon-wallet icon"></i>
         </el-badge>
         <span>待付款</span>
       </div>
-      <div class="status-item">
+      <div class="status-item" @click="$emit('view-all')">
         <i class="el-icon-box icon"></i>
         <span>待发货</span>
       </div>
-      <div class="status-item">
+      <div class="status-item" @click="$emit('view-all')">
         <i class="el-icon-truck icon"></i>
         <span>待收货</span>
       </div>
-      <div class="status-item">
+      <div class="status-item" @click="$emit('view-all')">
         <i class="el-icon-chat-line-round icon"></i>
         <span>评价</span>
       </div>
