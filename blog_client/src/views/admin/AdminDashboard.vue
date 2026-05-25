@@ -1,8 +1,8 @@
 <template>
   <div class="admin-container">
     <div class="admin-header">
-      <h1 class="admin-title">焙刻生活</h1>
-      <p class="admin-subtitle">管理烘焙新品、精品咖啡菜单以及品牌日常动态。</p>
+      <h1 class="admin-title">小柴包</h1>
+      <p class="admin-subtitle">管理日常日记、商品、人员、订单与系统全局配置。</p>
     </div>
 
     <el-tabs v-model="activeTab" type="border-card">
@@ -197,6 +197,38 @@
           </div>
         </div>
       </el-tab-pane>
+
+      <!-- 首页信息配置 -->
+      <el-tab-pane label="首页信息配置" name="system">
+        <el-form :model="homeConfigForm" label-width="120px" style="max-width: 600px; margin-top: 20px;" size="small">
+          <el-form-item label="首页头像">
+            <el-upload
+              class="product-image-uploader"
+              action="/api/files/upload"
+              :show-file-list="false"
+              :on-success="handleHomeAvatarSuccess"
+              :before-upload="beforeProductImageUpload">
+              <img v-if="homeConfigForm.avatarUrl" :src="homeConfigForm.avatarUrl" class="product-upload-preview">
+              <div v-else class="product-upload-placeholder">
+                <i class="el-icon-plus"></i>
+                <span>上传头像</span>
+              </div>
+            </el-upload>
+          </el-form-item>
+          <el-form-item label="创作者名称">
+            <el-input v-model="homeConfigForm.authorName" placeholder="例如: 小柴包"></el-input>
+          </el-form-item>
+          <el-form-item label="个性签名/简介">
+            <el-input type="textarea" :rows="4" v-model="homeConfigForm.authorBio" placeholder="请输入创作者简介"></el-input>
+          </el-form-item>
+          <el-form-item label="兴趣标签 (用英文逗号分隔)">
+            <el-input v-model="homeConfigForm.tagsString" placeholder="例如: 生活方式,独立品牌,创作手记"></el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" :loading="savingConfig" @click="saveHomeConfig">保存配置</el-button>
+          </el-form-item>
+        </el-form>
+      </el-tab-pane>
     </el-tabs>
 
     <el-dialog :title="isEditing ? '编辑商品' : '上架新商品'" :visible.sync="productDialogVisible" :width="isMobile ? '95%' : '600px'" top="5vh">
@@ -309,6 +341,13 @@ export default {
         isDigital: true,
         stock: 0,
         specsList: []
+      },
+      savingConfig: false,
+      homeConfigForm: {
+        avatarUrl: '',
+        authorName: '',
+        authorBio: '',
+        tagsString: ''
       }
     }
   },
@@ -318,6 +357,7 @@ export default {
     this.fetchUsers();
     this.fetchOrders();
     this.fetchGroups();
+    this.fetchHomeConfig();
     window.addEventListener('resize', this.handleResize);
   },
   beforeDestroy() {
@@ -555,6 +595,43 @@ export default {
     },
     formatTime(timeStr) {
       return new Date(timeStr).toLocaleString();
+    },
+    async fetchHomeConfig() {
+      try {
+        const res = await axios.get('/api/home/config');
+        if (res.data && res.data.data) {
+          const data = res.data.data;
+          this.homeConfigForm = {
+            avatarUrl: data.avatarUrl,
+            authorName: data.authorName,
+            authorBio: data.authorBio,
+            tagsString: data.tags ? data.tags.join(',') : ''
+          };
+        }
+      } catch (error) {
+        this.$message.error('获取系统配置失败');
+      }
+    },
+    handleHomeAvatarSuccess(res) {
+      this.homeConfigForm.avatarUrl = res.url;
+      this.$message.success('头像上传成功');
+    },
+    async saveHomeConfig() {
+      this.savingConfig = true;
+      try {
+        const payload = {
+          avatarUrl: this.homeConfigForm.avatarUrl,
+          authorName: this.homeConfigForm.authorName,
+          authorBio: this.homeConfigForm.authorBio,
+          tags: this.homeConfigForm.tagsString.split(',').map(s => s.trim()).filter(Boolean)
+        };
+        await axios.post('/api/home/config', payload, { headers: this.getAuthHeader() });
+        this.$message.success('系统配置保存成功！');
+      } catch (error) {
+        this.$message.error(error.response?.data?.message || '保存失败');
+      } finally {
+        this.savingConfig = false;
+      }
     }
   }
 }

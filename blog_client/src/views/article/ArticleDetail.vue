@@ -5,8 +5,8 @@
         <i class="el-icon-arrow-left"></i>
       </div>
       <div class="header-author">
-        <img src="/img/avatar.png" class="author-avatar" />
-        <span class="author-name">焙刻生活</span>
+        <img :src="homeConfig.avatarUrl || '/img/avatar.png'" class="author-avatar" />
+        <span class="author-name">{{ homeConfig.authorName || '小柴包' }}</span>
       </div>
       <div class="header-right">
         <el-button type="text" icon="el-icon-share" style="color: #FF7E67; font-size: 20px;" @click="shareArticle"></el-button>
@@ -99,15 +99,30 @@ export default {
       newComment: '',
       submitting: false,
       product: null,
-      isFavorited: false
+      isFavorited: false,
+      homeConfig: {
+        avatarUrl: '',
+        authorName: ''
+      }
     }
   },
   created() {
     this.fetchArticle()
     this.fetchComments()
     this.checkFavoriteStatus()
+    this.fetchHomeConfig()
   },
   methods: {
+    async fetchHomeConfig() {
+      try {
+        const res = await axios.get('/api/home/config');
+        if (res.data && res.data.data) {
+          this.homeConfig = res.data.data;
+        }
+      } catch (error) {
+        console.error('获取首页配置失败', error);
+      }
+    },
     async checkFavoriteStatus() {
       const token = localStorage.getItem('token');
       if (!token) return;

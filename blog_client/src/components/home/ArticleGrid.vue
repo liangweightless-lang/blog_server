@@ -20,8 +20,8 @@
             <div class="xhs-title">{{ article.title }}</div>
             <div class="xhs-bottom">
               <div class="xhs-author">
-                <img src="/img/avatar.png" class="xhs-author-avatar" />
-                <span class="xhs-author-name">焙刻生活</span>
+                <img :src="homeConfig.avatarUrl || '/img/avatar.png'" class="xhs-author-avatar" />
+                <span class="xhs-author-name">{{ homeConfig.authorName || '小柴包' }}</span>
               </div>
               <div class="xhs-likes">
                 <i class="el-icon-sugar"></i> {{ article.likesCount || 0 }}
@@ -36,6 +36,8 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   name: 'ArticleGrid',
   props: {
@@ -49,9 +51,27 @@ export default {
     }
   },
   data() {
-    return {}
+    return {
+      homeConfig: {
+        avatarUrl: '',
+        authorName: ''
+      }
+    }
+  },
+  created() {
+    this.fetchHomeConfig();
   },
   methods: {
+    async fetchHomeConfig() {
+      try {
+        const res = await axios.get('/api/home/config');
+        if (res.data && res.data.data) {
+          this.homeConfig = res.data.data;
+        }
+      } catch (error) {
+        console.error('获取首页配置失败', error);
+      }
+    },
     viewArticle(article) {
       this.$router.push(`/article/${article.id}`)
     },

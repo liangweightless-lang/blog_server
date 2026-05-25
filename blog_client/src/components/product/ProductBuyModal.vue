@@ -206,7 +206,7 @@ export default {
         });
 
         this.$message({
-          message: '支付成功！欢迎开启焙刻生活。',
+          message: '支付成功！欢迎开启小柴包美好体验。',
           type: 'success',
           duration: 3000
         });

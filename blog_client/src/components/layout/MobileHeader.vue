@@ -1,6 +1,6 @@
 <template>
   <div class="mobile-header">
-    <div class="logo" @click="$router.push('/')">焙刻生活</div>
+    <div class="logo" @click="$router.push('/')">小柴包</div>
     <div class="user-avatar" v-if="user" @click="$router.push('/profile')">
       <el-avatar :size="32" :src="user.avatarUrl"></el-avatar>
     </div>

@@ -2,21 +2,46 @@
   <div class="hero-section">
     <div class="hero-overlay"></div>
     <div class="profile-content">
-      <img src="/img/avatar.png" class="avatar" alt="Avatar" />
-      <h1 class="author-name">创作者 Weightless</h1>
-      <p class="author-bio">记录灵感，探索生活美学。在这里分享品牌的成长脉络，以及创作者的生活方式碎片。</p>
+      <img :src="homeConfig.avatarUrl || '/img/avatar.png'" class="avatar" alt="Avatar" />
+      <h1 class="author-name">创作者 {{ homeConfig.authorName || '小柴包' }}</h1>
+      <p class="author-bio">{{ homeConfig.authorBio || '记录灵感，探索生活美学。在这里分享品牌的成长脉络，以及创作者的生活方式碎片。' }}</p>
       <div class="social-links">
-        <el-tag size="small" type="info">#生活方式</el-tag>
-        <el-tag size="small" type="info">#独立品牌</el-tag>
-        <el-tag size="small" type="info">#创作手记</el-tag>
+        <el-tag size="small" type="info" v-for="tag in (homeConfig.tags || ['生活方式', '独立品牌', '创作手记'])" :key="tag">#{{ tag }}</el-tag>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
-  name: 'ProfileHero'
+  name: 'ProfileHero',
+  data() {
+    return {
+      homeConfig: {
+        avatarUrl: '',
+        authorName: '',
+        authorBio: '',
+        tags: []
+      }
+    }
+  },
+  created() {
+    this.fetchHomeConfig();
+  },
+  methods: {
+    async fetchHomeConfig() {
+      try {
+        const res = await axios.get('/api/home/config');
+        if (res.data && res.data.data) {
+          this.homeConfig = res.data.data;
+        }
+      } catch (error) {
+        console.error('获取首页配置失败', error);
+      }
+    }
+  }
 }
 </script>
 

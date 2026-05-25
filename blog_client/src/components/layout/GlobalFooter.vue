@@ -16,7 +16,7 @@
       </div>
       <div class="footer-bottom">
         <div class="copyright">
-          &copy; {{ new Date().getFullYear() }} Weightless 独立创意工作室 版权所有
+          &copy; {{ new Date().getFullYear() }} 小柴包 独立创意工作室 版权所有
         </div>
         <div class="wechat-qr">
           <p>扫描二维码添加微信</p>
