@@ -27,6 +27,7 @@ services:
       - "8081:8081"
     volumes:
       - ./uploads:/app/uploads
+      - ./src/main/resources/application-prod.properties:/app/config/application-prod.properties:ro
     depends_on:
       - mysql_server
 
