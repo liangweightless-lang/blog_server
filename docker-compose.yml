@@ -16,9 +16,7 @@ services:
       - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/schema.sql
 
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: wtls/blog_backend:latest
     container_name: blog_backend
     restart: always
     environment:
@@ -31,9 +29,7 @@ services:
       - mysql_server
 
   frontend:
-    build:
-      context: ./blog_client
-      dockerfile: Dockerfile
+    image: wtls/blog_frontend:latest
     container_name: blog_frontend
     restart: always
     ports:
