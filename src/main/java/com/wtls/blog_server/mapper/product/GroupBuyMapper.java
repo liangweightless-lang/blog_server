@@ -45,6 +45,16 @@ public interface GroupBuyMapper extends BaseMapper<GroupBuy> {
     @Select("SELECT COUNT(*) FROM group_buy_member WHERE group_id = #{groupId} AND user_id = #{userId}")
     int checkMember(@Param("groupId") Long groupId, @Param("userId") Long userId);
 
+    @Select("SELECT order_id FROM group_buy_member WHERE group_id = #{groupId} AND user_id = #{userId} LIMIT 1")
+    String getOrderIdForMember(@Param("groupId") Long groupId, @Param("userId") Long userId);
+
     @Select("SELECT * FROM group_buy_member WHERE group_id = #{groupId}")
     List<GroupBuyMember> findMembersByGroupId(Long groupId);
+
+    @Select("SELECT u.id as userId, u.nickname, u.avatar_url as avatarUrl, gbm.create_time as joinTime " +
+            "FROM group_buy_member gbm " +
+            "JOIN user u ON gbm.user_id = u.id " +
+            "WHERE gbm.group_id = #{groupId} " +
+            "ORDER BY gbm.create_time ASC")
+    List<java.util.Map<String, Object>> findMemberDetailsByGroupId(Long groupId);
 }

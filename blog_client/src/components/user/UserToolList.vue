@@ -25,13 +25,7 @@
         </div>
         <i class="el-icon-arrow-right"></i>
       </div>
-      <div class="tool-cell" v-if="user && user.role === 'ADMIN'" @click="$router.push('/admin')">
-        <div class="cell-left">
-          <i class="el-icon-set-up tool-icon" style="color: #E6A23C"></i>
-          <span>管理后台</span>
-        </div>
-        <i class="el-icon-arrow-right"></i>
-      </div>
+
       <div class="tool-cell" @click="$emit('logout')">
         <div class="cell-left">
           <i class="el-icon-switch-button tool-icon" style="color: #909399"></i>

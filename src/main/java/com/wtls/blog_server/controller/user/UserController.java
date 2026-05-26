@@ -3,6 +3,7 @@ package com.wtls.blog_server.controller.user;
 import com.wtls.blog_server.common.Result;
 import com.wtls.blog_server.entity.user.User;
 import com.wtls.blog_server.service.user.UserService;
+import com.wtls.blog_server.service.auth.CaptchaService;
 import com.wtls.blog_server.utils.JwtUtils;
 import cn.hutool.core.bean.BeanUtil;
 import io.jsonwebtoken.Claims;
@@ -26,6 +27,9 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private CaptchaService captchaService;
+
     @Schema(description = "登录请求参数")
     public static class LoginRequest {
         @Schema(description = "用户名", example = "admin")
@@ -34,6 +38,12 @@ public class UserController {
         @Schema(description = "密码", example = "123456")
         @NotBlank(message = "密码不能为空")
         public String password;
+        @Schema(description = "验证码 Key")
+        @NotBlank(message = "验证码Key不能为空")
+        public String captchaKey;
+        @Schema(description = "验证码")
+        @NotBlank(message = "验证码不能为空")
+        public String captchaCode;
         @Schema(description = "邀请码 (可选)")
         public String inviteCode;
     }
@@ -41,6 +51,9 @@ public class UserController {
     @PostMapping("/login")
     @Operation(summary = "用户登录/注册", description = "如果用户不存在则自动注册")
     public Result<?> login(@Valid @RequestBody LoginRequest request) {
+        if (!captchaService.validateCaptcha(request.captchaKey, request.captchaCode)) {
+            return Result.error(400, "验证码错误或已过期");
+        }
         Map<String, Object> result = userService.registerOrLogin(request.username, request.password, request.inviteCode);
         return Result.success(result);
     }

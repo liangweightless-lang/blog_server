@@ -46,6 +46,12 @@ public class GroupBuyController {
         return Result.success(groupBuyService.getGroupById(id));
     }
 
+    @GetMapping("/{id}/members")
+    @Operation(summary = "获取拼团成员列表")
+    public Result<List<Map<String, Object>>> getGroupMembers(@PathVariable Long id) {
+        return Result.success(groupBuyService.getGroupMembers(id));
+    }
+
     @GetMapping
     @Operation(summary = "获取所有拼团记录 (Admin)")
     public Result<List<GroupBuy>> getAllGroups(@RequestHeader("Authorization") String authHeader) {
@@ -59,21 +65,29 @@ public class GroupBuyController {
 
     @PostMapping("/start")
     @Operation(summary = "发起新拼团")
-    public Result<GroupBuy> startGroup(@RequestHeader("Authorization") String authHeader, @RequestBody Map<String, Object> body) {
+    public Result<Map<String, Object>> startGroup(@RequestHeader("Authorization") String authHeader, @RequestBody Map<String, Object> body) {
         Long userId = getUserId(authHeader);
         Long productId = Long.valueOf(body.get("productId").toString());
         String address = body.getOrDefault("address", "").toString();
         GroupBuy gb = groupBuyService.startGroup(userId, productId, address);
-        return Result.success(gb);
+        
+        // Find the newly created order ID
+        String orderId = groupBuyService.getOrderIdForMember(gb.getId(), userId);
+        
+        return Result.success(Map.of("group", gb, "orderId", orderId));
     }
 
     @PostMapping("/{groupId}/join")
     @Operation(summary = "加入拼团")
-    public Result<GroupBuy> joinGroup(@RequestHeader("Authorization") String authHeader, @PathVariable Long groupId, @RequestBody(required = false) Map<String, Object> body) {
+    public Result<Map<String, Object>> joinGroup(@RequestHeader("Authorization") String authHeader, @PathVariable Long groupId, @RequestBody(required = false) Map<String, Object> body) {
         Long userId = getUserId(authHeader);
         String address = (body != null && body.containsKey("address")) ? body.get("address").toString() : "";
         GroupBuy gb = groupBuyService.joinGroup(userId, groupId, address);
-        return Result.success(gb);
+        
+        // Find the newly created order ID
+        String orderId = groupBuyService.getOrderIdForMember(groupId, userId);
+        
+        return Result.success(Map.of("group", gb, "orderId", orderId));
     }
 
     @PostMapping("/{groupId}/force-success")

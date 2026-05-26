@@ -101,6 +101,10 @@ public class GroupBuyService {
         return updated;
     }
 
+    public String getOrderIdForMember(Long groupId, Long userId) {
+        return groupBuyMapper.getOrderIdForMember(groupId, userId);
+    }
+
     public List<GroupBuy> getUserGroups(Long userId) {
         return groupBuyMapper.findByUserIdWithNames(userId);
     }
@@ -111,6 +115,10 @@ public class GroupBuyService {
 
     public GroupBuy getGroupById(Long id) {
         return groupBuyMapper.selectById(id);
+    }
+
+    public List<java.util.Map<String, Object>> getGroupMembers(Long groupId) {
+        return groupBuyMapper.findMemberDetailsByGroupId(groupId);
     }
 
     @Transactional

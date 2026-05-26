@@ -24,6 +24,20 @@
         <el-button icon="el-icon-edit-outline" circle size="small" @click="$emit('edit')"></el-button>
       </div>
     </div>
+    
+    <!-- Admin VIP Banner -->
+    <div v-if="user && user.role === 'ADMIN'" class="admin-vip-banner" @click="$router.push('/admin')">
+      <div class="banner-left">
+        <div class="vip-icon-wrapper">
+          <i class="el-icon-s-custom vip-icon"></i>
+        </div>
+        <div class="vip-text">
+          <span class="vip-title">👑 创作者中心 / 管理控制台</span>
+          <span class="vip-subtitle">您拥有最高管理权限，点击进入</span>
+        </div>
+      </div>
+      <i class="el-icon-arrow-right"></i>
+    </div>
   </div>
 </template>
 
@@ -37,7 +51,8 @@ export default {
   },
   data() {
     return {
-      loading: false
+      loading: false,
+      checkinTimer: null
     }
   },
   computed: {
@@ -53,21 +68,26 @@ export default {
     }
   },
   methods: {
-    async handleCheckin() {
+    handleCheckin() {
       if (this.isCheckedIn) return;
-      this.loading = true;
-      try {
-        const res = await axios.post('/api/users/checkin', {}, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        });
-        this.$message.success(res.data.message);
-        // Refresh globally to update points and lastCheckinDate
-        window.dispatchEvent(new CustomEvent('refresh-user'));
-      } catch (error) {
-        this.$message.error(error.response?.data?.error || '签到失败');
-      } finally {
-        this.loading = false;
-      }
+      if (this.checkinTimer) clearTimeout(this.checkinTimer);
+      
+      this.checkinTimer = setTimeout(async () => {
+        if (this.loading) return;
+        this.loading = true;
+        try {
+          const res = await axios.post('/api/users/checkin', {}, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+          });
+          this.$message.success(res.data.message);
+          // Refresh globally to update points and lastCheckinDate
+          window.dispatchEvent(new CustomEvent('refresh-user'));
+        } catch (error) {
+          this.$message.error(error.response?.data?.error || '签到失败');
+        } finally {
+          this.loading = false;
+        }
+      }, 300);
     }
   }
 }
@@ -107,5 +127,69 @@ export default {
   margin: 4px 0 0;
   font-size: 12px;
   opacity: 0.8;
+}
+
+/* Admin VIP Banner Styles */
+.admin-vip-banner {
+  margin: 25px auto 0;
+  max-width: 600px;
+  background: linear-gradient(135deg, #3A3A3A 0%, #1A1A1A 100%);
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+.admin-vip-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,215,0,0.5), transparent);
+}
+.admin-vip-banner:active {
+  transform: scale(0.98);
+}
+.banner-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+.vip-icon-wrapper {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 215, 0, 0.15);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.vip-icon {
+  font-size: 20px;
+  color: #FFD700;
+}
+.vip-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.vip-title {
+  font-size: 15px;
+  font-weight: bold;
+  color: #FFF;
+  background: linear-gradient(90deg, #FFD700, #FFA500);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.vip-subtitle {
+  font-size: 12px;
+  color: rgba(255,255,255,0.6);
 }
 </style>

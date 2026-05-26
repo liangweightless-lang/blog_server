@@ -36,8 +36,11 @@
                   </el-tag>
                 </div>
                 <div class="order-card-body">
+                  <el-image :src="order.productImage" class="full-order-img" fit="cover">
+                    <div slot="error" class="image-slot"><i class="el-icon-picture-outline"></i></div>
+                  </el-image>
                   <div class="order-main-info">
-                    <p class="order-pname">商品ID: {{ order.productId }}</p>
+                    <p class="order-pname">{{ order.productName || '商品ID: ' + order.productId }}</p>
                     <p class="order-spec" v-if="order.selectedSpec">规格: {{ order.selectedSpec }}</p>
                     <p class="order-time">{{ formatTime(order.createTime) }}</p>
                   </div>
@@ -71,7 +74,10 @@
         <div v-else class="groups-list">
           <div v-for="group in myGroups" :key="group.id" class="group-item-card" @click="goToGroupDetail(group)">
             <div class="group-main">
-              <div class="group-info">
+              <el-image :src="group.productImage" class="group-img" fit="cover">
+                <div slot="error" class="image-slot"><i class="el-icon-picture-outline"></i></div>
+              </el-image>
+              <div class="group-info" style="flex: 1; min-width: 0;">
                 <p class="group-pname">{{ group.productName }}</p>
                 <p class="group-time">{{ formatTime(group.createTime) }}</p>
               </div>
@@ -79,7 +85,7 @@
                 <el-tag :type="getStatusType(group.status)" size="small" effect="dark">
                   {{ getStatusText(group.status) }}
                 </el-tag>
-                <i class="el-icon-arrow-right"></i>
+                <i class="el-icon-arrow-right" style="margin-left: 5px; color: #909399;"></i>
               </div>
             </div>
             <div class="group-progress">
@@ -119,7 +125,10 @@
           <el-input v-model="profileForm.wechatId" placeholder="方便后续沟通"></el-input>
         </el-form-item>
         <el-form-item label="收货地址">
-          <el-input type="textarea" v-model="profileForm.address" placeholder="详细地址"></el-input>
+          <div style="display: flex; gap: 10px; align-items: flex-start;">
+            <el-input type="textarea" v-model="profileForm.address" placeholder="详细地址" style="flex: 1;"></el-input>
+            <el-button type="primary" icon="el-icon-location" circle @click="openMapDialog" title="地图定位"></el-button>
+          </div>
         </el-form-item>
       </el-form>
       <div slot="footer">
@@ -127,6 +136,34 @@
         <el-button type="primary" @click="handleUpdate" :loading="updating">保存</el-button>
       </div>
     </el-dialog>
+
+    <!-- 高德地图选点弹窗 -->
+    <el-dialog title="地图定位" :visible.sync="mapDialogVisible" :width="isMobile ? '95%' : '600px'" append-to-body destroy-on-close @opened="initMap">
+      <div v-if="!amapKey" style="margin-bottom: 15px;">
+        <el-alert title="地图服务未配置" type="warning" show-icon :closable="false">
+          管理员尚未在后台系统配置中配置“高德地图 Key”与安全密钥，暂时无法使用地图定位功能。<br>
+          <span style="font-size: 12px; color: #909399;">若您是管理员，请前往 控制台 -> 首页信息配置 -> 第三方服务配置 填写相关信息。</span>
+        </el-alert>
+      </div>
+      
+      <div style="margin-bottom: 10px; display: flex; gap: 10px;">
+        <el-input id="map-search-input" v-model="mapSearchKeyword" placeholder="搜索地点..." prefix-icon="el-icon-search" clearable></el-input>
+        <el-button type="primary" @click="searchMap">搜索</el-button>
+      </div>
+      
+      <div id="amap-container" style="width: 100%; height: 300px; border-radius: 8px; border: 1px solid #DCDFE6;" v-loading="mapLoading"></div>
+      
+      <div v-if="selectedAddress" style="margin-top: 15px; background: #F2F6FC; padding: 10px; border-radius: 8px;">
+        <span style="color: #909399; font-size: 12px;">已选地址：</span>
+        <div style="font-weight: bold; color: #303133; margin-top: 4px;">{{ selectedAddress }}</div>
+      </div>
+      
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="mapDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="confirmMapLocation" :disabled="!selectedAddress">确 定</el-button>
+      </div>
+    </el-dialog>
+
 
     <!-- 邀请码弹窗 -->
     <el-dialog title="我的邀请码" :visible.sync="inviteDialogVisible" :width="isMobile ? '85%' : '400px'" round center>
@@ -144,6 +181,7 @@
 
 <script>
 import axios from 'axios';
+import AMapLoader from '@amap/amap-jsapi-loader';
 import UserHeader from '@/components/user/UserHeader.vue';
 import UserStats from '@/components/user/UserStats.vue';
 import UserOrderGrid from '@/components/user/UserOrderGrid.vue';
@@ -177,6 +215,18 @@ export default {
       editDialogVisible: false,
       inviteDialogVisible: false,
       groupsDialogVisible: false,
+      
+      // 高德地图相关
+      mapDialogVisible: false,
+      mapLoading: false,
+      mapSearchKeyword: '',
+      selectedAddress: '',
+      mapInstance: null,
+      markerInstance: null,
+      geocoderInstance: null,
+      amapKey: '', // 取自后端配置
+      amapSecurityCode: '', // 取自后端配置
+      
       myGroups: [],
       loadingGroups: false,
       activeTab: 'favorites',
@@ -189,6 +239,7 @@ export default {
     this.fetchUser();
     this.fetchMyFavorites();
     this.fetchMyOrders();
+    this.fetchMapConfig();
     window.addEventListener('resize', this.handleResize);
   },
   beforeDestroy() {
@@ -200,6 +251,17 @@ export default {
     }
   },
   methods: {
+    async fetchMapConfig() {
+      try {
+        const res = await axios.get('/api/home/config');
+        if (res.data && res.data.data) {
+          this.amapKey = res.data.data.amapKey || '';
+          this.amapSecurityCode = res.data.data.amapSecurityCode || '';
+        }
+      } catch (e) {
+        console.error('获取地图配置失败', e);
+      }
+    },
     handleResize() {
       this.isMobile = window.innerWidth <= 768;
     },
@@ -218,7 +280,7 @@ export default {
         const res = await axios.get('/api/favorites/me', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        this.favoriteArticles = res.data.data;
+        this.favoriteArticles = res.data.data || [];
       } catch (error) {
         console.error('获取收藏失败');
       } finally {
@@ -243,10 +305,21 @@ export default {
       if (!token) return;
       this.loadingGroups = true;
       try {
-        const res = await axios.get('/api/groups/me', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        this.myGroups = res.data.data;
+        const [groupRes, prodRes] = await Promise.all([
+          axios.get('/api/groups/me', { headers: { 'Authorization': `Bearer ${token}` } }),
+          axios.get('/api/products').catch(() => ({ data: { data: [] } }))
+        ]);
+        
+        const products = prodRes.data.data || [];
+        const productMap = {};
+        products.forEach(p => productMap[p.id] = p);
+        
+        const rawGroups = groupRes.data.data || [];
+        this.myGroups = rawGroups.map(group => ({
+          ...group,
+          productName: group.productName || productMap[group.productId]?.name || '未知商品',
+          productImage: productMap[group.productId]?.image || ''
+        }));
       } catch (error) {
         this.$message.error('加载拼团信息失败');
       } finally {
@@ -303,10 +376,21 @@ export default {
       if (!token) return;
       this.loadingOrders = true;
       try {
-        const res = await axios.get('/api/orders/me', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        this.orders = res.data.data;
+        const [orderRes, prodRes] = await Promise.all([
+          axios.get('/api/orders/me', { headers: { 'Authorization': `Bearer ${token}` } }),
+          axios.get('/api/products').catch(() => ({ data: { data: [] } }))
+        ]);
+        
+        const products = prodRes.data.data || [];
+        const productMap = {};
+        products.forEach(p => productMap[p.id] = p);
+        
+        const rawOrders = orderRes.data.data || [];
+        this.orders = rawOrders.map(order => ({
+          ...order,
+          productName: productMap[order.productId]?.name || '',
+          productImage: productMap[order.productId]?.image || ''
+        }));
       } catch (error) {
         console.error('加载订单失败');
       } finally {
@@ -370,6 +454,101 @@ export default {
       document.body.removeChild(input);
       
       this.$message.success('邀请链接已复制到剪贴板，快去发给好友吧！');
+    },
+    
+    // 地图相关方法
+    openMapDialog() {
+      this.mapDialogVisible = true;
+      this.selectedAddress = '';
+      this.mapSearchKeyword = '';
+      if (!this.amapKey) {
+        this.fetchMapConfig(); // 如果还没加载到，弹窗时重试加载
+      }
+    },
+    initMap() {
+      if (!this.amapKey) return;
+      
+      this.mapLoading = true;
+      window._AMapSecurityConfig = {
+        securityJsCode: this.amapSecurityCode,
+      };
+
+      AMapLoader.load({
+        key: this.amapKey,
+        version: "2.0",
+        plugins: ['AMap.Geocoder', 'AMap.PlaceSearch', 'AMap.Geolocation']
+      }).then((AMap) => {
+        this.mapInstance = new AMap.Map('amap-container', {
+          zoom: 14,
+          center: [116.397428, 39.90923] // 默认天安门
+        });
+
+        this.markerInstance = new AMap.Marker({
+          map: this.mapInstance
+        });
+
+        this.geocoderInstance = new AMap.Geocoder();
+
+        // 尝试自动定位
+        const geolocation = new AMap.Geolocation({
+          enableHighAccuracy: true,
+          timeout: 10000,
+          zoomToAccuracy: true,
+          buttonPosition: 'RB'
+        });
+        this.mapInstance.addControl(geolocation);
+        geolocation.getCurrentPosition((status, result) => {
+          if (status === 'complete') {
+             this.markerInstance.setPosition(result.position);
+             this.getAddress(result.position);
+          }
+        });
+
+        // 点击选点
+        this.mapInstance.on('click', (e) => {
+          this.markerInstance.setPosition(e.lnglat);
+          this.getAddress(e.lnglat);
+        });
+
+        this.mapLoading = false;
+      }).catch(e => {
+        console.error(e);
+        this.mapLoading = false;
+        this.$message.error('地图加载失败，请检查 Key 和网络');
+      });
+    },
+    getAddress(lnglat) {
+      if (!this.geocoderInstance) return;
+      this.geocoderInstance.getAddress(lnglat, (status, result) => {
+        if (status === 'complete' && result.info === 'OK') {
+          this.selectedAddress = result.regeocode.formattedAddress;
+        }
+      });
+    },
+    searchMap() {
+      if (!this.mapSearchKeyword || !this.mapInstance) return;
+      AMapLoader.load({}).then((AMap) => {
+         const placeSearch = new AMap.PlaceSearch({
+            map: this.mapInstance
+         });
+         placeSearch.search(this.mapSearchKeyword, (status, result) => {
+            if (status === 'complete' && result.info === 'OK') {
+               const poi = result.poiList.pois[0];
+               if (poi) {
+                  const lnglat = [poi.location.lng, poi.location.lat];
+                  this.mapInstance.setCenter(lnglat);
+                  this.markerInstance.setPosition(lnglat);
+                  this.selectedAddress = poi.pname + poi.cityname + poi.adname + poi.address + poi.name;
+               }
+            } else {
+               this.$message.warning('未找到相关地点');
+            }
+         });
+      });
+    },
+    confirmMapLocation() {
+      this.profileForm.address = this.selectedAddress;
+      this.mapDialogVisible = false;
     }
   }
 }
@@ -490,30 +669,42 @@ export default {
   color: #909399;
 }
 .group-item-card {
-  background: #FFFFFF;
-  border-radius: 16px;
-  padding: 18px;
+  background: #fdf5f5;
+  border-radius: 12px;
+  padding: 15px;
   margin-bottom: 15px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  border: 1px solid #F2F6FC;
+  transition: all 0.3s;
 }
+
 .group-item-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 126, 103, 0.1);
-  border-color: #FFE4D6;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
+
 .group-main {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 18px;
+  margin-bottom: 12px;
+  gap: 12px;
 }
+
+.group-img {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
 .group-pname {
-  font-weight: 800;
-  font-size: 15px;
-  color: #5C433B;
-  margin-bottom: 4px;
+  margin: 0 0 5px 0;
+  font-weight: bold;
+  font-size: 14px;
+  color: #303133;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .group-time {
   font-size: 11px;
@@ -565,8 +756,27 @@ export default {
 }
 .order-card-body {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 15px;
+}
+.full-order-img {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background-color: #f5f7fa;
+}
+.image-slot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  color: #c0c4cc;
+  font-size: 20px;
+}
+.order-main-info {
+  flex: 1;
 }
 .order-pname {
   font-weight: bold;

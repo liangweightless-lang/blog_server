@@ -7,8 +7,14 @@
       <el-form-item label="密码">
         <el-input v-model="loginForm.password" type="password" placeholder="请输入密码"></el-input>
       </el-form-item>
+      <el-form-item label="验证码">
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <el-input v-model="loginForm.captchaCode" placeholder="请输入图形验证码" style="flex: 1;" @keyup.enter.native="handleLogin"></el-input>
+          <img v-if="captchaImage" :src="captchaImage" @click="fetchCaptcha" style="cursor: pointer; height: 38px; border-radius: 4px; border: 1px solid #DCDFE6;" title="点击刷新">
+        </div>
+      </el-form-item>
       <el-form-item label="邀请码 (可选)">
-        <el-input v-model="loginForm.inviteCode" placeholder="如果有邀请码请填写"></el-input>
+        <el-input v-model="loginForm.inviteCode" placeholder="如果有邀请码请填写" @keyup.enter.native="handleLogin"></el-input>
       </el-form-item>
     </el-form>
     <div style="font-size: 12px; color: #909399; margin-bottom: 20px;">
@@ -39,8 +45,11 @@ export default {
       loginForm: {
         username: '',
         password: '',
+        captchaKey: '',
+        captchaCode: '',
         inviteCode: ''
       },
+      captchaImage: '',
       isMobile: window.innerWidth <= 768
     }
   },
@@ -55,6 +64,9 @@ export default {
     },
     visible(val) {
       this.$emit('update:show', val);
+      if (val) {
+        this.fetchCaptcha(); // 每次打开弹窗时刷新验证码
+      }
     }
   },
   created() {
@@ -73,9 +85,20 @@ export default {
     handleResize() {
       this.isMobile = window.innerWidth <= 768;
     },
+    async fetchCaptcha() {
+      try {
+        const res = await axios.get('/api/auth/captcha');
+        if (res.data && res.data.data) {
+          this.loginForm.captchaKey = res.data.data.captchaKey;
+          this.captchaImage = res.data.data.captchaImage;
+        }
+      } catch (error) {
+        console.error('获取验证码失败', error);
+      }
+    },
     async handleLogin() {
-      const { username, password } = this.loginForm;
-      if (!username || !password) {
+      const { username, password, captchaCode } = this.loginForm;
+      if (!username || !password || !captchaCode) {
         return this.$message.warning('请填写完整信息');
       }
       
@@ -96,6 +119,7 @@ export default {
         window.dispatchEvent(new CustomEvent('refresh-user'));
       } catch (error) {
         this.$message.error(error.response?.data?.error || '登录失败');
+        this.fetchCaptcha(); // 登录失败后自动刷新验证码
       } finally {
         this.loading = false;
       }

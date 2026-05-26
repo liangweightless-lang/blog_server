@@ -7,6 +7,17 @@
       <p class="author-bio">{{ homeConfig.authorBio || '记录灵感，探索生活美学。在这里分享品牌的成长脉络，以及创作者的生活方式碎片。' }}</p>
       <div class="social-links">
         <el-tag size="small" type="info" v-for="tag in (homeConfig.tags || ['生活方式', '独立品牌', '创作手记'])" :key="tag">#{{ tag }}</el-tag>
+        <el-popover
+          v-if="homeConfig.wechatQrUrl"
+          placement="bottom"
+          width="160"
+          trigger="hover">
+          <div style="text-align: center;">
+            <div style="font-size: 13px; color: #5C433B; margin-bottom: 8px; font-weight: bold;">扫码添加微信</div>
+            <img :src="homeConfig.wechatQrUrl" style="width: 100%; border-radius: 8px;">
+          </div>
+          <el-button slot="reference" size="mini" round icon="el-icon-chat-dot-round" class="wechat-btn">微信</el-button>
+        </el-popover>
       </div>
     </div>
   </div>
@@ -23,7 +34,8 @@ export default {
         avatarUrl: '',
         authorName: '',
         authorBio: '',
-        tags: []
+        tags: [],
+        wechatQrUrl: ''
       }
     }
   },
@@ -110,6 +122,16 @@ export default {
   border-radius: 20px;
   padding: 0 16px;
   font-weight: 700;
+}
+.wechat-btn {
+  background: #07C160;
+  color: #FFF;
+  border: none;
+  font-weight: bold;
+}
+.wechat-btn:hover {
+  background: #06AD56;
+  color: #FFF;
 }
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px); }

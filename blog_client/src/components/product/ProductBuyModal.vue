@@ -200,21 +200,23 @@ export default {
 
         const orderId = orderRes.data.data.id;
 
-        // 2. 模拟支付逻辑
-        await axios.post(`/api/orders/${orderId}/pay`, {}, {
+        // 2. 唤起支付宝支付
+        const payRes = await axios.post(`/api/pay/alipay/create?orderId=${orderId}`, {}, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
 
-        this.$message({
-          message: '支付成功！欢迎开启小柴包美好体验。',
-          type: 'success',
-          duration: 3000
-        });
+        // 支付宝返回一段包含自动提交脚本的 form HTML
+        const formHtml = payRes.data.data;
+        const div = document.createElement('div');
+        div.innerHTML = formHtml;
+        document.body.appendChild(div);
+        
+        // 提交最后一个表单（支付宝返回的）
+        if (document.forms && document.forms.length > 0) {
+           document.forms[document.forms.length - 1].submit();
+        }
         
         this.visible = false;
-        // 通知外部刷新数据
-        this.$emit('success');
-        window.dispatchEvent(new CustomEvent('refresh-user'));
       } catch (error) {
         this.$message.error(error.response?.data?.error || '支付失败，请稍后重试');
       } finally {

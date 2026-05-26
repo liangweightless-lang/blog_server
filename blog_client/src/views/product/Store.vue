@@ -198,8 +198,21 @@ export default {
           this.$router.push(`/product/group/${this.currentGroupId}`);
         } else {
           const res = await axios.post('/api/groups/start', { productId: this.currentProduct.id, address: this.orderAddress }, { headers });
-          this.$message.success('开团成功！快邀请好友来凑单吧');
-          this.$router.push(`/product/group/${res.data.data.id}`);
+          const orderId = res.data.data.orderId;
+          
+          // 唤起支付宝支付
+          const payRes = await axios.post(`/api/pay/alipay/create?orderId=${orderId}`, {}, { headers });
+          const formHtml = payRes.data.data;
+          const div = document.createElement('div');
+          div.innerHTML = formHtml;
+          document.body.appendChild(div);
+          
+          if (document.forms && document.forms.length > 0) {
+             document.forms[document.forms.length - 1].submit();
+          }
+          
+          this.groupDialogVisible = false;
+          return; // 页面即将跳转，不需要往下执行
         }
         
         this.groupDialogVisible = false;

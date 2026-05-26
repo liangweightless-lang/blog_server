@@ -49,6 +49,7 @@ public class HomeController {
         config.put("authorName", "小柴包");
         config.put("authorBio", "记录灵感，探索生活美学。在这里分享品牌的成长脉络，以及创作者的生活方式碎片。");
         config.put("tags", new String[]{"生活方式", "独立品牌", "创作手记"});
+        config.put("wechatQrUrl", "");
         return Result.success(config);
     }
 

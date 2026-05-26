@@ -82,6 +82,12 @@ public class ProductOrderService {
 
     @Transactional
     public ProductOrder mockPay(String orderId) {
+        ProductOrder order = handlePaymentSuccess(orderId);
+        return order;
+    }
+
+    @Transactional
+    public ProductOrder handlePaymentSuccess(String orderId) {
         ProductOrder order = orderMapper.selectById(orderId);
         if (order == null || order.getStatus() != 0) {
             throw new RuntimeException("Invalid order or already paid");
@@ -105,6 +111,7 @@ public class ProductOrderService {
 
         return orderMapper.selectById(orderId);
     }
+
     @Transactional
     public ProductOrder redeemWithPoints(Long userId, Long productId) {
         Product product = productMapper.selectById(productId);

@@ -28,13 +28,21 @@
     <!-- 快捷查看最近订单 -->
     <div class="recent-orders" v-if="orders.length > 0">
       <div v-for="order in orders.slice(0, 2)" :key="order.id" class="mini-order-card">
-        <div class="mini-order-info">
-          <span class="mini-id">#{{ order.id.substring(0, 8) }}</span>
-          <span class="mini-status" :style="{ color: getStatusColor(order.status) }">
-            {{ getStatusText(order.status) }}
-          </span>
+        <el-image :src="order.productImage" class="mini-product-img" fit="cover">
+          <div slot="error" class="image-slot"><i class="el-icon-picture-outline"></i></div>
+        </el-image>
+        <div class="mini-order-content">
+          <div class="mini-order-info">
+            <span class="mini-pname">{{ order.productName || '商品ID: ' + order.productId }}</span>
+            <span class="mini-status" :style="{ color: getStatusColor(order.status) }">
+              {{ getStatusText(order.status) }}
+            </span>
+          </div>
+          <div class="mini-order-bottom">
+            <span class="mini-id">#{{ order.id.substring(0, 8) }}</span>
+            <span class="mini-order-price">¥{{ order.amount }}</span>
+          </div>
         </div>
-        <div class="mini-order-price">¥{{ order.amount }}</div>
       </div>
     </div>
   </div>
@@ -116,13 +124,71 @@ export default {
 }
 .mini-order-card {
   display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 15px;
+  background: #FDFDFD;
+  border: 1px solid #F2F6FC;
+  border-radius: 8px;
+  padding: 10px;
+}
+.mini-order-card:last-child {
+  margin-bottom: 0;
+}
+.mini-product-img {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  background-color: #f5f7fa;
+}
+.image-slot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  color: #c0c4cc;
+  font-size: 20px;
+}
+.mini-order-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   justify-content: space-between;
-  font-size: 12px;
-  margin-bottom: 8px;
-  color: #909399;
+  min-height: 44px;
+}
+.mini-order-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.mini-pname {
+  font-size: 13px;
+  font-weight: bold;
+  color: #303133;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 150px;
 }
 .mini-status {
+  font-size: 12px;
   color: #FF7E67;
-  margin-left: 8px;
+}
+.mini-order-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+}
+.mini-id {
+  font-size: 11px;
+  color: #909399;
+}
+.mini-order-price {
+  font-size: 13px;
+  font-weight: bold;
+  color: #F56C6C;
 }
 </style>

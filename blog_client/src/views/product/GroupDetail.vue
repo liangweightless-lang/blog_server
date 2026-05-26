@@ -49,19 +49,15 @@
       <div class="members-section">
         <h3 class="section-title">参团成员</h3>
         <div class="member-list">
-          <div class="member-item initiator">
+          <div v-for="(member, index) in members" :key="member.userId || index" class="member-item" :class="{ initiator: index === 0 }">
             <div class="avatar-box">
-              <el-avatar icon="el-icon-user-solid" size="medium"></el-avatar>
-              <span class="badge">团长</span>
+              <el-avatar :src="member.avatarUrl" icon="el-icon-user-solid" size="medium"></el-avatar>
+              <span class="badge" v-if="index === 0">团长</span>
             </div>
-            <span class="name">{{ group.initiatorNickname }}</span>
-          </div>
-          <div v-for="i in (group.currentNum - 1)" :key="i" class="member-item">
-            <el-avatar icon="el-icon-user" size="medium"></el-avatar>
-            <span class="name">团员 {{ i }}</span>
+            <span class="name">{{ member.nickname || '匿名用户' }}</span>
           </div>
           <!-- 占位符 -->
-          <div v-for="i in (group.requiredNum - group.currentNum)" :key="'empty-'+i" class="member-item empty">
+          <div v-for="i in Math.max(0, group.requiredNum - group.currentNum)" :key="'empty-'+i" class="member-item empty">
             <div class="avatar-placeholder">?</div>
             <span class="name">待加入</span>
           </div>
@@ -117,6 +113,7 @@ export default {
       id: this.$route.params.id,
       group: null,
       product: {},
+      members: [],
       loading: true,
       countdownText: '',
       timer: null,
@@ -140,6 +137,10 @@ export default {
         this.loading = true;
         const res = await axios.get(`/api/groups/${this.id}`);
         this.group = res.data.data;
+        
+        // Fetch members
+        const memRes = await axios.get(`/api/groups/${this.id}/members`);
+        this.members = memRes.data.data || [];
         
         // Fetch product info
         const prodRes = await axios.get(`/api/products/${this.group.productId}`);
@@ -201,12 +202,29 @@ export default {
       this.joining = true;
       try {
         const token = localStorage.getItem('token');
-        await axios.post(`/api/groups/${this.id}/join`, { address: this.address }, {
+        const joinRes = await axios.post(`/api/groups/${this.id}/join`, { address: this.address }, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        this.$message.success('加入成功！');
+        
+        const orderId = joinRes.data.data.orderId;
+        
+        // 唤起支付宝支付
+        const payRes = await axios.post(`/api/pay/alipay/create?orderId=${orderId}`, {}, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        // 支付宝返回一段包含自动提交脚本的 form HTML
+        const formHtml = payRes.data.data;
+        const div = document.createElement('div');
+        div.innerHTML = formHtml;
+        document.body.appendChild(div);
+        
+        // 提交最后一个表单（支付宝返回的）
+        if (document.forms && document.forms.length > 0) {
+           document.forms[document.forms.length - 1].submit();
+        }
+        
         this.showJoinDialog = false;
-        await this.fetchData();
         this.checkMembership();
         window.dispatchEvent(new CustomEvent('refresh-user'));
       } catch (e) {
