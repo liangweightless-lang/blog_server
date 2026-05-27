@@ -66,13 +66,20 @@ export default {
   position: relative;
   height: 340px;
   border-radius: 24px;
-  background: linear-gradient(135deg, #FFE1D9 0%, #FFC1B6 100%);
+  background: linear-gradient(135deg, #FFE1D9, #FFC1B6, #FFD1C9);
+  background-size: 200% 200%;
+  animation: gradientFlow 8s ease infinite;
   overflow: hidden;
   box-shadow: 0 12px 30px rgba(255, 126, 103, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
+}
+@keyframes gradientFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 .hero-overlay {
   position: absolute;
@@ -91,10 +98,16 @@ export default {
   height: 105px;
   border-radius: 50%;
   border: 4px solid #FFFFFF;
-  box-shadow: 0 8px 24px rgba(255, 126, 103, 0.25);
+  box-shadow: 0 8px 24px rgba(255, 126, 103, 0.25), 0 0 0 0 rgba(255, 255, 255, 0.7);
   transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   object-fit: cover;
   background-color: white;
+  animation: pulseAvatar 2s infinite;
+}
+@keyframes pulseAvatar {
+  0% { box-shadow: 0 8px 24px rgba(255, 126, 103, 0.25), 0 0 0 0 rgba(255, 255, 255, 0.7); }
+  70% { box-shadow: 0 8px 24px rgba(255, 126, 103, 0.25), 0 0 0 15px rgba(255, 255, 255, 0); }
+  100% { box-shadow: 0 8px 24px rgba(255, 126, 103, 0.25), 0 0 0 0 rgba(255, 255, 255, 0); }
 }
 .avatar:hover {
   transform: scale(1.08) rotate(5deg);
@@ -120,22 +133,30 @@ export default {
   flex-wrap: wrap;
 }
 .social-links .arco-tag {
-  background: #FFF0ED;
-  border: none;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   color: #FF7E67;
   border-radius: 20px;
   padding: 0 16px;
   font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
 }
 .wechat-btn {
-  background: #07C160;
+  background: rgba(7, 193, 96, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: #FFF;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.3);
   font-weight: bold;
+  box-shadow: 0 4px 12px rgba(7, 193, 96, 0.3);
+  transition: all 0.3s ease;
 }
 .wechat-btn:hover {
-  background: #06AD56;
-  color: #FFF;
+  background: rgba(6, 173, 86, 0.95);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(7, 193, 96, 0.4);
 }
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px); }

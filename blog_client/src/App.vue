@@ -85,11 +85,12 @@ export default {
 <style>
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Helvetica, "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
-  background-color: #FAFAFA; /* Modern clean background */
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Helvetica, "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+  background: linear-gradient(180deg, #FAFAFA 0%, #F4F6F9 100%); /* Modern soft gradient background */
+  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: #333333; /* Darker grey for better readability */
+  color: #1D2129; /* Darker grey for better readability */
   letter-spacing: 0.2px;
   box-sizing: border-box;
 }
@@ -99,12 +100,17 @@ body {
 }
 
 .main-content {
-  padding: 30px 15px; /* Better mobile padding */
+  padding: 20px 10px 100px 10px; /* Enhanced mobile padding, bottom padding accounts for floating nav */
   max-width: 1000px;
   margin: 0 auto;
   width: 100%;
 }
 .header-hidden .main-content {
   padding-top: 0;
+}
+@media (min-width: 768px) {
+  .main-content {
+    padding: 30px 15px 40px 15px;
+  }
 }
 </style>
