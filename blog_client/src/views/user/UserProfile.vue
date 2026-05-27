@@ -328,15 +328,23 @@ export default {
 
 <style scoped>
 .user-center-container {
-  background: #F7F8FA;
+  background: linear-gradient(180deg, #FDFDFD 0%, #F4F6F9 100%);
   min-height: 100vh;
   padding-bottom: 80px;
 }
 
 .user-tabs-section {
-  background: #FFFFFF;
-  margin: 15px 0;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255,255,255,0.8);
+  border-bottom: 1px solid rgba(0,0,0,0.03);
+  margin: 20px 0;
   padding: 10px 15px;
+}
+
+:deep(.arco-tabs-nav::before) {
+  background-color: transparent !important;
 }
 
 .tab-content-wrapper {
@@ -344,17 +352,84 @@ export default {
   min-height: 200px;
 }
 
-
-
-
-
 /* Order Card Styles */
+.order-full-list {
+  padding: 0 10px;
+}
 .order-card-item {
-  background: white;
-  border-radius: 12px;
-  padding: 15px;
-  margin-bottom: 12px;
-  border: 1px solid #f0f0f0;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(255, 255, 255, 1);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.order-card-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.06);
+  border-color: rgba(255, 126, 103, 0.15);
+}
+
+.order-card-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed rgba(0,0,0,0.06);
+}
+.order-id {
+  font-size: 13px;
+  color: #86909C;
+}
+
+.order-card-body {
+  display: flex;
+  gap: 15px;
+}
+.full-order-img {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.order-main-info {
+  flex: 1;
+}
+.order-pname {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1D2129;
+  line-height: 1.4;
+}
+.order-spec {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: #86909C;
+}
+.order-time {
+  margin: 0;
+  font-size: 11px;
+  color: #C9CDD4;
+}
+
+.order-price-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+.price-val {
+  font-size: 16px;
+  font-weight: 800;
+  color: #FF7E67;
+}
+
+.list-end-tip {
+  text-align: center;
+  font-size: 12px;
+  color: #C9CDD4;
+  margin: 20px 0;
 }
 
 /* Invite Dialog Styles */
