@@ -425,6 +425,8 @@ export default {
   line-height: 1.8;
   margin-bottom: 24px;
   letter-spacing: 0.3px;
+  white-space: pre-wrap; /* Ensure newlines and spaces are preserved */
+  word-wrap: break-word;
 }
 
 .article-meta {
