@@ -2,14 +2,17 @@
   <div class="article-grid-container">
 
     <a-spin :loading="loading" style="width: 100%; display: block;">
-      <a-grid :cols="{ xs: 2, sm: 3, md: 3 }" :colGap="16" :rowGap="16" class="xhs-grid">
-        <a-empty v-if="articles.length === 0 && !loading" description="暂无内容，快来书写第一篇日记吧" style="grid-column: 1 / -1;"></a-empty>
-        <a-grid-item v-for="article in articles" :key="article.id">
+      <div class="waterfall-grid" v-if="articles.length > 0">
+        <div class="waterfall-item" v-for="article in articles" :key="article.id">
           <a-card class="xhs-card" hoverable :bordered="false" :body-style="{ padding: '0px' }" @click="viewArticle(article)">
-            <div class="xhs-cover"
-              :style="article.coverUrl ? { backgroundImage: 'url(' + article.coverUrl + ')', backgroundSize: 'cover', backgroundPosition: 'center' } : { background: getGradient(article.id) }">
-              <span class="cover-icon" v-if="!article.coverUrl">✨</span>
+            <!-- 封面图：有图则使用img标签自适应高度，无图则使用随机高度占位 -->
+            <div v-if="article.coverUrl" class="xhs-cover-img">
+              <img :src="article.coverUrl" alt="cover" />
             </div>
+            <div v-else class="xhs-cover-placeholder" :style="{ background: getGradient(article.id), height: getRandomHeight(article.id) + 'px' }">
+              <span class="cover-icon">✨</span>
+            </div>
+            
             <div class="xhs-info">
               <div class="xhs-title">{{ article.title }}</div>
               <div class="xhs-bottom">
@@ -25,8 +28,9 @@
               </div>
             </div>
           </a-card>
-        </a-grid-item>
-      </a-grid>
+        </div>
+      </div>
+      <a-empty v-else-if="!loading" description="暂无内容，快来书写第一篇日记吧" style="margin-top: 40px;"></a-empty>
     </a-spin>
 
   </div>
@@ -85,38 +89,65 @@ export default {
         'linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%)',
       ];
       return gradients[id % gradients.length];
+    },
+    getRandomHeight(id) {
+      // Generate pseudo-random heights between 160px and 260px for placeholders to ensure masonry effect
+      const heights = [160, 200, 240, 180, 260, 190];
+      return heights[id % heights.length];
     }
   }
 }
 </script>
 
 <style scoped>
-.xhs-grid {
-  margin-top: 24px;
+.waterfall-grid {
+  column-count: 3;
+  column-gap: 16px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.waterfall-item {
+  break-inside: avoid;
+  margin-bottom: 16px;
 }
 
 .xhs-card {
   border-radius: 16px;
   overflow: hidden;
-  margin-bottom: 16px;
-  box-shadow: 0 4px 12px rgba(255, 126, 103, 0.05) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04) !important;
   cursor: pointer;
-  background: transparent !important;
+  background: rgba(255, 255, 255, 0.7) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 :deep(.xhs-card > .arco-card-body) {
-  padding: 12px;
-  background: #FFFFFF;
+  padding: 0px;
+  background: transparent;
 }
 
 :deep(.xhs-card:hover) {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(255, 126, 103, 0.15) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08) !important;
 }
 
-.xhs-cover {
+.xhs-cover-img {
   width: 100%;
-  height: 160px;
+  display: block;
+}
+
+.xhs-cover-img img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
+
+.xhs-cover-placeholder {
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -134,7 +165,7 @@ export default {
 .xhs-title {
   font-size: 15px;
   font-weight: 700;
-  color: #5C433B;
+  color: #1D2129;
   line-height: 1.4;
   margin-bottom: 12px;
   display: -webkit-box;
@@ -155,16 +186,14 @@ export default {
   gap: 6px;
 }
 
-
-
 .xhs-author-name {
   font-size: 12px;
-  color: #8C6A5D;
+  color: #86909C;
 }
 
 .xhs-likes {
   font-size: 12px;
-  color: #8C6A5D;
+  color: #86909C;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -175,21 +204,23 @@ export default {
   color: #FF7E67;
 }
 
-.article-content {
-  font-size: 15px;
-  line-height: 1.7;
-  color: #8C7A6B;
+@media (max-width: 1024px) {
+  .waterfall-grid {
+    column-count: 3;
+  }
 }
 
 @media (max-width: 768px) {
-  .xhs-cover {
-    height: 140px;
+  .waterfall-grid {
+    column-count: 2;
+    column-gap: 12px;
   }
-
+  .waterfall-item {
+    margin-bottom: 12px;
+  }
   .xhs-title {
     font-size: 14px;
   }
-
   .xhs-info {
     padding: 10px;
   }
