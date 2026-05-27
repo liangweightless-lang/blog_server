@@ -3,8 +3,6 @@
     <UserHeader :user="user" @edit="showEditDialog" />
     <UserStats :user="user" />
     
-    <UserOrderGrid :orders="orders" @view-all="activeTab = 'orders'" @pay="handleContinuePay" />
-    
     <div class="user-tabs-section">
       <a-tabs v-model:active-key="activeTab" @change="handleTabClick" type="line" justify>
         <a-tab-pane key="favorites">
@@ -116,7 +114,6 @@ import axios from 'axios';
 import { Message } from '@arco-design/web-vue';
 import UserHeader from '@/components/user/UserHeader.vue';
 import UserStats from '@/components/user/UserStats.vue';
-import UserOrderGrid from '@/components/user/UserOrderGrid.vue';
 import UserToolList from '@/components/user/UserToolList.vue';
 import ArticleGrid from '@/components/home/ArticleGrid.vue';
 import ProfileEditDialog from '@/components/user/ProfileEditDialog.vue';
@@ -130,7 +127,6 @@ export default {
   components: {
     UserHeader,
     UserStats,
-    UserOrderGrid,
     UserToolList,
     ArticleGrid,
     ProfileEditDialog,
