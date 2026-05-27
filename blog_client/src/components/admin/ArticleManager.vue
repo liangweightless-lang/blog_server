@@ -1,7 +1,7 @@
 <template>
   <div class="article-manager">
     <div class="tab-header">
-      <span style="margin-right: 15px; color: #8C6A5D; font-weight: bold;">[测试日志] 共 {{ articles.length }} 篇数据已到达</span>
+      <span style="margin-right: 15px; color: #4E5969; font-weight: bold;">[测试日志] 共 {{ articles.length }} 篇数据已到达</span>
       <a-button type="primary" size="small" @click="goToCreateArticle"><template #icon><icon-plus /></template>发布新日常</a-button>
     </div>
 
@@ -15,8 +15,8 @@
         </a-table-column>
         <a-table-column title="文章信息">
           <template #cell="{ record }">
-            <div style="font-weight: bold; font-size: 15px; color: #333;">{{ record.title }}</div>
-            <div style="font-size: 12px; color: #999;">{{ formatTime(record.createTime) }}</div>
+            <div style="font-weight: 600; font-size: 14px; color: #1D2129;">{{ record.title }}</div>
+            <div style="font-size: 12px; color: #86909C; margin-top: 4px;">{{ formatTime(record.createTime) }}</div>
           </template>
         </a-table-column>
         <a-table-column title="数据" :width="100">
@@ -125,12 +125,12 @@ export default {
   justify-content: flex-end;
 }
 .stat-badge {
-  background: #fff0ed;
-  color: #FF7E67;
+  background: #F2F3F5;
+  color: #4E5969;
   padding: 4px 10px;
-  border-radius: 20px;
+  border-radius: 4px;
   font-size: 12px;
-  font-weight: bold;
+  font-weight: 600;
 }
 
 /* 移动端卡片列表样式 */
@@ -143,18 +143,19 @@ export default {
 .mobile-card-item {
   display: flex;
   background: white;
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 12px;
   gap: 12px;
   align-items: center;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  border: 1px solid #E5E6EB;
 }
 .card-cover {
   width: 60px;
   height: 60px;
-  border-radius: 8px;
+  border-radius: 6px;
   object-fit: cover;
   flex-shrink: 0;
+  border: 1px solid #F2F3F5;
 }
 .card-info {
   flex: 1;
@@ -162,8 +163,9 @@ export default {
 }
 .card-title {
   margin: 0 0 8px 0;
-  font-size: 15px;
-  color: #333;
+  font-size: 14px;
+  color: #1D2129;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -174,8 +176,8 @@ export default {
   gap: 10px;
 }
 .card-time {
-  font-size: 11px;
-  color: #999;
+  font-size: 12px;
+  color: #86909C;
 }
 .card-actions {
   flex-shrink: 0;
