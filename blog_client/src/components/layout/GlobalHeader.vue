@@ -210,7 +210,7 @@ export default {
     display: none;
   }
 
-  ::v-deep .arco-menu-item {
+  :deep(.arco-menu-item) {
     padding: 0 12px !important;
     font-size: 15px !important;
   }
