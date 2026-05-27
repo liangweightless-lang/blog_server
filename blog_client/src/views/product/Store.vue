@@ -178,14 +178,18 @@ export default {
 .product-card {
   border-radius: 24px;
   overflow: hidden;
-  transition: transform 0.4s ease, box-shadow 0.4s ease;
-  background-color: #FFFFFF;
-  box-shadow: 0 8px 24px rgba(255, 126, 103, 0.08);
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  background-color: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
 .product-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 16px 32px rgba(255, 126, 103, 0.15);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.08);
+  background-color: rgba(255, 255, 255, 0.8);
 }
 
 .product-image-wrapper {
@@ -193,7 +197,7 @@ export default {
   width: 100%;
   padding-top: 100%;
   overflow: hidden;
-  background-color: #FFFDF8;
+  background-color: rgba(0,0,0,0.02);
 }
 
 .product-image {
@@ -214,35 +218,37 @@ export default {
   position: absolute;
   top: 12px;
   right: 12px;
-  background: #FF7E67;
+  background: linear-gradient(135deg, rgba(255, 126, 103, 0.95) 0%, rgba(255, 90, 68, 0.95) 100%);
   color: #FFFFFF;
   padding: 4px 14px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 800;
   box-shadow: 0 4px 12px rgba(255, 126, 103, 0.3);
+  backdrop-filter: blur(4px);
 }
 
 .product-info {
-  padding: 24px;
+  padding: 20px 24px 24px 24px;
 }
 
 .product-name {
   margin: 0 0 10px 0;
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 800;
-  color: #5C433B;
+  color: #1D2129;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: 0.3px;
 }
 
 .product-desc {
-  font-size: 14px;
-  color: #8C6A5D;
+  font-size: 13px;
+  color: #86909C;
   line-height: 1.6;
   margin-bottom: 20px;
-  height: 44px;
+  height: 42px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -286,26 +292,42 @@ export default {
 
 /* 拼团样式 */
 .group-buy-section {
-  background: #F9F9F9;
-  padding: 20px;
-  border-radius: 16px;
-  margin-bottom: 24px;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 24px;
+  border-radius: 24px;
+  margin-bottom: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.03);
 }
 
 .section-title {
-  font-size: 16px;
-  color: #333;
-  margin-bottom: 16px;
-  font-weight: 700;
+  font-size: 18px;
+  color: #1D2129;
+  margin-bottom: 20px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .group-card {
-  background: transparent !important;
+  background: rgba(255, 255, 255, 0.6) !important;
+  backdrop-filter: blur(10px);
   border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  transition: all 0.3s ease;
 }
+.group-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
 :deep(.group-card > .arco-card-body) {
-  background: #FFFFFF;
+  background: transparent;
 }
 
 .group-info {
@@ -316,15 +338,16 @@ export default {
 .group-info .product-name {
   display: block;
   font-weight: 800;
-  font-size: 14px;
-  margin-bottom: 4px;
+  font-size: 15px;
+  color: #1D2129;
+  margin-bottom: 6px;
 }
 
 .group-info .initiator {
   font-size: 12px;
-  color: #909399;
+  color: #86909C;
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .button-group {
