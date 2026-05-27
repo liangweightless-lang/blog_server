@@ -672,5 +672,21 @@ export default {
   .footer-input-box {
     margin-right: 12px;
   }
+  
+  :deep(.custom-share-modal) {
+    position: absolute !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 24px 24px 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    animation: slideUpModal 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+}
+
+@keyframes slideUpModal {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 </style>
