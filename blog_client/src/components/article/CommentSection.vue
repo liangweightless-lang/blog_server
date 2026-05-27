@@ -87,23 +87,33 @@ export default {
 <style scoped>
 .comments-section {
   margin-top: 30px;
-  border-top: 1px solid #FDF0E6;
+  border-top: 1px solid rgba(0,0,0,0.05);
   padding-top: 20px;
 }
 
 .comments-title {
   font-size: 14px;
-  color: #8C6A5D;
-  margin-bottom: 20px;
+  color: #86909C;
+  margin-bottom: 24px;
+  font-weight: 600;
 }
 
 .comment-item {
   display: flex;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  padding: 12px;
+  border-radius: 16px;
+  background: transparent;
+  transition: all 0.3s ease;
+}
+
+.comment-item:hover {
+  background: rgba(0,0,0,0.02);
 }
 
 .comment-avatar {
   margin-right: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
 }
 
 .comment-body {
@@ -112,20 +122,20 @@ export default {
 
 .comment-author {
   font-size: 13px;
-  color: #8C6A5D;
+  color: #86909C;
   font-weight: 600;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .comment-content {
-  font-size: 14px;
-  color: #5C433B;
-  line-height: 1.5;
-  margin-bottom: 6px;
+  font-size: 15px;
+  color: #1D2129;
+  line-height: 1.6;
+  margin-bottom: 8px;
 }
 
 .comment-time {
   font-size: 12px;
-  color: #D3C1BA;
+  color: #C9CDD4;
 }
 </style>

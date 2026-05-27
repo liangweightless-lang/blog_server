@@ -281,11 +281,12 @@ export default {
 
 <style scoped>
 .xhs-detail-container {
-  background: #FFFFFF;
+  background: transparent;
   border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(255, 126, 103, 0.08);
-  margin-bottom: 20px;
+  position: relative;
+  min-height: 100vh;
+  padding-bottom: 70px;
 }
 
 .xhs-detail-header {
@@ -293,14 +294,24 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 15px 20px;
-  background: #FFFFFF;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .header-left {
   font-size: 24px;
-  color: #5C433B;
+  color: #1D2129;
   cursor: pointer;
   width: 60px;
+  transition: transform 0.2s ease;
+}
+.header-left:active {
+  transform: scale(0.9);
 }
 
 .header-author {
@@ -313,7 +324,7 @@ export default {
 
 .author-name {
   font-weight: 700;
-  color: #5C433B;
+  color: #1D2129;
   font-size: 15px;
 }
 
@@ -324,7 +335,8 @@ export default {
 
 .xhs-media-carousel {
   width: 100%;
-  background: #FDF0E6;
+  background: transparent;
+  padding: 15px;
 }
 
 .carousel-image-wrapper {
@@ -333,12 +345,15 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
 }
 
 .carousel-image {
   max-width: 100%;
   max-height: 100%;
-  object-fit: contain;
+  object-fit: cover;
 }
 
 .xhs-media-placeholder {
@@ -356,28 +371,36 @@ export default {
 
 .xhs-detail-content {
   padding: 24px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 24px 24px 0 0;
+  margin-top: -20px;
+  position: relative;
+  z-index: 10;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.03);
 }
 
 .article-title {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 800;
-  color: #5C433B;
+  color: #1D2129;
   margin-bottom: 16px;
   margin-top: 0;
   line-height: 1.4;
+  letter-spacing: 0.5px;
 }
 
 .article-text {
   font-size: 16px;
-  color: #8C6A5D;
+  color: #4E5969;
   line-height: 1.8;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  letter-spacing: 0.3px;
 }
 
 .article-meta {
   font-size: 13px;
-  color: #D3C1BA;
-  border-bottom: 1px solid #FDF0E6;
+  color: #86909C;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
   padding-bottom: 20px;
 }
 
@@ -385,8 +408,19 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 24px;
-  background: #FFFFFF;
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.03);
+  max-width: 1000px; /* match main-content width */
+  margin: 0 auto;
 }
 
 .footer-input-box {
@@ -395,12 +429,17 @@ export default {
 }
 
 :deep(.custom-input .arco-input-wrapper) {
-  border-radius: 20px 0 0 20px;
-  background: #FFFDF8;
-  border: 1px solid #FDF0E6;
+  border-radius: 24px 0 0 24px;
+  background: rgba(242, 243, 245, 0.8);
+  border: 1px solid transparent;
+  transition: all 0.3s;
+}
+:deep(.custom-input.arco-input-focus .arco-input-wrapper) {
+  background: #FFF;
+  border-color: #FF7E67;
 }
 :deep(.custom-input .arco-input-append) {
-  border-radius: 0 20px 20px 0;
+  border-radius: 0 24px 24px 0;
   padding: 0;
   background: transparent;
   border: none;
@@ -415,22 +454,34 @@ export default {
   display: flex;
   align-items: center;
   gap: 4px;
-  color: #5C433B;
+  color: #4E5969;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.action-btn svg {
-  font-size: 22px;
+.action-btn:hover {
+  transform: translateY(-2px);
   color: #FF7E67;
 }
 
+.action-btn:active {
+  transform: scale(0.9);
+}
 
+.action-btn svg {
+  font-size: 24px;
+  color: #86909C;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
 
-
-
-@media (max-width: 768px) {
+.action-btn:hover svg,
+.action-btn svg[style*="color: #FF7E67"],
+.action-btn svg[style*="color: rgb(255, 126, 103)"] {
+  color: #FF7E67 !important;
+  transform: scale(1.15);
+}@media (max-width: 768px) {
   .xhs-detail-container {
     border-radius: 16px;
   }
