@@ -284,16 +284,18 @@ export default {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const formHtml = payRes.data.data;
-        const div = document.createElement('div');
-        div.innerHTML = formHtml;
-        document.body.appendChild(div);
         
-        if (document.forms && document.forms.length > 0) {
-           const form = document.forms[document.forms.length - 1];
-           form.target = "_blank";
-           form.submit();
+        // 业界标准做法：打开新窗口并将支付宝返回的 HTML 表单直接写入新窗口
+        // 这样不仅避免了污染当前 SPA 也就是 Vue 的 DOM (document.body)，
+        // 而且可以原生地执行支付宝 HTML 中自带的自动提交 script 标签。
+        const newWindow = window.open('', '_blank');
+        if (newWindow) {
+          newWindow.document.write(formHtml);
+          newWindow.document.close();
+          this.paymentConfirmVisible = true;
+        } else {
+          Message.warning('支付页面被浏览器拦截，请在地址栏右侧允许弹出窗口');
         }
-        this.paymentConfirmVisible = true;
       } catch (error) {
         Message.error(error.response?.data?.message || '获取支付链接失败');
       }

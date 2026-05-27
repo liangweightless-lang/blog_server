@@ -249,14 +249,16 @@ export default {
         });
 
         const formHtml = payRes.data.data;
-        const div = document.createElement('div');
-        div.innerHTML = formHtml;
-        document.body.appendChild(div);
         
-        if (document.forms && document.forms.length > 0) {
-           const form = document.forms[document.forms.length - 1];
-           form.target = "_blank"; // 强制在新标签页打开，避免覆盖当前网站
-           form.submit();
+        // 业界标准做法：打开新窗口并将支付宝返回的 HTML 表单直接写入新窗口
+        const newWindow = window.open('', '_blank');
+        if (newWindow) {
+          newWindow.document.write(formHtml);
+          newWindow.document.close();
+        } else {
+          Message.warning('支付页面被浏览器拦截，请在地址栏右侧允许弹出窗口');
+          this.loading = false;
+          return;
         }
         
         if (this.usePoints && this.pointsToUse > 0) {
