@@ -143,11 +143,11 @@ export default {
 
 <style scoped>
 .xhs-create-container {
-  background: #FFFFFF;
+  background: transparent;
   border-radius: 24px;
   min-height: 80vh;
-  padding: 30px;
-  box-shadow: 0 8px 24px rgba(255, 126, 103, 0.08);
+  position: relative;
+  /* removing padding from container, applying it to sections so sticky header works nicely */
 }
 
 .xhs-create-header {
@@ -155,74 +155,99 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+  padding: 15px 20px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-radius: 24px 24px 0 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 .header-left {
   cursor: pointer;
-  color: #5C433B;
+  color: #1D2129;
   width: 60px;
+  transition: transform 0.2s;
+}
+.header-left:active {
+  transform: scale(0.9);
 }
 .header-title {
   font-size: 18px;
   font-weight: 800;
-  color: #5C433B;
+  color: #1D2129;
 }
 .header-right {
   width: 60px;
   text-align: right;
 }
 .publish-btn {
-  background: #FF7E67;
+  background: linear-gradient(135deg, rgba(255, 126, 103, 0.95) 0%, rgba(255, 90, 68, 0.95) 100%);
   border: none;
   font-weight: bold;
+  box-shadow: 0 4px 12px rgba(255, 126, 103, 0.3);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 .publish-btn:hover {
-  background: #E56A54;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 126, 103, 0.4);
+}
+.publish-btn:active {
+  transform: scale(0.95);
 }
 
 .xhs-upload-area {
   margin-bottom: 24px;
+  padding: 0 20px;
 }
 
 :deep(.arco-upload-picture-card) {
   width: 100%;
   height: 120px;
-  background-color: #F8F9FA;
-  border: 1px dashed #E5E6EB;
+  background-color: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px dashed rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  transition: all 0.3s ease;
 }
 :deep(.arco-upload-picture-card:hover) {
-  background: #FFF0ED;
+  background: rgba(255, 255, 255, 0.9);
+  border-color: #FF7E67;
 }
 
 .xhs-editor-area {
   display: flex;
   flex-direction: column;
+  padding: 0 20px;
 }
 
 .xhs-title-input {
   border: none;
   font-size: 20px;
   font-weight: 700;
-  color: #5C433B;
+  color: #1D2129;
   padding: 10px 0;
   outline: none;
   background: transparent;
 }
 .xhs-title-input::placeholder {
-  color: #D3C1BA;
+  color: #C9CDD4;
   font-weight: 600;
 }
 
 .xhs-divider {
   height: 1px;
-  background: #FDF0E6;
+  background: rgba(0,0,0,0.05);
   margin: 10px 0;
 }
 
 .xhs-content-input {
   border: none;
   font-size: 16px;
-  color: #8C6A5D;
-  line-height: 1.6;
+  color: #4E5969;
+  line-height: 1.8;
   padding: 10px 0;
   outline: none;
   resize: none;
@@ -230,29 +255,40 @@ export default {
   background: transparent;
 }
 .xhs-content-input::placeholder {
-  color: #D3C1BA;
+  color: #C9CDD4;
 }
 
 .xhs-bottom-actions {
   display: flex;
   gap: 16px;
   margin-top: 20px;
-  border-top: 1px solid #FDF0E6;
-  padding-top: 20px;
+  border-top: 1px solid rgba(0,0,0,0.05);
+  padding: 20px 20px 0 20px;
   flex-wrap: wrap;
 }
 .action-item {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #FFFDF8;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
   padding: 6px 14px;
   border-radius: 20px;
   font-size: 13px;
-  color: #8C6A5D;
+  color: #4E5969;
   font-weight: 600;
   cursor: pointer;
-  border: 1px solid #FDF0E6;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.action-item:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.action-item:active {
+  transform: scale(0.95);
 }
 .action-item .icon {
   font-weight: 800;
@@ -265,8 +301,8 @@ export default {
 
 .xhs-product-link {
   margin-top: 30px;
-  padding-top: 20px;
-  border-top: 1px dashed #FDF0E6;
+  padding: 20px 20px 0 20px;
+  border-top: 1px dashed rgba(0,0,0,0.08);
 }
 .link-header {
   display: flex;
@@ -278,14 +314,17 @@ export default {
 }
 .link-tip {
   font-size: 12px;
-  color: #D3C1BA;
+  color: #86909C;
   margin-top: 10px;
 }
 
 @media (max-width: 768px) {
   .xhs-create-container {
-    padding: 20px 15px;
-    border-radius: 16px;
+    border-radius: 0; /* Let it stretch to screen edges on mobile */
+  }
+  .xhs-create-header {
+    margin: 0;
+    border-radius: 0;
   }
 }
 </style>
