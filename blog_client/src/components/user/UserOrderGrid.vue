@@ -38,7 +38,10 @@
           </div>
           <div class="mini-order-bottom">
             <span class="mini-id">#{{ order.id.substring(0, 8) }}</span>
-            <span class="mini-order-price">¥{{ order.amount }}</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="mini-order-price">¥{{ order.amount }}</span>
+              <a-button v-if="order.status === 0" type="primary" size="mini" shape="round" style="background-color: #FF7E67; height: 20px; padding: 0 8px; font-size: 12px;" @click.stop="$emit('pay', order)">去支付</a-button>
+            </div>
           </div>
         </div>
       </div>

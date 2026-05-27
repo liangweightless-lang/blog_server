@@ -3,7 +3,7 @@
     <UserHeader :user="user" @edit="showEditDialog" />
     <UserStats :user="user" />
     
-    <UserOrderGrid :orders="orders" @view-all="activeTab = 'orders'" />
+    <UserOrderGrid :orders="orders" @view-all="activeTab = 'orders'" @pay="handleContinuePay" />
     
     <div class="user-tabs-section">
       <a-tabs v-model:active-key="activeTab" @change="handleTabClick" type="line" justify>
@@ -24,7 +24,13 @@
               <template #image><icon-gift style="font-size: 48px; color: #D3C1BA; opacity: 0.5;" /></template>
             </a-empty>
             <a-list v-else class="order-full-list" :bordered="false" :split="false">
-              <a-list-item v-for="order in orders" :key="order.id" class="order-card-item">
+              <a-list-item 
+                v-for="order in orders" 
+                :key="order.id" 
+                class="order-card-item" 
+                @click="showOrderDetail(order)" 
+                style="cursor: pointer;"
+              >
                 <div class="order-card-header">
                   <span class="order-id">订单号: {{ order.id.substring(0, 12) }}...</span>
                   <a-tag :color="getOrderStatusColor(order.status)" size="small">
@@ -38,8 +44,9 @@
                     <p class="order-spec" v-if="order.selectedSpec">规格: {{ order.selectedSpec }}</p>
                     <p class="order-time">{{ formatTime(order.createTime) }}</p>
                   </div>
-                  <div class="order-price-info">
+                  <div class="order-price-info" style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
                     <span class="price-val">¥{{ order.amount }}</span>
+                    <a-button v-if="order.status === 0" type="primary" size="small" shape="round" style="background-color: #FF7E67;" @click.stop="handleContinuePay(order)">去支付</a-button>
                   </div>
                 </div>
               </a-list-item>
@@ -75,6 +82,32 @@
         <p class="invite-tip">每邀请一位好友注册，双方均可获得50积分奖励</p>
       </div>
     </a-modal>
+
+    <!-- 支付状态确认弹窗 -->
+    <a-modal 
+      v-model:visible="paymentConfirmVisible" 
+      title="支付确认"
+      :footer="false"
+      :mask-closable="false"
+      :closable="false"
+    >
+      <div style="text-align: center; padding: 20px 0;">
+        <icon-check-circle style="font-size: 48px; color: #00B42A; margin-bottom: 20px;" />
+        <h3 style="margin-bottom: 30px;">请在新打开的页面中完成支付</h3>
+        <p style="color: #86909C; margin-bottom: 30px; font-size: 13px;">支付完成前请不要关闭此窗口。完成支付后，请根据您的情况点击下面按钮。</p>
+        <div style="display: flex; justify-content: center; gap: 15px;">
+          <a-button @click="handlePaymentFail">遇到问题，重新支付</a-button>
+          <a-button type="primary" @click="handlePaymentSuccess" style="background-color: #FF7E67;">我已完成支付</a-button>
+        </div>
+      </div>
+    </a-modal>
+
+    <!-- 订单详情弹窗 -->
+    <OrderDetailDialog 
+      v-model:show="orderDetailVisible" 
+      :order="selectedOrder" 
+      @pay="handleContinuePay" 
+    />
   </div>
 </template>
 
@@ -88,6 +121,7 @@ import UserToolList from '@/components/user/UserToolList.vue';
 import ArticleGrid from '@/components/home/ArticleGrid.vue';
 import ProfileEditDialog from '@/components/user/ProfileEditDialog.vue';
 import MyGroupsDialog from '@/components/user/MyGroupsDialog.vue';
+import OrderDetailDialog from '@/components/user/OrderDetailDialog.vue';
 import { mapState, mapActions } from 'pinia'
 import { useUserStore } from '@/stores/user'
 
@@ -100,7 +134,8 @@ export default {
     UserToolList,
     ArticleGrid,
     ProfileEditDialog,
-    MyGroupsDialog
+    MyGroupsDialog,
+    OrderDetailDialog
   },
   data() {
     return {
@@ -109,6 +144,9 @@ export default {
       editDialogVisible: false,
       inviteDialogVisible: false,
       groupsDialogVisible: false,
+      paymentConfirmVisible: false,
+      orderDetailVisible: false,
+      selectedOrder: null,
       activeTab: 'favorites',
       favoriteArticles: [],
       loadingFavorites: false,
@@ -231,7 +269,43 @@ export default {
     },
     formatTime(timeStr) {
       if (!timeStr) return '';
-      return new Date(timeStr).toLocaleString();
+      const d = new Date(timeStr);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    },
+    showOrderDetail(order) {
+      this.selectedOrder = order;
+      this.orderDetailVisible = true;
+    },
+    async handleContinuePay(order) {
+      const token = localStorage.getItem('token');
+      if (!token) return Message.warning('请先登录');
+      try {
+        const payRes = await axios.post(`/api/pay/alipay/create?orderId=${order.id}`, {}, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const formHtml = payRes.data.data;
+        const div = document.createElement('div');
+        div.innerHTML = formHtml;
+        document.body.appendChild(div);
+        
+        if (document.forms && document.forms.length > 0) {
+           const form = document.forms[document.forms.length - 1];
+           form.target = "_blank";
+           form.submit();
+        }
+        this.paymentConfirmVisible = true;
+      } catch (error) {
+        Message.error(error.response?.data?.message || '获取支付链接失败');
+      }
+    },
+    handlePaymentSuccess() {
+      this.paymentConfirmVisible = false;
+      this.fetchMyOrders();
+      Message.success('订单已刷新，请查看最新状态');
+    },
+    handlePaymentFail() {
+      this.paymentConfirmVisible = false;
+      Message.info('您可以稍后再次尝试支付');
     },
     copyInviteLink() {
       const baseUrl = window.location.origin;
