@@ -1,59 +1,63 @@
 <template>
-  <el-header>
+  <a-layout-header class="global-header">
     <div class="logo" @click="$router.push('/')">
-      <i class="el-icon-sunny" style="margin-right: 8px;"></i>小柴包
+      <icon-sun style="margin-right: 8px;" />小柴包
     </div>
     <div class="nav-menu">
-      <el-menu :default-active="$route.path" mode="horizontal" background-color="transparent" text-color="#8C6A5D"
-        active-text-color="#FF7E67" router>
-        <el-menu-item index="/">品牌故事</el-menu-item>
-        <el-menu-item index="/store">Ta的灵感橱窗</el-menu-item>
-        <el-menu-item v-if="user && user.role === 'ADMIN'" index="/admin">后台管理</el-menu-item>
-      </el-menu>
+      <a-menu :selected-keys="[$route.path]" mode="horizontal" style="background-color: transparent;" @menu-item-click="(key) => $router.push(key)">
+        <a-menu-item key="/">品牌故事</a-menu-item>
+        <a-menu-item key="/store">Ta的灵感橱窗</a-menu-item>
+        <a-menu-item v-if="user && user.role === 'ADMIN'" key="/admin">后台管理</a-menu-item>
+      </a-menu>
     </div>
     <div class="user-info">
       <template v-if="user">
-        <el-tooltip class="item" effect="dark" :content="'专属邀请码: ' + user.inviteCode" placement="bottom">
+        <a-tooltip :content="'专属邀请码: ' + user.inviteCode" position="bottom">
           <div class="points-tag">
-            <i class="el-icon-coin"></i> {{ user.points }} 积分
+            <icon-trophy /> {{ user.points }} 积分
           </div>
-        </el-tooltip>
-        <el-button type="text" icon="el-icon-share" style="margin-right: 15px; color: #8C6A5D;"
-          @click="copyInviteLink">邀请有礼</el-button>
-        <el-dropdown>
-          <span class="el-dropdown-link">
-            <el-avatar :size="32" :src="user.avatarUrl" style="margin-right: 8px; vertical-align: middle;"></el-avatar>
+        </a-tooltip>
+        <a-button type="text" style="margin-right: 15px; color: #8C6A5D;" @click="copyInviteLink">
+          <template #icon><icon-share-alt /></template>
+          邀请有礼
+        </a-button>
+        <a-dropdown @select="handleDropdown">
+          <span class="dropdown-link">
+            <a-avatar :size="32" style="margin-right: 8px; vertical-align: middle;">
+              <img :src="user.avatarUrl" />
+            </a-avatar>
             <span class="nickname">{{ user.nickname }}</span>
           </span>
-          <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item @click.native="$router.push('/profile')">个人资料</el-dropdown-item>
-            <el-dropdown-item @click.native="logout">退出登录</el-dropdown-item>
-          </el-dropdown-menu>
-        </el-dropdown>
+          <template #content>
+            <a-doption value="profile">个人资料</a-doption>
+            <a-doption value="logout">退出登录</a-doption>
+          </template>
+        </a-dropdown>
       </template>
-      <el-button v-else type="primary" size="small" round @click="loginDialogVisible = true">登录 / 注册</el-button>
+      <a-button v-else type="primary" size="small" shape="round" @click="loginDialogVisible = true">登录 / 注册</a-button>
     </div>
-  </el-header>
+  </a-layout-header>
 </template>
 
 <script>
-import axios from 'axios';
+import { mapState, mapActions } from 'pinia'
+import { useUserStore } from '@/stores/user'
+import { Message } from '@arco-design/web-vue';
 
 export default {
   name: 'GlobalHeader',
   data() {
     return {
-      loginDialogVisible: false,
-      user: null
+      loginDialogVisible: false
+    }
+  },
+  computed: {
+    ...mapState(useUserStore, ['userInfo']),
+    user() {
+      return this.userInfo;
     }
   },
   created() {
-    this.checkUser();
-    window.addEventListener('refresh-user', this.checkUser);
-    window.addEventListener('user-updated', (e) => {
-      this.user = e.detail;
-    });
-
     // Check for invite code in URL
     const urlParams = new URLSearchParams(window.location.search);
     const invite = urlParams.get('invite');
@@ -62,40 +66,23 @@ export default {
     }
   },
   watch: {
-    // Sync local loginDialogVisible with global one if needed
-    // But since we use events, we can just dispatch open-login
     loginDialogVisible(val) {
       if (val) {
         window.dispatchEvent(new CustomEvent('open-login'));
-        this.loginDialogVisible = false; // Reset local state
+        this.loginDialogVisible = false;
       }
     }
   },
-  beforeDestroy() {
-    window.removeEventListener('refresh-user', this.checkUser);
-  },
   methods: {
-    checkUser() {
-      const token = localStorage.getItem('token');
-      if (token && token !== 'undefined' && token !== 'null') {
-        axios.get('/api/users/me', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }).then(res => {
-          if (res.data && res.data.data) {
-            this.user = res.data.data;
-            window.dispatchEvent(new CustomEvent('user-updated', { detail: res.data.data }));
-          }
-        }).catch(() => {
-          localStorage.removeItem('token');
-          this.user = null;
-        });
-      }
+    ...mapActions(useUserStore, ['clearUser']),
+    handleDropdown(val) {
+      if (val === 'profile') this.$router.push('/profile');
+      if (val === 'logout') this.logout();
     },
     logout() {
-      localStorage.removeItem('token');
-      this.user = null;
-      this.$message.info('已退出登录');
-      window.dispatchEvent(new CustomEvent('user-updated', { detail: null }));
+      this.clearUser();
+      Message.info('已退出登录');
+      this.$router.push('/');
     },
     copyInviteLink() {
       const link = `${window.location.origin}/register?invite=${this.user.inviteCode}`;
@@ -112,16 +99,16 @@ export default {
         try {
           document.execCommand('copy');
           document.body.removeChild(textArea);
-          this.$message.success('邀请链接已复制');
+          Message.success('邀请链接已复制');
         } catch (err) {
           document.body.removeChild(textArea);
-          this.$message.error('复制失败，请手动复制');
+          Message.error('复制失败，请手动复制');
         }
       };
 
       if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(link).then(() => {
-          this.$message.success('邀请链接已复制，快去发给好友吧！');
+          Message.success('邀请链接已复制，快去发给好友吧！');
         }).catch(() => {
           fallbackCopy(link);
         });
@@ -134,7 +121,7 @@ export default {
 </script>
 
 <style scoped>
-.el-header {
+.global-header {
   background: #FFFFFF;
   color: #5C433B;
   line-height: 60px;
@@ -173,7 +160,7 @@ export default {
   cursor: help;
 }
 
-.el-dropdown-link {
+.dropdown-link {
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -185,17 +172,17 @@ export default {
   color: #5C433B;
 }
 
-::v-deep .el-menu.el-menu--horizontal {
+::v-deep .arco-menu-horizontal {
   border-bottom: none !important;
 }
 
-::v-deep .el-menu-item {
+::v-deep .arco-menu-item {
   font-size: 15px !important;
   font-weight: 600;
 }
 
 @media (max-width: 768px) {
-  .el-header {
+  .global-header {
     padding: 0 15px;
   }
 
@@ -208,7 +195,7 @@ export default {
     display: none;
   }
 
-  ::v-deep .el-menu-item {
+  ::v-deep .arco-menu-item {
     padding: 0 12px !important;
     font-size: 15px !important;
   }

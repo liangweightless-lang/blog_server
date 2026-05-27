@@ -7,6 +7,7 @@ import com.wtls.blog_server.mapper.product.GroupBuyMapper;
 import com.wtls.blog_server.mapper.product.ProductOrderMapper;
 import com.wtls.blog_server.mapper.user.UserMapper;
 import lombok.extern.slf4j.Slf4j;
+import com.wtls.blog_server.exception.BusinessException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,7 +41,7 @@ public class GroupBuyService {
         // Logic: Monday only (Optional: comment out if you want to test any day)
         // LocalDateTime now = LocalDateTime.now();
         // if (now.getDayOfWeek() != DayOfWeek.MONDAY) {
-        //    throw new RuntimeException("拼团活动仅在周一开启！");
+        //    throw new BusinessException("拼团活动仅在周一开启！");
         // }
 
         // Create the initiator's order first
@@ -69,11 +70,11 @@ public class GroupBuyService {
     public GroupBuy joinGroup(Long userId, Long groupId, String address) {
         GroupBuy gb = groupBuyMapper.selectById(groupId);
         if (gb == null || gb.getStatus() != 0 || gb.getExpireTime().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("该拼团已失效或已结束");
+            throw new BusinessException("该拼团已失效或已结束");
         }
         
         if (groupBuyMapper.checkMember(groupId, userId) > 0) {
-            throw new RuntimeException("您已经参加过该拼团了");
+            throw new BusinessException("您已经参加过该拼团了");
         }
 
         // Create the participant's order
@@ -125,7 +126,7 @@ public class GroupBuyService {
     public void forceSuccess(Long groupId) {
         GroupBuy gb = groupBuyMapper.selectById(groupId);
         if (gb == null || gb.getStatus() != 0) {
-            throw new RuntimeException("Group is not active or already finished");
+            throw new BusinessException("Group is not active or already finished");
         }
         
         gb.setStatus(1); // Success
@@ -147,7 +148,7 @@ public class GroupBuyService {
     public void forceFail(Long groupId) {
         GroupBuy gb = groupBuyMapper.selectById(groupId);
         if (gb == null || gb.getStatus() != 0) {
-            throw new RuntimeException("Group is not active or already finished");
+            throw new BusinessException("Group is not active or already finished");
         }
         
         gb.setStatus(2); // Failed

@@ -1,14 +1,12 @@
-import Vue from 'vue'
-import ElementUI from 'element-ui'
-import 'element-ui/lib/theme-chalk/index.css'
-import 'element-ui/lib/theme-chalk/display.css'
+import { createApp } from 'vue'
+import '@arco-design/web-vue/dist/arco.css'
 import App from './App.vue'
 import router from './router'
+import { createPinia } from 'pinia'
+import './utils/request'
 
-Vue.use(ElementUI)
-Vue.config.productionTip = false
-
-new Vue({
-  router,
-  render: h => h(App)
-}).$mount('#app')
+const app = createApp(App)
+const pinia = createPinia()
+app.use(pinia)
+app.use(router)
+app.mount('#app')

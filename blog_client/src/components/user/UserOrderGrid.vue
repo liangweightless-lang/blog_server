@@ -1,26 +1,26 @@
 <template>
-  <div class="section-card order-section">
+  <a-card class="section-card order-section" :bordered="false" :body-style="{ padding: '15px' }">
     <div class="section-header">
       <span class="section-title">我的订单</span>
-      <el-button type="text" class="view-all" @click="$emit('view-all')">全部订单 <i class="el-icon-arrow-right"></i></el-button>
+      <a-button type="text" class="view-all" @click="$emit('view-all')">全部订单 <icon-right /></a-button>
     </div>
     <div class="order-status-grid">
       <div class="status-item" @click="$emit('view-all')">
-        <el-badge :value="unpaidCount" :hidden="unpaidCount === 0" class="badge-item">
-          <i class="el-icon-wallet icon"></i>
-        </el-badge>
+        <a-badge :count="unpaidCount" class="badge-item">
+          <icon-safe class="icon" />
+        </a-badge>
         <span>待付款</span>
       </div>
       <div class="status-item" @click="$emit('view-all')">
-        <i class="el-icon-box icon"></i>
+        <icon-gift class="icon" />
         <span>待发货</span>
       </div>
       <div class="status-item" @click="$emit('view-all')">
-        <i class="el-icon-truck icon"></i>
+        <icon-send class="icon" />
         <span>待收货</span>
       </div>
       <div class="status-item" @click="$emit('view-all')">
-        <i class="el-icon-chat-line-round icon"></i>
+        <icon-message class="icon" />
         <span>评价</span>
       </div>
     </div>
@@ -28,9 +28,7 @@
     <!-- 快捷查看最近订单 -->
     <div class="recent-orders" v-if="orders.length > 0">
       <div v-for="order in orders.slice(0, 2)" :key="order.id" class="mini-order-card">
-        <el-image :src="order.productImage" class="mini-product-img" fit="cover">
-          <div slot="error" class="image-slot"><i class="el-icon-picture-outline"></i></div>
-        </el-image>
+        <img :src="order.productImage" class="mini-product-img" />
         <div class="mini-order-content">
           <div class="mini-order-info">
             <span class="mini-pname">{{ order.productName || '商品ID: ' + order.productId }}</span>
@@ -45,7 +43,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </a-card>
 </template>
 
 <script>
@@ -74,12 +72,15 @@ export default {
 
 <style scoped>
 .section-card {
-  background: white;
-  margin: 15px;
-  border-radius: 12px;
-  padding: 15px;
-  max-width: 600px;
+  background: transparent !important;
   margin: 15px auto;
+  border-radius: 12px;
+  max-width: 600px;
+}
+::v-deep .arco-card-body {
+  padding: 15px;
+  background: white;
+  border-radius: 12px;
 }
 .section-header {
   display: flex;
@@ -140,16 +141,8 @@ export default {
   height: 48px;
   border-radius: 6px;
   flex-shrink: 0;
+  object-fit: cover;
   background-color: #f5f7fa;
-}
-.image-slot {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-  color: #c0c4cc;
-  font-size: 20px;
 }
 .mini-order-content {
   flex: 1;

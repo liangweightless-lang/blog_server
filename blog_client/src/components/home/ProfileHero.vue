@@ -3,21 +3,25 @@
     <div class="hero-overlay"></div>
     <div class="profile-content">
       <img :src="homeConfig.avatarUrl || '/img/avatar.png'" class="avatar" alt="Avatar" />
-      <h1 class="author-name">创作者 {{ homeConfig.authorName || '小柴包' }}</h1>
+      <h1 class="author-name">{{ homeConfig.authorName || '小柴包' }}</h1>
       <p class="author-bio">{{ homeConfig.authorBio || '记录灵感，探索生活美学。在这里分享品牌的成长脉络，以及创作者的生活方式碎片。' }}</p>
       <div class="social-links">
-        <el-tag size="small" type="info" v-for="tag in (homeConfig.tags || ['生活方式', '独立品牌', '创作手记'])" :key="tag">#{{ tag }}</el-tag>
-        <el-popover
+        <a-tag size="small" color="orangered" v-for="tag in (homeConfig.tags || ['生活方式', '独立品牌', '创作手记'])" :key="tag">#{{ tag }}</a-tag>
+        <a-popover
           v-if="homeConfig.wechatQrUrl"
-          placement="bottom"
-          width="160"
+          position="bottom"
           trigger="hover">
-          <div style="text-align: center;">
-            <div style="font-size: 13px; color: #5C433B; margin-bottom: 8px; font-weight: bold;">扫码添加微信</div>
-            <img :src="homeConfig.wechatQrUrl" style="width: 100%; border-radius: 8px;">
-          </div>
-          <el-button slot="reference" size="mini" round icon="el-icon-chat-dot-round" class="wechat-btn">微信</el-button>
-        </el-popover>
+          <a-button size="small" shape="round" class="wechat-btn">
+            <template #icon><icon-message /></template>
+            微信
+          </a-button>
+          <template #content>
+            <div style="text-align: center; width: 160px;">
+              <div style="font-size: 13px; color: #5C433B; margin-bottom: 8px; font-weight: bold;">扫码添加微信</div>
+              <img :src="homeConfig.wechatQrUrl" style="width: 100%; border-radius: 8px;">
+            </div>
+          </template>
+        </a-popover>
       </div>
     </div>
   </div>
@@ -115,7 +119,7 @@ export default {
   justify-content: center;
   flex-wrap: wrap;
 }
-.social-links .el-tag {
+.social-links .arco-tag {
   background: #FFF0ED;
   border: none;
   color: #FF7E67;
@@ -140,20 +144,32 @@ export default {
 @media (max-width: 768px) {
   .hero-section {
     height: auto;
-    padding: 40px 15px;
+    padding: 24px 15px;
+    border-radius: 16px;
   }
   .avatar {
-    width: 80px;
-    height: 80px;
+    width: 56px;
+    height: 56px;
+    border-width: 3px;
   }
   .author-name {
-    font-size: 24px;
+    font-size: 18px;
+    margin: 10px 0 6px 0;
   }
   .author-bio {
-    font-size: 14px;
+    font-size: 12px;
+    margin-bottom: 12px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
   .social-links {
-    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .social-links .arco-tag {
+    padding: 0 10px;
+    font-size: 11px;
   }
 }
 </style>

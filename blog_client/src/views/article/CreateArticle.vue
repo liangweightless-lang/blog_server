@@ -3,30 +3,29 @@
     <!-- 顶部导航条 -->
     <div class="xhs-create-header">
       <div class="header-left" @click="$router.push('/')">
-        <i class="el-icon-arrow-left"></i>
+        <icon-left style="font-size: 20px" />
       </div>
       <div class="header-title">发布日记</div>
       <div class="header-right">
-        <el-button class="publish-btn" type="primary" round size="small" :loading="submitting" @click="onSubmit">
+        <a-button class="publish-btn" type="primary" shape="round" size="small" :loading="submitting" @click="onSubmit">
           发布
-        </el-button>
+        </a-button>
       </div>
     </div>
 
     <!-- 真实的上传照片区 -->
     <div class="xhs-upload-area">
-      <el-upload
+      <a-upload
         action="/api/files/upload"
         list-type="picture-card"
-        :on-success="handleUploadSuccess"
-        :on-error="handleUploadError"
-        :on-remove="handleRemove"
-        :file-list="fileList"
+        v-model:file-list="fileList"
+        @success="handleUploadSuccess"
+        @error="handleUploadError"
         multiple
+        image-preview
         accept="image/*,video/*"
       >
-        <i class="el-icon-plus"></i>
-      </el-upload>
+      </a-upload>
       <div class="upload-tip" style="font-size: 12px; color: #D3C1BA; margin-top: 8px;">支持多张图片与短视频上传</div>
     </div>
 
@@ -41,25 +40,23 @@
     <div class="xhs-bottom-actions">
       <div class="action-item"><span class="icon">#</span> 参与话题</div>
       <div class="action-item"><span class="icon">@</span> 提醒谁看</div>
-      <div class="action-item"><i class="el-icon-location-outline"></i> 添加地点</div>
+      <div class="action-item"><icon-location /> 添加地点</div>
     </div>
 
     <!-- 关联商品选择 -->
     <div class="xhs-product-link">
       <div class="link-header">
-        <i class="el-icon-shopping-bag-2"></i>
+        <icon-gift />
         <span>好物推荐</span>
       </div>
-      <el-select v-model="form.productId" clearable placeholder="选择日记中提到的商品" style="width: 100%">
-        <el-option
+      <a-select v-model="form.productId" allow-clear placeholder="选择日记中提到的商品" style="width: 100%">
+        <a-option
           v-for="item in products"
           :key="item.id"
-          :label="item.name"
-          :value="item.id">
-          <span style="float: left">{{ item.name }}</span>
-          <span style="float: right; color: #8492a6; font-size: 13px">¥{{ item.price }}</span>
-        </el-option>
-      </el-select>
+          :value="item.id"
+          :label="item.name + ' (¥' + item.price + ')'">
+        </a-option>
+      </a-select>
       <p class="link-tip">关联后，读者将在文末直接看到购买入口</p>
     </div>
   </div>
@@ -67,6 +64,7 @@
 
 <script>
 import axios from 'axios'
+import { Message } from '@arco-design/web-vue'
 
 export default {
   name: 'CreateArticle',
@@ -88,16 +86,12 @@ export default {
     this.fetchProducts();
   },
   methods: {
-    handleUploadSuccess(res, file, fileList) {
-      // FileController returns { url: '/uploads/...' }, extract the string
-      file.uploadedUrl = (res && res.url) ? res.url : res;
-      this.fileList = fileList;
+    handleUploadSuccess(fileItem) {
+      const res = fileItem.response;
+      fileItem.uploadedUrl = (res && res.url) ? res.url : res;
     },
-    handleRemove(file, fileList) {
-      this.fileList = fileList;
-    },
-    handleUploadError(err, file, fileList) {
-      this.$message.error('文件上传失败，请重试');
+    handleUploadError(fileItem) {
+      Message.error('文件上传失败，请重试');
     },
     async fetchProducts() {
       try {
@@ -109,16 +103,15 @@ export default {
     },
     async onSubmit() {
       if (!this.form.title.trim()) {
-        this.$message.warning('标题不能为空哦~')
+        Message.warning('标题不能为空哦~')
         return
       }
       if (!this.form.content.trim()) {
-        this.$message.warning('多写点正文吧~')
+        Message.warning('多写点正文吧~')
         return
       }
       
       const urls = this.fileList.map(f => {
-        // f.uploadedUrl is set by handleUploadSuccess; fallback to f.response.url or f.url
         if (f.uploadedUrl) return f.uploadedUrl;
         const r = f.response;
         return r ? (typeof r === 'string' ? r : r.url) : f.url;
@@ -133,13 +126,13 @@ export default {
           headers: { 'Authorization': `Bearer ${token}` }
         })
         if (res.data && res.data.data) {
-          this.$message.success('日记发布成功！')
+          Message.success('日记发布成功！')
           this.$router.push('/admin')
         } else {
-          this.$message.error('日记发布失败，请稍后重试')
+          Message.error('日记发布失败，请稍后重试')
         }
       } catch (error) {
-        this.$message.error(error.response?.data?.error || '日记发布失败，无管理员权限')
+        Message.error(error.response?.data?.message || '日记发布失败，无管理员权限')
       } finally {
         this.submitting = false
       }
@@ -164,7 +157,6 @@ export default {
   margin-bottom: 24px;
 }
 .header-left {
-  font-size: 20px;
   cursor: pointer;
   color: #5C433B;
   width: 60px;
@@ -190,26 +182,15 @@ export default {
 .xhs-upload-area {
   margin-bottom: 24px;
 }
-::v-deep .el-upload--picture-card {
+
+::v-deep .arco-upload-picture-card {
   background: #FFFDF8;
   border: 1px dashed #FFC1B6;
   border-radius: 12px;
-  width: 100px;
-  height: 100px;
-  line-height: 100px;
   color: #FF7E67;
-  transition: all 0.3s;
 }
-::v-deep .el-upload--picture-card:hover {
+::v-deep .arco-upload-picture-card:hover {
   background: #FFF0ED;
-}
-::v-deep .el-upload--picture-card i {
-  font-size: 24px;
-}
-::v-deep .el-upload-list--picture-card .el-upload-list__item {
-  width: 100px;
-  height: 100px;
-  border-radius: 12px;
 }
 
 .xhs-editor-area {
@@ -277,7 +258,7 @@ export default {
   font-weight: 800;
   color: #FF7E67;
 }
-.action-item i {
+.action-item svg {
   color: #FF7E67;
   font-size: 15px;
 }

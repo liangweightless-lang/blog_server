@@ -1,22 +1,22 @@
 <template>
-  <el-dialog
+  <a-modal
     title="订单确认"
-    :visible.sync="visible"
+    :visible="visible"
     :width="isMobile ? '90%' : '420px'"
-    center
-    append-to-body
-    custom-class="buy-modal">
+    @cancel="visible = false"
+    :footer="false"
+    modal-class="buy-modal">
     <div class="buy-dialog-content" v-if="product">
       <!-- 商品概要区 -->
       <div class="product-preview">
-        <img :src="product.image" class="product-thumb-large" />
+        <a-image :src="product.image" class="product-thumb-large" width="90" height="90" fit="cover" />
         <div class="product-info-text">
           <h3 class="product-name">{{ product.name }}</h3>
           <p class="product-price-line">
             <span class="price-symbol">¥</span>
             <span class="price-val">{{ product.price }}</span>
-            <el-tag v-if="product.stock <= 5 && product.stock > 0" type="danger" size="mini" effect="plain" style="margin-left: 10px;">仅剩 {{ product.stock }} 件</el-tag>
-            <el-tag v-else-if="product.stock <= 0" type="info" size="mini" style="margin-left: 10px;">已售罄</el-tag>
+            <a-tag v-if="product.stock <= 5 && product.stock > 0" color="red" size="small" style="margin-left: 10px;">仅剩 {{ product.stock }} 件</a-tag>
+            <a-tag v-else-if="product.stock <= 0" color="gray" size="small" style="margin-left: 10px;">已售罄</a-tag>
             <span v-else class="stock-text">库存: {{ product.stock }}</span>
           </p>
         </div>
@@ -27,15 +27,15 @@
         <div v-for="(spec, sIdx) in parsedSpecs" :key="sIdx" class="spec-group">
           <p class="spec-group-title">{{ spec.name }}</p>
           <div class="spec-options">
-            <div 
-              v-for="(opt, oIdx) in spec.options" 
-              :key="oIdx"
-              class="spec-option-btn"
-              :class="{ active: selectedSpecs[spec.name] === opt }"
-              @click="selectSpec(spec.name, opt)"
-            >
-              {{ opt }}
-            </div>
+            <a-radio-group v-model="selectedSpecs[spec.name]" type="button">
+              <a-radio 
+                v-for="(opt, oIdx) in spec.options" 
+                :key="oIdx"
+                :value="opt"
+              >
+                {{ opt }}
+              </a-radio>
+            </a-radio-group>
           </div>
         </div>
       </div>
@@ -43,17 +43,16 @@
       <!-- 积分抵扣区 -->
       <div class="points-deduction-card" v-if="userPoints > 0">
         <div class="card-header">
-          <i class="el-icon-coin"></i> 积分抵扣
-          <el-switch v-model="usePoints" active-color="#FF7E67"></el-switch>
+          <span><icon-trophy /> 积分抵扣</span>
+          <a-switch v-model="usePoints" checked-color="#FF7E67"></a-switch>
         </div>
         <div v-if="usePoints" class="slider-wrapper">
-          <el-slider 
+          <a-slider 
             v-model="pointsToUse" 
             :max="maxPointsPossible" 
             :step="100"
-            show-input
-            input-size="mini">
-          </el-slider>
+            show-input>
+          </a-slider>
           <div class="deduction-info">
             <span>可用积分: {{ userPoints }}</span>
             <span class="deduct-amount">- ¥{{ (pointsToUse / 100).toFixed(2) }}</span>
@@ -84,24 +83,27 @@
       <p class="demo-tip">此功能为演示版本。在生产环境中，点击后将调起微信/支付宝支付。</p>
     </div>
 
-    <span slot="footer" class="dialog-footer">
-      <el-button @click="visible = false" round>再想想</el-button>
-      <el-button 
+    <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+      <a-button @click="visible = false" shape="round">再想想</a-button>
+      <a-button 
         type="primary" 
         @click="handleConfirm" 
         :loading="loading" 
         :disabled="isPayDisabled"
-        round 
+        shape="round" 
         class="pay-btn"
       >
         {{ product.stock <= 0 ? '库存不足' : '立即支付' }}
-      </el-button>
-    </span>
-  </el-dialog>
+      </a-button>
+    </div>
+  </a-modal>
 </template>
 
 <script>
 import axios from 'axios';
+import { Message } from '@arco-design/web-vue';
+import { mapState, mapActions } from 'pinia'
+import { useUserStore } from '@/stores/user'
 
 export default {
   name: 'ProductBuyModal',
@@ -114,12 +116,15 @@ export default {
       loading: false,
       usePoints: false,
       pointsToUse: 0,
-      userPoints: 0,
       selectedSpecs: {},
       isMobile: window.innerWidth <= 768
     }
   },
   computed: {
+    ...mapState(useUserStore, ['userInfo']),
+    userPoints() {
+      return this.userInfo ? this.userInfo.points : 0;
+    },
     visible: {
       get() { return this.show },
       set(val) { this.$emit('update:show', val) }
@@ -139,7 +144,6 @@ export default {
     isPayDisabled() {
       if (!this.product) return true;
       if (this.product.stock <= 0) return true;
-      // Check if all specs are selected
       return this.parsedSpecs.some(spec => !this.selectedSpecs[spec.name]);
     },
     maxPointsPossible() {
@@ -156,42 +160,25 @@ export default {
   watch: {
     show(newVal) {
       if (newVal) {
-        this.fetchUserPoints();
         this.usePoints = false;
         this.pointsToUse = 0;
         this.selectedSpecs = {};
-        // Auto select if only one option
         this.parsedSpecs.forEach(spec => {
           if (spec.options && spec.options.length === 1) {
-            this.$set(this.selectedSpecs, spec.name, spec.options[0]);
+            this.selectedSpecs[spec.name] = spec.options[0];
           }
         });
       }
     }
   },
   methods: {
-    selectSpec(name, opt) {
-      this.$set(this.selectedSpecs, name, opt);
-    },
-    async fetchUserPoints() {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) return;
-        const res = await axios.get('/api/users/me', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        this.userPoints = res.data.data.points || 0;
-      } catch (e) {
-        console.error('获取积分失败');
-      }
-    },
+    ...mapActions(useUserStore, ['updatePoints']),
     async handleConfirm() {
       const token = localStorage.getItem('token');
-      if (!token) return this.$message.warning('请先登录');
+      if (!token) return Message.warning('请先登录');
 
       this.loading = true;
       try {
-        // 1. 创建订单
         const orderRes = await axios.post('/api/orders/create', { 
           productId: this.product.id,
           pointsToUse: this.usePoints ? this.pointsToUse : 0,
@@ -200,25 +187,25 @@ export default {
 
         const orderId = orderRes.data.data.id;
 
-        // 2. 唤起支付宝支付
         const payRes = await axios.post(`/api/pay/alipay/create?orderId=${orderId}`, {}, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
 
-        // 支付宝返回一段包含自动提交脚本的 form HTML
         const formHtml = payRes.data.data;
         const div = document.createElement('div');
         div.innerHTML = formHtml;
         document.body.appendChild(div);
         
-        // 提交最后一个表单（支付宝返回的）
         if (document.forms && document.forms.length > 0) {
            document.forms[document.forms.length - 1].submit();
         }
         
+        if (this.usePoints && this.pointsToUse > 0) {
+           this.updatePoints(this.pointsToUse);
+        }
         this.visible = false;
       } catch (error) {
-        this.$message.error(error.response?.data?.error || '支付失败，请稍后重试');
+        Message.error(error.response?.data?.message || '支付失败，请稍后重试');
       } finally {
         this.loading = false;
       }
@@ -240,13 +227,6 @@ export default {
   border-radius: 16px;
   margin-bottom: 20px;
   border: 1px solid #FFE4D6;
-}
-.product-thumb-large {
-  width: 90px;
-  height: 90px;
-  object-fit: cover;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 .product-name {
   margin: 0 0 8px 0;
@@ -290,30 +270,7 @@ export default {
   margin-bottom: 8px;
 }
 .spec-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-.spec-option-btn {
-  padding: 6px 16px;
-  background: #fff;
-  border: 1px solid #DCDFE6;
-  border-radius: 20px;
-  font-size: 12px;
-  color: #606266;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.spec-option-btn:hover {
-  border-color: #FF7E67;
-  color: #FF7E67;
-}
-.spec-option-btn.active {
-  background: #FF7E67;
-  border-color: #FF7E67;
-  color: #fff;
-  font-weight: bold;
-  box-shadow: 0 2px 6px rgba(255, 126, 103, 0.3);
+  margin-top: 8px;
 }
 
 .points-deduction-card {
@@ -382,7 +339,7 @@ export default {
 .pay-btn {
   background: linear-gradient(135deg, #FF7E67 0%, #FF5A44 100%);
   border: none;
-  padding: 12px 40px;
+  padding: 0 40px;
   font-weight: 800;
 }
 </style>

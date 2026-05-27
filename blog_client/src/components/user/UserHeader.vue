@@ -11,17 +11,20 @@
         </div>
       </div>
       <div class="header-actions">
-        <el-button 
-          :type="isCheckedIn ? 'success' : 'warning'" 
+        <a-button 
+          :type="isCheckedIn ? 'primary' : 'primary'" 
+          :status="isCheckedIn ? 'success' : 'warning'"
           size="small" 
-          round 
+          shape="round" 
           :disabled="isCheckedIn"
           :loading="loading"
           @click="handleCheckin"
         >
           {{ isCheckedIn ? '今日已签到' : '每日签到' }}
-        </el-button>
-        <el-button icon="el-icon-edit-outline" circle size="small" @click="$emit('edit')"></el-button>
+        </a-button>
+        <a-button shape="circle" size="small" @click="$emit('edit')" style="margin-left: 8px;">
+          <icon-edit />
+        </a-button>
       </div>
     </div>
     
@@ -29,20 +32,21 @@
     <div v-if="user && user.role === 'ADMIN'" class="admin-vip-banner" @click="$router.push('/admin')">
       <div class="banner-left">
         <div class="vip-icon-wrapper">
-          <i class="el-icon-s-custom vip-icon"></i>
+          <icon-user class="vip-icon" />
         </div>
         <div class="vip-text">
-          <span class="vip-title">👑 创作者中心 / 管理控制台</span>
+          <span class="vip-title">👑 管理后台</span>
           <span class="vip-subtitle">您拥有最高管理权限，点击进入</span>
         </div>
       </div>
-      <i class="el-icon-arrow-right"></i>
+      <icon-right />
     </div>
   </div>
 </template>
 
 <script>
 import axios from 'axios';
+import { Message } from '@arco-design/web-vue';
 
 export default {
   name: 'UserHeader',
@@ -59,7 +63,6 @@ export default {
     isCheckedIn() {
       if (!this.user || !this.user.lastCheckinDate) return false;
       const today = new Date().toISOString().split('T')[0];
-      // Handling both array [2026, 5, 11] and string formats
       let dateStr = this.user.lastCheckinDate;
       if (Array.isArray(dateStr)) {
         dateStr = `${dateStr[0]}-${String(dateStr[1]).padStart(2, '0')}-${String(dateStr[2]).padStart(2, '0')}`;
@@ -79,11 +82,10 @@ export default {
           const res = await axios.post('/api/users/checkin', {}, {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
           });
-          this.$message.success(res.data.message);
-          // Refresh globally to update points and lastCheckinDate
+          Message.success(res.data.message);
           window.dispatchEvent(new CustomEvent('refresh-user'));
         } catch (error) {
-          this.$message.error(error.response?.data?.error || '签到失败');
+          Message.error(error.response?.data?.message || '签到失败');
         } finally {
           this.loading = false;
         }

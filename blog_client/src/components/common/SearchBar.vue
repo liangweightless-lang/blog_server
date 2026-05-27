@@ -1,7 +1,7 @@
 <template>
   <div class="search-bar-container" :class="{ 'is-focused': isFocused }">
     <div class="search-input-wrapper">
-      <i class="el-icon-search search-icon"></i>
+      <icon-search class="search-icon" />
       <input 
         type="text" 
         v-model="query" 
@@ -11,7 +11,7 @@
         @input="handleInput"
         class="search-input"
       />
-      <i v-if="query" class="el-icon-circle-close clear-icon" @click="clearSearch"></i>
+      <icon-close-circle v-if="query" class="clear-icon" @click="clearSearch" />
     </div>
   </div>
 </template>
@@ -54,12 +54,12 @@ export default {
 .search-input-wrapper {
   display: flex;
   align-items: center;
-  background: #FFFDF8;
-  border: 2px solid #FDF0E6;
+  background: #F5F5F5;
+  border: 2px solid #EFEFEF;
   border-radius: 25px;
   padding: 8px 18px;
   gap: 10px;
-  box-shadow: 0 4px 12px rgba(255, 126, 103, 0.03);
+  box-shadow: none;
   transition: all 0.3s ease;
 }
 

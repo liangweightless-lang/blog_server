@@ -8,6 +8,7 @@ import com.wtls.blog_server.mapper.product.ProductOrderMapper;
 import com.wtls.blog_server.mapper.user.UserMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.wtls.blog_server.exception.BusinessException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,12 +32,12 @@ public class ProductOrderService {
     public ProductOrder createOrder(Long userId, Long productId, String address, String type, Integer pointsToUse, String spec) {
         Product product = productMapper.selectById(productId);
         if (product == null) {
-            throw new RuntimeException("Product not found");
+            throw new BusinessException("Product not found");
         }
         
         // 校验库存
         if (product.getStock() != null && product.getStock() <= 0) {
-            throw new RuntimeException("商品库存不足");
+            throw new BusinessException("商品库存不足");
         }
 
         java.math.BigDecimal originalAmount = "GROUP".equals(type) && product.getGroupPrice() != null ? product.getGroupPrice() : product.getPrice();
@@ -46,7 +47,7 @@ public class ProductOrderService {
         if (pointsToUse != null && pointsToUse > 0) {
             User user = userMapper.findById(userId);
             if (user.getPoints() < pointsToUse) {
-                throw new RuntimeException("积分余额不足");
+                throw new BusinessException("积分余额不足");
             }
             
             // 100 points = 1 Yuan
@@ -90,13 +91,13 @@ public class ProductOrderService {
     public ProductOrder handlePaymentSuccess(String orderId) {
         ProductOrder order = orderMapper.selectById(orderId);
         if (order == null || order.getStatus() != 0) {
-            throw new RuntimeException("Invalid order or already paid");
+            throw new BusinessException("Invalid order or already paid");
         }
 
         // 扣减库存
         int rows = productMapper.reduceStock(order.getProductId(), 1);
         if (rows == 0) {
-            throw new RuntimeException("支付失败：商品库存不足");
+            throw new BusinessException("支付失败：商品库存不足");
         }
 
         // Update order status
@@ -116,18 +117,18 @@ public class ProductOrderService {
     public ProductOrder redeemWithPoints(Long userId, Long productId) {
         Product product = productMapper.selectById(productId);
         if (product == null) {
-            throw new RuntimeException("Product not found");
+            throw new BusinessException("Product not found");
         }
 
         if (product.getStock() != null && product.getStock() <= 0) {
-            throw new RuntimeException("商品库存不足，无法兑换");
+            throw new BusinessException("商品库存不足，无法兑换");
         }
 
         // 1000 points for a free item
         int pointsNeeded = 1000;
         int rows = userMapper.deductPoints(userId, pointsNeeded);
         if (rows == 0) {
-            throw new RuntimeException("积分不足，兑换失败 (需1000积分)");
+            throw new BusinessException("积分不足，兑换失败 (需1000积分)");
         }
         
         // 扣减库存

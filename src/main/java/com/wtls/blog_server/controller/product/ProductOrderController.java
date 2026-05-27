@@ -8,6 +8,7 @@ import io.jsonwebtoken.Claims;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import com.wtls.blog_server.exception.UnauthorizedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,13 +45,13 @@ public class ProductOrderController {
 
     private Long getUserIdFromToken(String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new RuntimeException("Unauthorized");
+            throw new UnauthorizedException("未授权访问，请重新登录");
         }
         String token = authHeader.substring(7);
         Claims claims = JwtUtils.parseToken(token);
         Object userId = claims.get("userId");
         if (userId == null) {
-            throw new RuntimeException("Invalid token: userId missing");
+            throw new UnauthorizedException("Token无效，缺少用户信息");
         }
         return Long.valueOf(userId.toString());
     }
@@ -90,7 +91,7 @@ public class ProductOrderController {
         Claims claims = JwtUtils.parseToken(token);
         String role = claims.get("role", String.class);
         if (!"ADMIN".equals(role)) {
-            throw new RuntimeException("Access Denied");
+            throw new UnauthorizedException("拒绝访问，只能操作自己的数据");
         }
         return Result.success(orderService.getAllOrders());
     }
@@ -100,7 +101,7 @@ public class ProductOrderController {
         String token = authHeader.substring(7);
         Claims claims = JwtUtils.parseToken(token);
         if (!"ADMIN".equals(claims.get("role", String.class))) {
-            throw new RuntimeException("Access Denied");
+            throw new UnauthorizedException("拒绝访问，只能操作自己的数据");
         }
         orderService.shipOrder(orderId);
         return Result.success("Order shipped");

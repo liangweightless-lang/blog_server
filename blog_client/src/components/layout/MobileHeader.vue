@@ -2,44 +2,35 @@
   <div class="mobile-header">
     <div class="logo" @click="$router.push('/')">小柴包</div>
     <div class="user-avatar" v-if="user" @click="$router.push('/profile')">
-      <el-avatar :size="32" :src="user.avatarUrl"></el-avatar>
+      <a-avatar :size="32">
+        <img :src="user.avatarUrl" />
+      </a-avatar>
     </div>
-    <el-button v-else type="text" style="color: #FF7E67;" @click="triggerLogin">登录</el-button>
+    <a-button v-else type="text" style="color: #FF7E67;" @click="triggerLogin">登录</a-button>
   </div>
 </template>
 
 <script>
-import axios from 'axios';
+import { mapState, mapActions } from 'pinia'
+import { useUserStore } from '@/stores/user'
 
 export default {
   name: 'MobileHeader',
-  data() {
-    return { user: null }
-  },
-  created() {
-    this.checkUser();
-    window.addEventListener('refresh-user', this.checkUser);
-    window.addEventListener('user-updated', (e) => {
-      this.user = e.detail;
-    });
-  },
-  beforeDestroy() {
-    window.removeEventListener('refresh-user', this.checkUser);
+  computed: {
+    ...mapState(useUserStore, ['userInfo']),
+    user() {
+      return this.userInfo;
+    }
   },
   methods: {
-    checkUser() {
-      const token = localStorage.getItem('token');
-      if (token && token !== 'undefined') {
-        axios.get('/api/users/me', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }).then(res => {
-          this.user = res.data.data;
-        }).catch(() => {
-          localStorage.removeItem('token');
-          this.user = null;
-        });
-      } else {
-        this.user = null;
+    ...mapActions(useUserStore, ['clearUser']),
+    handleDropdown(val) {
+      if (val === 'logout') {
+        this.clearUser();
+        this.$router.push('/');
+        window.location.reload();
+      } else if (val === 'profile') {
+        this.$router.push('/profile');
       }
     },
     triggerLogin() {

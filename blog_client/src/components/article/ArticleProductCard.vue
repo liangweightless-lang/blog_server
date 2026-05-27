@@ -1,13 +1,13 @@
 <template>
   <div class="recommended-product" v-if="product && product.id" @click="handleClick">
     <div class="product-card-inner">
-      <div class="product-badge">创作者推荐</div>
+      <div class="product-badge">推荐好物</div>
       <img :src="product.image" class="product-thumb" />
       <div class="product-info-mini">
         <h4 class="product-name-mini">{{ product.name }}</h4>
         <div class="product-price-row">
           <span class="product-price-mini">¥{{ product.price }}</span>
-          <el-button type="primary" size="mini" round class="buy-now-btn">立即去买</el-button>
+          <a-button type="primary" size="mini" shape="round" class="buy-now-btn">立即去买</a-button>
         </div>
       </div>
     </div>

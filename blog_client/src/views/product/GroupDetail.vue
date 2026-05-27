@@ -1,11 +1,15 @@
 <template>
   <div class="group-detail-container">
     <div class="back-nav" @click="$router.back()">
-      <i class="el-icon-arrow-left"></i> 返回商城
+      <icon-left /> 返回商城
     </div>
 
     <div v-if="loading" class="loading-state">
-      <el-skeleton :rows="10" animated />
+      <a-skeleton animation>
+        <a-space direction="vertical" :style="{width:'100%'}" size="large">
+          <a-skeleton-line :rows="10" />
+        </a-space>
+      </a-skeleton>
     </div>
 
     <div v-else-if="group" class="detail-content">
@@ -36,12 +40,11 @@
             <span>已凑齐 <b>{{ group.currentNum }}</b> 人</span>
             <span>还差 <b>{{ group.requiredNum - group.currentNum }}</b> 人</span>
           </div>
-          <el-progress 
-            :percentage="(group.currentNum / group.requiredNum) * 100" 
+          <a-progress 
+            :percent="group.currentNum / group.requiredNum" 
             :stroke-width="12" 
             :show-text="false"
-            color="#FF7E67">
-          </el-progress>
+            color="#FF7E67" />
         </div>
       </div>
 
@@ -51,7 +54,7 @@
         <div class="member-list">
           <div v-for="(member, index) in members" :key="member.userId || index" class="member-item" :class="{ initiator: index === 0 }">
             <div class="avatar-box">
-              <el-avatar :src="member.avatarUrl" icon="el-icon-user-solid" size="medium"></el-avatar>
+              <a-avatar :image-url="member.avatarUrl || '/img/avatar.png'" :size="40"></a-avatar>
               <span class="badge" v-if="index === 0">团长</span>
             </div>
             <span class="name">{{ member.nickname || '匿名用户' }}</span>
@@ -66,48 +69,44 @@
 
       <!-- 4. 操作按钮 -->
       <div class="action-footer" v-if="group.status === 0">
-        <el-button 
-          type="warning" 
+        <a-button 
+          type="primary" 
+          status="warning"
           class="join-btn" 
-          round 
+          shape="round" 
           @click="showJoinDialog = true"
           :disabled="isMember">
           {{ isMember ? '您已在团中' : '立即加入拼团' }}
-        </el-button>
+        </a-button>
         <p class="share-tip">分享给好友，成团更快哦！</p>
       </div>
     </div>
 
     <!-- 加入拼团弹窗 -->
-    <el-dialog
-      title="加入拼团"
-      :visible.sync="showJoinDialog"
-      width="90%"
-      max-width="450px"
-      center>
-      <div class="join-form">
-        <div class="form-item">
-          <p class="label">配送地址</p>
-          <el-input type="textarea" v-model="address" placeholder="请输入收货地址" :rows="3"></el-input>
-        </div>
-        <div class="price-confirm">
-          <span>需支付金额:</span>
-          <span class="amount">¥{{ product.groupPrice || (product.price * 0.8).toFixed(2) }}</span>
-        </div>
-      </div>
-      <span slot="footer">
-        <el-button @click="showJoinDialog = false">取 消</el-button>
-        <el-button type="warning" @click="handleJoin" :loading="joining">立即支付并加入</el-button>
-      </span>
-    </el-dialog>
+    <GroupActionModal
+      v-model:show="showJoinDialog"
+      actionType="join"
+      :product="product"
+      :groupId="id"
+      @success="handleGroupSuccess" />
   </div>
 </template>
 
 <script>
 import axios from 'axios';
+import { Message } from '@arco-design/web-vue';
+import GroupActionModal from '@/components/product/GroupActionModal.vue';
+import { mapState } from 'pinia'
+import { useUserStore } from '@/stores/user'
 
 export default {
   name: 'GroupDetail',
+  components: {
+    GroupActionModal
+  },
+  computed: {
+    ...mapState(useUserStore, ['userInfo'])
+  },
   data() {
     return {
       id: this.$route.params.id,
@@ -118,42 +117,37 @@ export default {
       countdownText: '',
       timer: null,
       showJoinDialog: false,
-      address: '',
-      joining: false,
-      isMember: false
+      isMember: false,
+      isMobile: window.innerWidth <= 768
     };
   },
   async created() {
+    window.addEventListener('resize', this.handleResize);
     await this.fetchData();
     this.startCountdown();
     this.checkMembership();
   },
-  beforeDestroy() {
+  beforeUnmount() {
+    window.removeEventListener('resize', this.handleResize);
     if (this.timer) clearInterval(this.timer);
   },
   methods: {
+    handleResize() {
+      this.isMobile = window.innerWidth <= 768;
+    },
     async fetchData() {
       try {
         this.loading = true;
         const res = await axios.get(`/api/groups/${this.id}`);
         this.group = res.data.data;
         
-        // Fetch members
         const memRes = await axios.get(`/api/groups/${this.id}/members`);
         this.members = memRes.data.data || [];
         
-        // Fetch product info
         const prodRes = await axios.get(`/api/products/${this.group.productId}`);
         this.product = prodRes.data.data;
-
-        // Fetch profile to get default address
-        const token = localStorage.getItem('token');
-        if (token) {
-          const userRes = await axios.get('/api/users/me', { headers: { 'Authorization': `Bearer ${token}` } });
-          this.address = userRes.data.data.address || '';
-        }
       } catch (e) {
-        this.$message.error('获取拼团信息失败');
+        Message.error('获取拼团信息失败');
         this.$router.push('/store');
       } finally {
         this.loading = false;
@@ -197,41 +191,9 @@ export default {
       update();
       this.timer = setInterval(update, 1000);
     },
-    async handleJoin() {
-      if (!this.address) return this.$message.warning('请填写配送地址');
-      this.joining = true;
-      try {
-        const token = localStorage.getItem('token');
-        const joinRes = await axios.post(`/api/groups/${this.id}/join`, { address: this.address }, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        const orderId = joinRes.data.data.orderId;
-        
-        // 唤起支付宝支付
-        const payRes = await axios.post(`/api/pay/alipay/create?orderId=${orderId}`, {}, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        // 支付宝返回一段包含自动提交脚本的 form HTML
-        const formHtml = payRes.data.data;
-        const div = document.createElement('div');
-        div.innerHTML = formHtml;
-        document.body.appendChild(div);
-        
-        // 提交最后一个表单（支付宝返回的）
-        if (document.forms && document.forms.length > 0) {
-           document.forms[document.forms.length - 1].submit();
-        }
-        
-        this.showJoinDialog = false;
-        this.checkMembership();
-        window.dispatchEvent(new CustomEvent('refresh-user'));
-      } catch (e) {
-        this.$message.error(e.response?.data?.message || '加入失败');
-      } finally {
-        this.joining = false;
-      }
+    handleGroupSuccess() {
+      this.checkMembership();
+      this.fetchData();
     }
   }
 };
@@ -428,6 +390,7 @@ export default {
   padding: 15px 20px 30px;
   box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
   text-align: center;
+  z-index: 10;
 }
 
 .join-btn {
@@ -443,28 +406,5 @@ export default {
   margin-top: 10px;
 }
 
-.join-form .form-item {
-  margin-bottom: 15px;
-}
 
-.join-form .label {
-  font-weight: bold;
-  font-size: 14px;
-  margin-bottom: 8px;
-}
-
-.price-confirm {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 20px;
-  padding-top: 15px;
-  border-top: 1px solid #F2F6FC;
-}
-
-.price-confirm .amount {
-  font-size: 20px;
-  color: #FF7E67;
-  font-weight: bold;
-}
 </style>

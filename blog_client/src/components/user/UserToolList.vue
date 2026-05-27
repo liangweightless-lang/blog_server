@@ -1,40 +1,40 @@
 <template>
-  <div class="section-card tools-section">
+  <a-card class="section-card tools-section" :bordered="false" :body-style="{ padding: '15px' }">
     <div class="section-header">
       <span class="section-title">常用工具</span>
     </div>
     <div class="tools-list">
       <div class="tool-cell" @click="$emit('address')">
         <div class="cell-left">
-          <i class="el-icon-location-outline tool-icon" style="color: #409EFF"></i>
+          <icon-location class="tool-icon" style="color: #409EFF" />
           <span>收货地址</span>
         </div>
-        <i class="el-icon-arrow-right"></i>
+        <icon-right />
       </div>
       <div class="tool-cell" @click="$emit('invite')">
         <div class="cell-left">
-          <i class="el-icon-present tool-icon" style="color: #F56C6C"></i>
+          <icon-gift class="tool-icon" style="color: #F56C6C" />
           <span>邀请有礼</span>
         </div>
-        <i class="el-icon-arrow-right"></i>
+        <icon-right />
       </div>
       <div class="tool-cell" @click="$emit('groups')">
         <div class="cell-left">
-          <i class="el-icon-user tool-icon" style="color: #67C23A"></i>
+          <icon-user-group class="tool-icon" style="color: #67C23A" />
           <span>我的拼团</span>
         </div>
-        <i class="el-icon-arrow-right"></i>
+        <icon-right />
       </div>
 
       <div class="tool-cell" @click="$emit('logout')">
         <div class="cell-left">
-          <i class="el-icon-switch-button tool-icon" style="color: #909399"></i>
+          <icon-poweroff class="tool-icon" style="color: #909399" />
           <span>退出登录</span>
         </div>
-        <i class="el-icon-arrow-right"></i>
+        <icon-right />
       </div>
     </div>
-  </div>
+  </a-card>
 </template>
 
 <script>
@@ -48,12 +48,15 @@ export default {
 
 <style scoped>
 .section-card {
-  background: white;
-  margin: 15px;
-  border-radius: 12px;
-  padding: 15px;
-  max-width: 600px;
+  background: transparent !important;
   margin: 15px auto;
+  border-radius: 12px;
+  max-width: 600px;
+}
+::v-deep .arco-card-body {
+  padding: 15px;
+  background: white;
+  border-radius: 12px;
 }
 .section-header {
   display: flex;

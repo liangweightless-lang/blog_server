@@ -3,6 +3,7 @@ package com.wtls.blog_server.controller.common;
 import com.wtls.blog_server.common.Result;
 import com.wtls.blog_server.utils.JwtUtils;
 import io.jsonwebtoken.Claims;
+import com.wtls.blog_server.exception.UnauthorizedException;
 import org.springframework.web.bind.annotation.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -20,12 +21,12 @@ public class HomeController {
 
     private void checkAdmin(String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new RuntimeException("Unauthorized");
+            throw new UnauthorizedException("未授权访问，请重新登录");
         }
         Claims claims = JwtUtils.parseToken(authHeader.substring(7));
         String role = claims.get("role", String.class);
         if (!"ADMIN".equals(role)) {
-            throw new RuntimeException("Admin access required");
+            throw new UnauthorizedException("权限不足，需要管理员权限");
         }
     }
 

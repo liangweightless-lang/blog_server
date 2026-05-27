@@ -1,15 +1,15 @@
 <template>
   <div class="mobile-bottom-nav">
     <div class="nav-item" :class="{ active: $route.path === '/' }" @click="$router.push('/')">
-      <i class="el-icon-house"></i>
+      <icon-home />
       <span>首页</span>
     </div>
     <div class="nav-item" :class="{ active: $route.path === '/store' }" @click="$router.push('/store')">
-      <i class="el-icon-shopping-bag-2"></i>
-      <span>灵感</span>
+      <icon-gift />
+      <span>橱窗</span>
     </div>
     <div class="nav-item" :class="{ active: $route.path === '/profile' }" @click="handleProfileClick">
-      <i class="el-icon-user"></i>
+      <icon-user />
       <span>我的</span>
     </div>
   </div>

@@ -1,61 +1,61 @@
-import Vue from 'vue'
-import VueRouter from 'vue-router'
-import Home from '../views/home/Home.vue'
-import CreateArticle from '../views/article/CreateArticle.vue'
-import Store from '../views/product/Store.vue'
-import ArticleDetail from '../views/article/ArticleDetail.vue'
-import AdminDashboard from '../views/admin/AdminDashboard.vue'
-import UserProfile from '../views/user/UserProfile.vue'
-import GroupDetail from '../views/product/GroupDetail.vue'
-
-Vue.use(VueRouter)
+import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
   {
     path: '/',
     name: 'Home',
-    component: Home,
+    component: () => import('../views/home/Home.vue'),
     meta: { hideHeaderMobile: true }
   },
   {
     path: '/create',
     name: 'CreateArticle',
-    component: CreateArticle
+    component: () => import('../views/article/CreateArticle.vue')
   },
   {
     path: '/store',
     name: 'Store',
-    component: Store
+    component: () => import('../views/product/Store.vue')
   },
   {
     path: '/product/group/:id',
     name: 'GroupDetail',
-    component: GroupDetail,
+    component: () => import('../views/product/GroupDetail.vue'),
     meta: { hideHeaderMobile: true }
   },
   {
     path: '/article/:id',
     name: 'ArticleDetail',
-    component: ArticleDetail,
+    component: () => import('../views/article/ArticleDetail.vue'),
     meta: { hideHeaderMobile: true }
   },
   {
     path: '/admin',
     name: 'AdminDashboard',
-    component: AdminDashboard
+    component: () => import('../views/admin/AdminDashboard.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/profile',
     name: 'UserProfile',
-    component: UserProfile,
-    meta: { hideHeaderMobile: true }
+    component: () => import('../views/user/UserProfile.vue'),
+    meta: { hideHeaderMobile: true, requiresAuth: true }
   }
 ]
 
-const router = new VueRouter({
-  mode: 'history',
-  base: '/',
+const router = createRouter({
+  history: createWebHistory('/'),
   routes
 })
+
+router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem('token');
+  if (to.meta.requiresAuth && !token) {
+    window.dispatchEvent(new CustomEvent('open-login'));
+    next('/');
+  } else {
+    next();
+  }
+});
 
 export default router

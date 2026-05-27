@@ -1,17 +1,17 @@
 <template>
-  <el-footer class="global-footer" height="auto">
+  <a-layout-footer class="global-footer">
     <div class="footer-content">
       <div class="footer-links">
         <a href="javascript:void(0)">关于我们</a>
-        <el-divider direction="vertical"></el-divider>
+        <a-divider direction="vertical" />
         <a href="javascript:void(0)">联系我们</a>
-        <el-divider direction="vertical"></el-divider>
+        <a-divider direction="vertical" />
         <a href="javascript:void(0)">合作伙伴与客户评价</a>
-        <el-divider direction="vertical"></el-divider>
+        <a-divider direction="vertical" />
         <a href="javascript:void(0)">免责声明</a>
-        <el-divider direction="vertical"></el-divider>
+        <a-divider direction="vertical" />
         <a href="javascript:void(0)">用户协议</a>
-        <el-divider direction="vertical"></el-divider>
+        <a-divider direction="vertical" />
         <a href="javascript:void(0)">隐私政策</a>
       </div>
       <div class="footer-bottom">
@@ -24,7 +24,7 @@
         </div>
       </div>
     </div>
-  </el-footer>
+  </a-layout-footer>
 </template>
 
 <script>
@@ -94,7 +94,7 @@ export default {
     gap: 12px;
     line-height: 1.8;
   }
-  .footer-links .el-divider {
+  .footer-links .arco-divider {
     display: none;
   }
 }

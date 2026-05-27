@@ -11,7 +11,7 @@
     
     <!-- 管理员专属悬浮按钮 -->
     <div v-if="isAdmin" class="admin-fab" @click="$router.push('/create')">
-      <i class="el-icon-plus"></i>
+      <icon-plus />
       <span class="fab-text">发布日常</span>
     </div>
   </div>
@@ -22,6 +22,9 @@ import axios from 'axios'
 import ProfileHero from '@/components/home/ProfileHero.vue'
 import ArticleGrid from '@/components/home/ArticleGrid.vue'
 import SearchBar from '@/components/common/SearchBar.vue'
+import { Message } from '@arco-design/web-vue'
+import { mapState } from 'pinia'
+import { useUserStore } from '@/stores/user'
 
 export default {
   name: 'Home',
@@ -34,21 +37,20 @@ export default {
     return {
       articles: [],
       loading: false,
-      user: null,
       searchQuery: ''
     }
   },
   computed: {
+    ...mapState(useUserStore, ['userInfo']),
+    user() {
+      return this.userInfo
+    },
     isAdmin() {
       return this.user && this.user.role === 'ADMIN'
     }
   },
   created() {
     this.fetchArticles()
-    this.checkUser()
-    window.addEventListener('user-updated', (e) => {
-      this.user = e.detail
-    })
   },
   methods: {
     handleSearch(query) {
@@ -58,18 +60,6 @@ export default {
       this.searchTimer = setTimeout(() => {
         this.fetchArticles()
       }, 500)
-    },
-    async checkUser() {
-      const token = localStorage.getItem('token')
-      if (token) {
-        axios.get('/api/users/me', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }).then(res => {
-          if (res.data && res.data.data) {
-            this.user = res.data.data
-          }
-        })
-      }
     },
     async fetchArticles() {
       this.loading = true
@@ -81,7 +71,7 @@ export default {
         const res = await axios.get(url)
         this.articles = res.data.data
       } catch (error) {
-        this.$message.error('搜索日记失败')
+        Message.error('搜索日记失败')
       } finally {
         this.loading = false
       }

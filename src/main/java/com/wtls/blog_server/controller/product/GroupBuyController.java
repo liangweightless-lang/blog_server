@@ -7,6 +7,7 @@ import com.wtls.blog_server.utils.JwtUtils;
 import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import com.wtls.blog_server.exception.UnauthorizedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,12 +25,12 @@ public class GroupBuyController {
 
     private Long getUserId(String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new RuntimeException("Unauthorized");
+            throw new UnauthorizedException("未授权访问，请重新登录");
         }
         Claims claims = JwtUtils.parseToken(authHeader.substring(7));
         Object userId = claims.get("userId");
         if (userId == null) {
-            throw new RuntimeException("Invalid token: userId missing");
+            throw new UnauthorizedException("Token无效，缺少用户信息");
         }
         return Long.valueOf(userId.toString());
     }
@@ -58,7 +59,7 @@ public class GroupBuyController {
         String token = authHeader.substring(7);
         Claims claims = JwtUtils.parseToken(token);
         if (!"ADMIN".equals(claims.get("role", String.class))) {
-            throw new RuntimeException("Access Denied");
+            throw new UnauthorizedException("拒绝访问，只能操作自己的数据");
         }
         return Result.success(groupBuyService.getAllGroups());
     }
@@ -110,7 +111,7 @@ public class GroupBuyController {
         String token = authHeader.substring(7);
         Claims claims = JwtUtils.parseToken(token);
         if (!"ADMIN".equals(claims.get("role", String.class))) {
-            throw new RuntimeException("Access Denied");
+            throw new UnauthorizedException("拒绝访问，只能操作自己的数据");
         }
     }
 

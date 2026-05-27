@@ -1,101 +1,100 @@
 <template>
-  <div class="xhs-detail-container" v-loading="loading">
-    <div class="xhs-detail-header">
-      <div class="header-left" @click="$router.push('/')">
-        <i class="el-icon-arrow-left"></i>
-      </div>
-      <div class="header-author">
-        <img :src="homeConfig.avatarUrl || '/img/avatar.png'" class="author-avatar" />
-        <span class="author-name">{{ homeConfig.authorName || '小柴包' }}</span>
-      </div>
-      <div class="header-right">
-        <el-button type="text" icon="el-icon-share" style="color: #FF7E67; font-size: 20px;" @click="shareArticle"></el-button>
-      </div>
-    </div>
-
-    <div class="xhs-media-carousel" v-if="mediaUrls.length > 0">
-      <el-carousel trigger="click" height="400px" :autoplay="false">
-        <el-carousel-item v-for="(url, index) in mediaUrls" :key="index">
-          <div class="carousel-image-wrapper">
-            <img :src="url" class="carousel-image" />
-          </div>
-        </el-carousel-item>
-      </el-carousel>
-    </div>
-    <div class="xhs-media-placeholder" v-else :style="{ background: getGradient(article.id) }">
-      <span class="cover-icon">✨</span>
-    </div>
-
-    <div class="xhs-detail-content">
-      <h1 class="article-title">{{ article.title }}</h1>
-      <div class="article-text" v-html="formatContent(article.content)"></div>
-      <div class="article-meta">
-        <span class="post-time">{{ formatDate(article.createTime) }}</span>
+  <a-spin :loading="loading" style="width: 100%; display: block;">
+    <div class="xhs-detail-container">
+      <div class="xhs-detail-header">
+        <div class="header-left" @click="$router.push('/')">
+          <icon-left style="font-size: 24px;" />
+        </div>
+        <div class="header-author">
+          <a-avatar class="author-avatar" :size="36">
+            <img :src="homeConfig.avatarUrl || '/img/avatar.png'" />
+          </a-avatar>
+          <span class="author-name">{{ homeConfig.authorName || '小柴包' }}</span>
+        </div>
+        <div class="header-right">
+          <a-button type="text" style="color: #FF7E67; font-size: 20px;" @click="shareArticle">
+            <template #icon><icon-share-alt /></template>
+          </a-button>
+        </div>
       </div>
 
-      <!-- 创作者推荐商品卡片 (已封装组件) -->
-      <ArticleProductCard :product="product" @click="goToProduct" />
-
-      <div class="comments-section">
-        <h3 class="comments-title">共 {{ comments.length }} 条评论</h3>
-        <div class="comment-list" v-if="comments.length > 0">
-          <div class="comment-item" v-for="comment in comments" :key="comment.id">
-            <img src="/img/creamy_avatar.png" class="comment-avatar" onerror="this.src='/img/avatar.png'" />
-            <div class="comment-body">
-              <div class="comment-author">{{ comment.authorName }}</div>
-              <div class="comment-content">{{ comment.content }}</div>
-              <div class="comment-time">{{ formatTime(comment.createTime) }}</div>
+      <div class="xhs-media-carousel" v-if="mediaUrls.length > 0">
+        <a-carousel :auto-play="false" style="height: 400px; width: 100%;">
+          <a-carousel-item v-for="(url, index) in mediaUrls" :key="index">
+            <div class="carousel-image-wrapper">
+              <a-image :src="url" class="carousel-image" width="100%" height="100%" fit="contain" />
             </div>
+          </a-carousel-item>
+        </a-carousel>
+      </div>
+      <div class="xhs-media-placeholder" v-else :style="{ background: getGradient(article.id) }">
+        <span class="cover-icon">✨</span>
+      </div>
+
+      <div class="xhs-detail-content">
+        <h1 class="article-title">{{ article.title }}</h1>
+        <div class="article-text" v-html="formatContent(article.content)"></div>
+        <div class="article-meta">
+          <span class="post-time">{{ formatDate(article.createTime) }}</span>
+        </div>
+
+        <!-- 创作者推荐商品卡片 (已封装组件) -->
+        <ArticleProductCard :product="product" @click="goToProduct" />
+
+        <CommentSection v-if="article.id" :articleId="article.id" ref="commentSection" @update-count="commentCount = $event" />
+      </div>
+
+      <div class="xhs-detail-footer">
+        <div class="footer-input-box">
+          <a-input v-model="newComment" placeholder="说点什么..." size="large" class="custom-input" @press-enter="submitComment">
+            <template #append>
+              <a-button type="primary" @click="submitComment" style="background: #FF7E67; border: none;">发送</a-button>
+            </template>
+          </a-input>
+        </div>
+        <div class="footer-actions">
+          <div class="action-btn" @click="likeArticle">
+            <icon-heart />
+            <span>{{ article.likesCount || '赞' }}</span>
+          </div>
+          <div class="action-btn" @click="toggleFavorite">
+            <icon-star-fill v-if="isFavorited" style="color: #FF7E67;" />
+            <icon-star v-else />
+            <span :style="{ color: isFavorited ? '#FF7E67' : '' }">{{ isFavorited ? '已收藏' : '收藏' }}</span>
+          </div>
+          <div class="action-btn">
+            <icon-message />
+            <span>{{ commentCount || '评论' }}</span>
+          </div>
+          <div class="action-btn" @click="shareArticle">
+            <icon-share-alt />
+            <span>分享</span>
           </div>
         </div>
-        <div v-else class="no-comments">还没有人评论，快来抢沙发~</div>
       </div>
     </div>
-
-    <div class="xhs-detail-footer">
-      <div class="footer-input-box">
-        <el-input v-model="newComment" placeholder="说点什么..." size="small" class="custom-input"
-          @keyup.enter.native="submitComment">
-          <el-button slot="append" icon="el-icon-position" @click="submitComment"></el-button>
-        </el-input>
-      </div>
-      <div class="footer-actions">
-        <div class="action-btn" @click="likeArticle">
-          <i class="el-icon-sugar"></i>
-          <span>{{ article.likesCount || '赞' }}</span>
-        </div>
-        <div class="action-btn" @click="toggleFavorite">
-          <i :class="isFavorited ? 'el-icon-star-on' : 'el-icon-star-off'" :style="{ color: isFavorited ? '#FF7E67' : '' }"></i>
-          <span :style="{ color: isFavorited ? '#FF7E67' : '' }">{{ isFavorited ? '已收藏' : '收藏' }}</span>
-        </div>
-        <div class="action-btn">
-          <i class="el-icon-chat-dot-round"></i>
-          <span>{{ comments.length || '评论' }}</span>
-        </div>
-        <div class="action-btn" @click="shareArticle">
-          <i class="el-icon-share"></i>
-          <span>分享</span>
-        </div>
-      </div>
-    </div>
-  </div>
+  </a-spin>
 </template>
 
 <script>
 import axios from 'axios'
+import { Message, Modal } from '@arco-design/web-vue'
 import ArticleProductCard from '@/components/article/ArticleProductCard.vue'
+import CommentSection from '@/components/article/CommentSection.vue'
+import DOMPurify from 'dompurify'
 
 export default {
   name: 'ArticleDetail',
   components: {
-    ArticleProductCard
+    ArticleProductCard,
+    CommentSection
   },
   data() {
     return {
       loading: true,
       article: {},
       mediaUrls: [],
-      comments: [],
+      commentCount: 0,
       newComment: '',
       submitting: false,
       product: null,
@@ -108,7 +107,6 @@ export default {
   },
   created() {
     this.fetchArticle()
-    this.fetchComments()
     this.checkFavoriteStatus()
     this.fetchHomeConfig()
   },
@@ -139,7 +137,7 @@ export default {
     async toggleFavorite() {
       const token = localStorage.getItem('token');
       if (!token) {
-        this.$message.warning('请先登录后收藏');
+        Message.warning('请先登录后收藏');
         return;
       }
       const id = this.$route.params.id;
@@ -148,11 +146,10 @@ export default {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         this.isFavorited = !this.isFavorited;
-        this.$message.success(this.isFavorited ? '收藏成功' : '已取消收藏');
-        // 通知主页或 Profile 页刷新状态（可选）
+        Message.success(this.isFavorited ? '收藏成功' : '已取消收藏');
         window.dispatchEvent(new CustomEvent('favorites-updated'));
       } catch (e) {
-        this.$message.error('操作失败');
+        Message.error('操作失败');
       }
     },
     async fetchArticle() {
@@ -171,7 +168,7 @@ export default {
           this.fetchProduct(this.article.productId)
         }
       } catch (error) {
-        this.$message.error('无法加载日记详情')
+        Message.error('无法加载日记详情')
       } finally {
         this.loading = false
       }
@@ -186,7 +183,8 @@ export default {
     },
     formatContent(content) {
       if (!content) return ''
-      return content.replace(/\n/g, '<br>')
+      const safeContent = DOMPurify.sanitize(content)
+      return safeContent.replace(/\n/g, '<br>')
     },
     formatDate(dateStr) {
       if (!dateStr) return ''
@@ -198,29 +196,14 @@ export default {
       const date = new Date(dateStr)
       return `${date.getMonth() + 1}-${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
     },
-    async fetchComments() {
-      const id = this.$route.params.id
-      try {
-        const res = await axios.get(`/api/comments/article/${id}`)
-        this.comments = (res.data && res.data.data) ? res.data.data : []
-      } catch (error) {
-        console.error('获取评论失败', error)
-      }
-    },
     async submitComment() {
       if (!this.newComment.trim() || this.submitting) return;
       this.submitting = true;
-      const id = this.$route.params.id;
       try {
-        await axios.post('/api/comments', {
-          articleId: id,
-          content: this.newComment.trim()
-        });
-        this.newComment = '';
-        this.$message.success('评论成功');
-        this.fetchComments();
-      } catch (error) {
-        this.$message.error('评论失败');
+        const success = await this.$refs.commentSection.submitComment(this.newComment);
+        if (success) {
+          this.newComment = '';
+        }
       } finally {
         this.submitting = false;
       }
@@ -230,12 +213,12 @@ export default {
       try {
         await axios.post(`/api/articles/${id}/like`);
         if (this.article.likesCount === undefined || this.article.likesCount === null) {
-          this.$set(this.article, 'likesCount', 0);
+          this.article.likesCount = 0;
         }
         this.article.likesCount++;
-        this.$message.success('点赞成功');
+        Message.success('点赞成功');
       } catch (error) {
-        this.$message.error('点赞失败');
+        Message.error('点赞失败');
       }
     },
     shareArticle() {
@@ -244,7 +227,6 @@ export default {
         if (navigator.clipboard && window.isSecureContext) {
           return navigator.clipboard.writeText(text);
         } else {
-          // Fallback for non-HTTPS
           const textArea = document.createElement("textarea");
           textArea.value = text;
           textArea.style.position = "fixed";
@@ -265,19 +247,17 @@ export default {
       };
 
       copyToClipboard(url).then(() => {
-        this.$confirm('文章链接已复制到剪贴板！可以直接粘贴转发给好友，他们打开后就能看见您推荐的商品。', '分享成功', {
-          confirmButtonText: '知道了',
-          type: 'success',
-          showCancelButton: false,
-          roundButton: true
+        Modal.info({
+          title: '分享成功',
+          content: '文章链接已复制到剪贴板！可以直接粘贴转发给好友，他们打开后就能看见您推荐的商品。',
+          okText: '知道了'
         });
       }).catch(() => {
-        this.$message.error('复制失败，请手动复制浏览器地址栏链接分享');
+        Message.error('复制失败，请手动复制浏览器地址栏链接分享');
       });
     },
     goToProduct() {
       if (this.product) {
-        // 跳转到商店，并带上直达下单参数
         this.$router.push({
           path: '/store',
           query: { buyProductId: this.product.id }
@@ -329,12 +309,7 @@ export default {
   gap: 10px;
 }
 
-.author-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  object-fit: cover;
-}
+
 
 .author-name {
   font-weight: 700;
@@ -345,12 +320,6 @@ export default {
 .header-right {
   width: 60px;
   text-align: right;
-}
-
-.follow-btn {
-  border-color: #FF7E67;
-  color: #FF7E67;
-  font-weight: 600;
 }
 
 .xhs-media-carousel {
@@ -425,18 +394,16 @@ export default {
   margin-right: 20px;
 }
 
-::v-deep .custom-input .el-input__inner {
+::v-deep .custom-input .arco-input-wrapper {
   border-radius: 20px 0 0 20px;
   background: #FFFDF8;
-  border-color: #FDF0E6;
-  color: #5C433B;
+  border: 1px solid #FDF0E6;
 }
-
-::v-deep .custom-input .el-input-group__append {
+::v-deep .custom-input .arco-input-append {
   border-radius: 0 20px 20px 0;
-  background: #FF7E67;
-  color: white;
-  border-color: #FF7E67;
+  padding: 0;
+  background: transparent;
+  border: none;
 }
 
 .footer-actions {
@@ -454,89 +421,40 @@ export default {
   cursor: pointer;
 }
 
-.action-btn i {
+.action-btn svg {
   font-size: 22px;
   color: #FF7E67;
 }
 
-/* Comments Section */
-.comments-section {
-  margin-top: 30px;
-  border-top: 1px solid #FDF0E6;
-  padding-top: 20px;
-}
 
-.comments-title {
-  font-size: 14px;
-  color: #8C6A5D;
-  margin-bottom: 20px;
-}
 
-.comment-item {
-  display: flex;
-  margin-bottom: 20px;
-}
-
-.comment-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin-right: 12px;
-}
-
-.comment-body {
-  flex: 1;
-}
-
-.comment-author {
-  font-size: 13px;
-  color: #8C6A5D;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
-.comment-content {
-  font-size: 14px;
-  color: #5C433B;
-  line-height: 1.5;
-  margin-bottom: 6px;
-}
-
-.comment-time {
-  font-size: 12px;
-  color: #D3C1BA;
-}
-
-.no-comments {
-  text-align: center;
-  color: #D3C1BA;
-  padding: 30px 0;
-  font-size: 14px;
-}
 
 
 @media (max-width: 768px) {
   .xhs-detail-container {
     border-radius: 16px;
   }
-
   .xhs-detail-content {
     padding: 16px;
   }
-
   .article-title {
     font-size: 18px;
   }
-
+  .xhs-media-carousel {
+    height: auto;
+  }
+  .xhs-media-carousel :deep(.arco-carousel) {
+    height: 280px !important;
+  }
+  .xhs-media-placeholder {
+    height: 200px;
+  }
   .xhs-detail-footer {
     padding: 12px 16px;
   }
-
   .footer-actions {
     gap: 12px;
   }
-
   .footer-input-box {
     margin-right: 12px;
   }

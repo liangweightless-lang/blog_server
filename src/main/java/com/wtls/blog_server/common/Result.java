@@ -8,30 +8,43 @@ public class Result<T> {
     private String message;
     private T data;
 
+    public Result() {}
+
+    public Result(Integer code, String message, T data) {
+        this.code = code;
+        this.message = message;
+        this.data = data;
+    }
+
     public static <T> Result<T> success(T data) {
-        return success(data, "success");
+        return success(data, ResultCode.OK.getMessage());
     }
 
     public static <T> Result<T> success(T data, String message) {
-        Result<T> result = new Result<>();
-        result.setCode(200);
-        result.setMessage(message);
-        result.setData(data);
-        return result;
+        return new Result<>(ResultCode.OK.getCode(), message, data);
     }
 
     public static <T> Result<T> success() {
         return success(null);
     }
 
+    public static <T> Result<T> clientFailed(String message) {
+        return new Result<>(ResultCode.INVALID_REQUEST.getCode(), message, null);
+    }
+
+    public static <T> Result<T> serverFailed(String message) {
+        return new Result<>(ResultCode.INTERNAL_SERVER_ERROR.getCode(), message, null);
+    }
+
+    public static <T> Result<T> unauthorized(String message) {
+        return new Result<>(ResultCode.UNAUTHORIZED.getCode(), message, null);
+    }
+
     public static <T> Result<T> error(Integer code, String message) {
-        Result<T> result = new Result<>();
-        result.setCode(code);
-        result.setMessage(message);
-        return result;
+        return new Result<>(code, message, null);
     }
 
     public static <T> Result<T> error(String message) {
-        return error(500, message);
+        return serverFailed(message);
     }
 }

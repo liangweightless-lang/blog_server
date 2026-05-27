@@ -1,36 +1,33 @@
 <template>
   <div class="article-grid-container">
-    <div class="section-header">
-      <span class="section-title">📖 创作者日记</span>
-      <el-button class="hidden-xs-only" round size="small"
-        style="background: #FF7E67; color: white; border: none; font-weight: bold;" @click="$router.push('/create')">
-        <i class="el-icon-edit"></i> 记录新日常
-      </el-button>
-    </div>
 
-    <el-row :gutter="16" class="xhs-grid" v-loading="loading">
-      <el-empty v-if="articles.length === 0 && !loading" description="暂无内容，快来书写第一篇日记吧"></el-empty>
-      <el-col :xs="12" :sm="8" :md="8" v-for="article in articles" :key="article.id">
-        <div class="xhs-card" @click="viewArticle(article)">
-          <div class="xhs-cover"
-            :style="article.coverUrl ? { backgroundImage: 'url(' + article.coverUrl + ')', backgroundSize: 'cover', backgroundPosition: 'center' } : { background: getGradient(article.id) }">
-            <span class="cover-icon" v-if="!article.coverUrl">✨</span>
-          </div>
-          <div class="xhs-info">
-            <div class="xhs-title">{{ article.title }}</div>
-            <div class="xhs-bottom">
-              <div class="xhs-author">
-                <img :src="homeConfig.avatarUrl || '/img/avatar.png'" class="xhs-author-avatar" />
-                <span class="xhs-author-name">{{ homeConfig.authorName || '小柴包' }}</span>
-              </div>
-              <div class="xhs-likes">
-                <i class="el-icon-sugar"></i> {{ article.likesCount || 0 }}
+    <a-spin :loading="loading" style="width: 100%; display: block;">
+      <a-grid :cols="{ xs: 2, sm: 3, md: 3 }" :colGap="16" :rowGap="16" class="xhs-grid">
+        <a-empty v-if="articles.length === 0 && !loading" description="暂无内容，快来书写第一篇日记吧" style="grid-column: 1 / -1;"></a-empty>
+        <a-grid-item v-for="article in articles" :key="article.id">
+          <a-card class="xhs-card" hoverable :bordered="false" :body-style="{ padding: '0px' }" @click="viewArticle(article)">
+            <div class="xhs-cover"
+              :style="article.coverUrl ? { backgroundImage: 'url(' + article.coverUrl + ')', backgroundSize: 'cover', backgroundPosition: 'center' } : { background: getGradient(article.id) }">
+              <span class="cover-icon" v-if="!article.coverUrl">✨</span>
+            </div>
+            <div class="xhs-info">
+              <div class="xhs-title">{{ article.title }}</div>
+              <div class="xhs-bottom">
+                <div class="xhs-author">
+                  <a-avatar :size="20">
+                    <img :src="homeConfig.avatarUrl || '/img/avatar.png'" />
+                  </a-avatar>
+                  <span class="xhs-author-name">{{ homeConfig.authorName || '小柴包' }}</span>
+                </div>
+                <div class="xhs-likes">
+                  <icon-heart /> {{ article.likesCount || 0 }}
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </el-col>
-    </el-row>
+          </a-card>
+        </a-grid-item>
+      </a-grid>
+    </a-spin>
 
   </div>
 </template>
@@ -94,38 +91,26 @@ export default {
 </script>
 
 <style scoped>
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 10px;
-  margin-top: 15px;
-  margin-bottom: 20px;
-}
-
-.section-title {
-  font-size: 22px;
-  font-weight: 800;
-  color: #5C433B;
-}
-
 .xhs-grid {
   margin-top: 24px;
 }
 
 .xhs-card {
-  background: #FFFFFF;
   border-radius: 16px;
   overflow: hidden;
   margin-bottom: 16px;
-  box-shadow: 0 4px 12px rgba(255, 126, 103, 0.05);
+  box-shadow: 0 4px 12px rgba(255, 126, 103, 0.05) !important;
   cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background: transparent !important;
 }
 
-.xhs-card:hover {
+::v-deep .xhs-card > .arco-card-body {
+  background: #FFFFFF;
+}
+
+::v-deep .xhs-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(255, 126, 103, 0.15);
+  box-shadow: 0 8px 24px rgba(255, 126, 103, 0.15) !important;
 }
 
 .xhs-cover {
@@ -169,12 +154,7 @@ export default {
   gap: 6px;
 }
 
-.xhs-author-avatar {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  object-fit: cover;
-}
+
 
 .xhs-author-name {
   font-size: 12px;
