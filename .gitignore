@@ -35,3 +35,4 @@ blog_client/node_modules/
 uploads/
 .DS_Store
 blog_client/.DS_Store
+blog_client/dist/
