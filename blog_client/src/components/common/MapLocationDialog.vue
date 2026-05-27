@@ -78,12 +78,12 @@ export default {
           this.fetchMapConfig().then(() => {
             setTimeout(() => {
               this.initMap();
-            }, 100);
+            }, 400); // 增加延时等待 modal 动画完全结束
           });
         } else {
           setTimeout(() => {
             this.initMap();
-          }, 100);
+          }, 400); // 增加延时等待 modal 动画完全结束
         }
       }
     }
@@ -124,11 +124,13 @@ export default {
       AMapLoader.load({
         key: this.amapKey,
         version: "2.0",
-        plugins: ['AMap.Geocoder', 'AMap.PlaceSearch', 'AMap.Geolocation']
+        plugins: ['AMap.Geocoder', 'AMap.PlaceSearch', 'AMap.Geolocation', 'AMap.CitySearch']
       }).then((AMap) => {
         this.mapInstance = new AMap.Map('amap-container', {
+          viewMode: '2D',
           zoom: 14,
-          center: [116.397428, 39.90923]
+          center: [116.397428, 39.90923],
+          layers: [new AMap.TileLayer()] // 强制使用传统栅格图片底图，避开容易被拦截的 3D 矢量 PBF 数据
         });
 
         this.markerInstance = new AMap.Marker({
@@ -148,6 +150,21 @@ export default {
           if (status === 'complete') {
              this.markerInstance.setPosition(result.position);
              this.getAddress(result.position);
+          } else {
+             // 定位失败（可能是因为 http 协议、权限被拒、或电脑端无GPS模块）
+             // 降级使用 IP 定位
+             AMap.plugin('AMap.CitySearch', () => {
+               const citySearch = new AMap.CitySearch();
+               citySearch.getLocalCity((status, result) => {
+                 if (status === 'complete' && result.info === 'OK') {
+                   // IP定位成功，将中心点移动到该城市
+                   this.mapInstance.setCenter(result.rectangle.split(';')[0].split(','));
+                   Message.info('高精度定位失败，已为您切换至大致城市位置');
+                 } else {
+                   Message.warning('无法获取您的当前位置，请手动搜索');
+                 }
+               });
+             });
           }
         });
 

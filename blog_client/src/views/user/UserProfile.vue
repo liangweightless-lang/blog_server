@@ -307,7 +307,7 @@ export default {
   color: #909399;
   margin-top: 15px;
 }
-::v-deep .arco-list-item.order-card-item {
+:deep(.arco-list-item.order-card-item) {
   padding: 15px;
 }
 .order-card-header {

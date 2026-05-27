@@ -104,11 +104,12 @@ export default {
   background: transparent !important;
 }
 
-::v-deep .xhs-card > .arco-card-body {
+:deep(.xhs-card > .arco-card-body) {
+  padding: 12px;
   background: #FFFFFF;
 }
 
-::v-deep .xhs-card:hover {
+:deep(.xhs-card:hover) {
   transform: translateY(-4px);
   box-shadow: 0 8px 24px rgba(255, 126, 103, 0.15) !important;
 }

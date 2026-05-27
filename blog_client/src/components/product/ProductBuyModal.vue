@@ -60,6 +60,24 @@
         </div>
       </div>
 
+      <!-- 配送信息区 -->
+      <div class="address-card">
+        <div class="card-header" style="margin-bottom: 12px;">
+          <span><icon-location /> 配送信息</span>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center; width: 100%;">
+          <a-input 
+            v-model="shippingAddress" 
+            placeholder="请输入详细收货地址 (必填)" 
+            allow-clear 
+            style="flex: 1;"
+          />
+          <a-button type="primary" shape="circle" @click="openMapDialog" title="地图定位" style="background-color: #FF7E67; border-color: #FF7E67;">
+            <icon-location />
+          </a-button>
+        </div>
+      </div>
+
       <!-- 结算区 -->
       <div class="summary-card">
         <div class="summary-item" v-if="specString">
@@ -96,6 +114,9 @@
         {{ product.stock <= 0 ? '库存不足' : '立即支付' }}
       </a-button>
     </div>
+
+    <!-- 高德地图选点弹窗 -->
+    <MapLocationDialog v-model:show="mapDialogVisible" @select="confirmMapLocation" />
   </a-modal>
 </template>
 
@@ -104,9 +125,13 @@ import axios from 'axios';
 import { Message } from '@arco-design/web-vue';
 import { mapState, mapActions } from 'pinia'
 import { useUserStore } from '@/stores/user'
+import MapLocationDialog from '@/components/common/MapLocationDialog.vue';
 
 export default {
   name: 'ProductBuyModal',
+  components: {
+    MapLocationDialog
+  },
   props: {
     show: Boolean,
     product: Object
@@ -117,6 +142,8 @@ export default {
       usePoints: false,
       pointsToUse: 0,
       selectedSpecs: {},
+      shippingAddress: '',
+      mapDialogVisible: false,
       isMobile: window.innerWidth <= 768
     }
   },
@@ -144,6 +171,7 @@ export default {
     isPayDisabled() {
       if (!this.product) return true;
       if (this.product.stock <= 0) return true;
+      if (!this.shippingAddress || this.shippingAddress.trim() === '') return true;
       return this.parsedSpecs.some(spec => !this.selectedSpecs[spec.name]);
     },
     maxPointsPossible() {
@@ -163,6 +191,7 @@ export default {
         this.usePoints = false;
         this.pointsToUse = 0;
         this.selectedSpecs = {};
+        this.shippingAddress = this.userInfo?.address || '';
         this.parsedSpecs.forEach(spec => {
           if (spec.options && spec.options.length === 1) {
             this.selectedSpecs[spec.name] = spec.options[0];
@@ -173,6 +202,13 @@ export default {
   },
   methods: {
     ...mapActions(useUserStore, ['updatePoints']),
+    openMapDialog() {
+      this.mapDialogVisible = true;
+    },
+    confirmMapLocation(address) {
+      this.shippingAddress = address;
+      this.mapDialogVisible = false;
+    },
     async handleConfirm() {
       const token = localStorage.getItem('token');
       if (!token) return Message.warning('请先登录');
@@ -182,7 +218,8 @@ export default {
         const orderRes = await axios.post('/api/orders/create', { 
           productId: this.product.id,
           pointsToUse: this.usePoints ? this.pointsToUse : 0,
-          spec: this.specString
+          spec: this.specString,
+          address: this.shippingAddress
         }, { headers: { 'Authorization': `Bearer ${token}` } });
 
         const orderId = orderRes.data.data.id;
@@ -273,7 +310,7 @@ export default {
   margin-top: 8px;
 }
 
-.points-deduction-card {
+.points-deduction-card, .address-card {
   background: #FFFDF8;
   border-radius: 12px;
   padding: 15px;

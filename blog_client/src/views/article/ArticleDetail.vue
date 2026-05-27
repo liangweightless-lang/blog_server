@@ -394,12 +394,12 @@ export default {
   margin-right: 20px;
 }
 
-::v-deep .custom-input .arco-input-wrapper {
+:deep(.custom-input .arco-input-wrapper) {
   border-radius: 20px 0 0 20px;
   background: #FFFDF8;
   border: 1px solid #FDF0E6;
 }
-::v-deep .custom-input .arco-input-append {
+:deep(.custom-input .arco-input-append) {
   border-radius: 0 20px 20px 0;
   padding: 0;
   background: transparent;

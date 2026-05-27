@@ -183,13 +183,13 @@ export default {
   margin-bottom: 24px;
 }
 
-::v-deep .arco-upload-picture-card {
-  background: #FFFDF8;
-  border: 1px dashed #FFC1B6;
-  border-radius: 12px;
-  color: #FF7E67;
+:deep(.arco-upload-picture-card) {
+  width: 100%;
+  height: 120px;
+  background-color: #F8F9FA;
+  border: 1px dashed #E5E6EB;
 }
-::v-deep .arco-upload-picture-card:hover {
+:deep(.arco-upload-picture-card:hover) {
   background: #FFF0ED;
 }
 

@@ -172,15 +172,30 @@ export default {
   color: #5C433B;
 }
 
-::v-deep .arco-menu-horizontal {
-  border-bottom: none !important;
+:deep(.arco-menu-horizontal) {
+  border-bottom: none;
 }
 
-::v-deep .arco-menu-item {
-  font-size: 15px !important;
-  font-weight: 600;
+:deep(.arco-menu-item) {
+  font-size: 16px;
+  font-weight: 500;
+  color: #4E5969;
+  transition: all 0.3s ease;
+  padding: 0 16px;
 }
 
+:deep(.arco-menu-item.arco-menu-selected) {
+  color: #FF7E67;
+  background-color: transparent !important;
+}
+
+:deep(.arco-menu-item:hover) {
+  color: #FF7E67;
+  background-color: #FFF5F4 !important;
+  border-radius: 8px;
+}
+
+/* 移动端菜单样式修正 */
 @media (max-width: 768px) {
   .global-header {
     padding: 0 15px;

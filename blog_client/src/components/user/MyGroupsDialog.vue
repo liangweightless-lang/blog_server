@@ -138,7 +138,7 @@ export default {
   cursor: pointer;
   transition: all 0.3s;
 }
-::v-deep .arco-list-item.group-item-card {
+:deep(.arco-list-item.group-item-card) {
   padding: 15px;
 }
 

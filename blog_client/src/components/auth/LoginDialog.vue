@@ -163,10 +163,10 @@ export default {
 }
 </script>
 <style scoped>
-::v-deep .auth-dialog .arco-modal-header {
-  padding: 10px 20px 0;
+:deep(.auth-dialog .arco-modal-header) {
+  border-bottom: none;
 }
-::v-deep .auth-dialog .arco-tabs-nav-tab {
+:deep(.auth-dialog .arco-tabs-nav-tab) {
   display: flex;
   justify-content: center;
 }

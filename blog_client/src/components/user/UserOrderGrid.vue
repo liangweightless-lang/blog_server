@@ -77,7 +77,7 @@ export default {
   border-radius: 12px;
   max-width: 600px;
 }
-::v-deep .arco-card-body {
+:deep(.arco-card-body) {
   padding: 15px;
   background: white;
   border-radius: 12px;
