@@ -113,6 +113,8 @@
       >
         {{ product.stock <= 0 ? '库存不足' : '立即支付' }}
       </a-button>
+    </div>
+
     <!-- 高德地图选点弹窗 -->
     <MapLocationDialog v-model:show="mapDialogVisible" @select="confirmMapLocation" />
 
