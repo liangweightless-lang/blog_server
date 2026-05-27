@@ -113,10 +113,27 @@
       >
         {{ product.stock <= 0 ? '库存不足' : '立即支付' }}
       </a-button>
-    </div>
-
     <!-- 高德地图选点弹窗 -->
     <MapLocationDialog v-model:show="mapDialogVisible" @select="confirmMapLocation" />
+
+    <!-- 支付状态确认弹窗 -->
+    <a-modal 
+      v-model:visible="paymentConfirmVisible" 
+      title="支付确认"
+      :footer="false"
+      :mask-closable="false"
+      :closable="false"
+    >
+      <div style="text-align: center; padding: 20px 0;">
+        <icon-check-circle style="font-size: 48px; color: #00B42A; margin-bottom: 20px;" />
+        <h3 style="margin-bottom: 30px;">请在新打开的页面中完成支付</h3>
+        <p style="color: #86909C; margin-bottom: 30px; font-size: 13px;">支付完成前请不要关闭此窗口。完成支付后，请根据您的情况点击下面按钮。</p>
+        <div style="display: flex; justify-content: center; gap: 15px;">
+          <a-button @click="handlePaymentFail">遇到问题，重新支付</a-button>
+          <a-button type="primary" @click="handlePaymentSuccess" style="background-color: #FF7E67;">我已完成支付</a-button>
+        </div>
+      </div>
+    </a-modal>
   </a-modal>
 </template>
 
@@ -144,6 +161,7 @@ export default {
       selectedSpecs: {},
       shippingAddress: '',
       mapDialogVisible: false,
+      paymentConfirmVisible: false,
       isMobile: window.innerWidth <= 768
     }
   },
@@ -234,18 +252,33 @@ export default {
         document.body.appendChild(div);
         
         if (document.forms && document.forms.length > 0) {
-           document.forms[document.forms.length - 1].submit();
+           const form = document.forms[document.forms.length - 1];
+           form.target = "_blank"; // 强制在新标签页打开，避免覆盖当前网站
+           form.submit();
         }
         
         if (this.usePoints && this.pointsToUse > 0) {
            this.updatePoints(this.pointsToUse);
         }
-        this.visible = false;
+        
+        // 弹出支付确认框
+        this.paymentConfirmVisible = true;
       } catch (error) {
         Message.error(error.response?.data?.message || '支付失败，请稍后重试');
       } finally {
         this.loading = false;
       }
+    },
+    handlePaymentSuccess() {
+      this.paymentConfirmVisible = false;
+      this.visible = false;
+      Message.success('订单已提交，正在等待系统确认...');
+      // 真实项目中这里通常会轮询后端查询订单状态，或者直接跳转到我的订单页
+      this.$router.push('/user/profile');
+    },
+    handlePaymentFail() {
+      this.paymentConfirmVisible = false;
+      Message.info('您可以稍后在我的订单中继续支付');
     }
   }
 }
