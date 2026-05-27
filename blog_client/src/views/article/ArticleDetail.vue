@@ -72,6 +72,39 @@
           </div>
         </div>
       </div>
+      
+      <!-- 自定义高级分享弹窗 -->
+      <a-modal v-model:visible="shareModalVisible" :footer="false" :header="false" modal-class="custom-share-modal" unmount-on-close>
+        <div class="share-modal-content">
+          <div class="share-modal-header">
+            <div class="success-icon-wrapper">
+              <icon-check-circle-fill class="success-icon" />
+            </div>
+            <h2>链接已复制！</h2>
+            <p>快去粘贴分享给你的好友吧</p>
+          </div>
+          
+          <div class="share-article-preview">
+            <div class="preview-img-box" :style="{ background: mediaUrls.length > 0 ? 'transparent' : getGradient(article.id) }">
+              <img v-if="mediaUrls.length > 0" :src="mediaUrls[0]" />
+              <span v-else class="preview-icon">✨</span>
+            </div>
+            <div class="preview-info">
+              <div class="preview-title">{{ article.title }}</div>
+              <div class="preview-author">
+                <a-avatar :size="16"><img :src="homeConfig.avatarUrl || '/img/avatar.png'" /></a-avatar>
+                <span>{{ homeConfig.authorName || '小柴包' }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="share-actions">
+            <a-button class="share-action-btn wechat-btn" shape="round" size="large" @click="shareModalVisible = false">
+              <template #icon><icon-wechat /></template> 去微信粘贴
+            </a-button>
+          </div>
+        </div>
+      </a-modal>
     </div>
   </a-spin>
 </template>
@@ -99,6 +132,7 @@ export default {
       submitting: false,
       product: null,
       isFavorited: false,
+      shareModalVisible: false,
       homeConfig: {
         avatarUrl: '',
         authorName: ''
@@ -247,11 +281,7 @@ export default {
       };
 
       copyToClipboard(url).then(() => {
-        Modal.info({
-          title: '分享成功',
-          content: '文章链接已复制到剪贴板！可以直接粘贴转发给好友，他们打开后就能看见您推荐的商品。',
-          okText: '知道了'
-        });
+        this.shareModalVisible = true;
       }).catch(() => {
         Message.error('复制失败，请手动复制浏览器地址栏链接分享');
       });
@@ -481,7 +511,140 @@ export default {
 .action-btn svg[style*="color: rgb(255, 126, 103)"] {
   color: #FF7E67 !important;
   transform: scale(1.15);
-}@media (max-width: 768px) {
+}
+
+/* 自定义分享弹窗样式 */
+:deep(.custom-share-modal) {
+  border-radius: 24px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+}
+
+.share-modal-content {
+  padding: 10px;
+}
+
+.share-modal-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.success-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(7, 193, 96, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px auto;
+  animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.success-icon {
+  font-size: 32px;
+  color: #07C160;
+}
+
+.share-modal-header h2 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  color: #1D2129;
+  font-weight: 800;
+}
+
+.share-modal-header p {
+  margin: 0;
+  font-size: 14px;
+  color: #86909C;
+}
+
+.share-article-preview {
+  display: flex;
+  background: rgba(0, 0, 0, 0.03);
+  padding: 12px;
+  border-radius: 16px;
+  margin-bottom: 30px;
+}
+
+.preview-img-box {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 12px;
+}
+
+.preview-img-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.preview-icon {
+  font-size: 24px;
+}
+
+.preview-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.preview-title {
+  font-size: 14px;
+  color: #1D2129;
+  font-weight: 600;
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.preview-author {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #86909C;
+}
+
+.share-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.wechat-btn {
+  width: 100%;
+  background: #07C160;
+  color: white;
+  font-weight: bold;
+  height: 48px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  border: none;
+}
+.wechat-btn:hover {
+  background: #06AD56;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(7, 193, 96, 0.3);
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@media (max-width: 768px) {
   .xhs-detail-container {
     border-radius: 16px;
   }
