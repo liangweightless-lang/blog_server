@@ -6,7 +6,7 @@
       <router-view></router-view>
     </a-layout-content>
     <GlobalFooter v-if="!isMobile" />
-    <template v-else>
+    <template v-else-if="!$route.meta.hideBottomNav">
       <div class="bottom-nav-spacer"></div>
       <MobileBottomNav />
     </template>

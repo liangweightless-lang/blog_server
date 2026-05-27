@@ -10,7 +10,8 @@ const routes = [
   {
     path: '/create',
     name: 'CreateArticle',
-    component: () => import('../views/article/CreateArticle.vue')
+    component: () => import('../views/article/CreateArticle.vue'),
+    meta: { hideBottomNav: true }
   },
   {
     path: '/store',
@@ -21,13 +22,13 @@ const routes = [
     path: '/product/group/:id',
     name: 'GroupDetail',
     component: () => import('../views/product/GroupDetail.vue'),
-    meta: { hideHeaderMobile: true }
+    meta: { hideHeaderMobile: true, hideBottomNav: true }
   },
   {
     path: '/article/:id',
     name: 'ArticleDetail',
     component: () => import('../views/article/ArticleDetail.vue'),
-    meta: { hideHeaderMobile: true }
+    meta: { hideHeaderMobile: true, hideBottomNav: true }
   },
   {
     path: '/admin',
