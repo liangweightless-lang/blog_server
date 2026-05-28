@@ -19,13 +19,38 @@
       </div>
 
       <div class="xhs-media-carousel" v-if="mediaUrls.length > 0">
-        <a-carousel :auto-play="false" style="height: 400px; width: 100%;">
-          <a-carousel-item v-for="(url, index) in mediaUrls" :key="index">
-            <div class="carousel-image-wrapper">
-              <a-image :src="url" class="carousel-image" width="100%" height="100%" fit="contain" />
+        <div
+          class="swipe-carousel"
+          ref="carouselRef"
+          @touchstart="onTouchStart"
+          @touchmove="onTouchMove"
+          @touchend="onTouchEnd"
+        >
+          <div
+            class="swipe-track"
+            :style="{
+              transform: `translateX(calc(-${currentSlide * 100}% + ${swipeOffset}px))`,
+              transition: isSwiping ? 'none' : 'transform 0.35s cubic-bezier(0.25, 1, 0.5, 1)'
+            }"
+          >
+            <div class="swipe-slide" v-for="(url, index) in mediaUrls" :key="index">
+              <div class="carousel-image-wrapper">
+                <a-image :src="url" class="carousel-image" width="100%" height="100%" fit="contain" />
+              </div>
             </div>
-          </a-carousel-item>
-        </a-carousel>
+          </div>
+        </div>
+        <div class="carousel-indicators" v-if="mediaUrls.length > 1">
+          <span
+            v-for="(_, i) in mediaUrls"
+            :key="i"
+            class="indicator-dot"
+            :class="{ active: i === currentSlide }"
+          ></span>
+        </div>
+        <div class="carousel-counter" v-if="mediaUrls.length > 1">
+          {{ currentSlide + 1 }} / {{ mediaUrls.length }}
+        </div>
       </div>
       <div class="xhs-media-placeholder" v-else :style="{ background: getGradient(article.id) }">
         <span class="cover-icon">✨</span>
@@ -133,6 +158,12 @@ export default {
       product: null,
       isFavorited: false,
       shareModalVisible: false,
+      currentSlide: 0,
+      swipeOffset: 0,
+      isSwiping: false,
+      touchStartX: 0,
+      touchStartY: 0,
+      touchStartTime: 0,
       homeConfig: {
         avatarUrl: '',
         authorName: ''
@@ -294,6 +325,47 @@ export default {
         })
       }
     },
+    onTouchStart(e) {
+      this.touchStartX = e.touches[0].clientX;
+      this.touchStartY = e.touches[0].clientY;
+      this.touchStartTime = Date.now();
+      this.isSwiping = false;
+      this.swipeOffset = 0;
+    },
+    onTouchMove(e) {
+      const dx = e.touches[0].clientX - this.touchStartX;
+      const dy = e.touches[0].clientY - this.touchStartY;
+      // Only treat as horizontal swipe if horizontal movement > vertical
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+        e.preventDefault();
+        this.isSwiping = true;
+        // Add resistance at edges
+        if ((this.currentSlide === 0 && dx > 0) ||
+            (this.currentSlide === this.mediaUrls.length - 1 && dx < 0)) {
+          this.swipeOffset = dx * 0.3; // rubber band effect
+        } else {
+          this.swipeOffset = dx;
+        }
+      }
+    },
+    onTouchEnd() {
+      if (!this.isSwiping) return;
+      const threshold = 50;
+      const velocity = Math.abs(this.swipeOffset) / (Date.now() - this.touchStartTime);
+      if (this.swipeOffset < -threshold || (this.swipeOffset < -20 && velocity > 0.3)) {
+        // Swipe left → next
+        if (this.currentSlide < this.mediaUrls.length - 1) {
+          this.currentSlide++;
+        }
+      } else if (this.swipeOffset > threshold || (this.swipeOffset > 20 && velocity > 0.3)) {
+        // Swipe right → prev
+        if (this.currentSlide > 0) {
+          this.currentSlide--;
+        }
+      }
+      this.swipeOffset = 0;
+      this.isSwiping = false;
+    },
     getGradient(id) {
       if (!id) return '#FFF0E6';
       const gradients = [
@@ -367,6 +439,28 @@ export default {
   width: 100%;
   background: transparent;
   padding: 15px;
+  position: relative;
+}
+
+.swipe-carousel {
+  width: 100%;
+  height: 400px;
+  overflow: hidden;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  touch-action: pan-y; /* allow vertical scroll, we handle horizontal */
+}
+
+.swipe-track {
+  display: flex;
+  height: 100%;
+  will-change: transform;
+}
+
+.swipe-slide {
+  min-width: 100%;
+  height: 100%;
+  flex-shrink: 0;
 }
 
 .carousel-image-wrapper {
@@ -375,15 +469,48 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  background: #f5f5f5;
 }
 
 .carousel-image {
   max-width: 100%;
   max-height: 100%;
   object-fit: cover;
+}
+
+.carousel-indicators {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.indicator-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: #C9CDD4;
+  transition: all 0.3s ease;
+}
+
+.indicator-dot.active {
+  width: 18px;
+  background: #FF7E67;
+}
+
+.carousel-counter {
+  position: absolute;
+  top: 26px;
+  right: 26px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 12px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .xhs-media-placeholder {
@@ -658,8 +785,9 @@ export default {
   }
   .xhs-media-carousel {
     height: auto;
+    padding: 10px;
   }
-  .xhs-media-carousel :deep(.arco-carousel) {
+  .swipe-carousel {
     height: 280px !important;
   }
   .xhs-media-placeholder {
