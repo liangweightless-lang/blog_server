@@ -24,6 +24,7 @@ import GlobalFooter from './components/layout/GlobalFooter.vue'
 import LoginDialog from './components/auth/LoginDialog.vue'
 import { mapState, mapActions } from 'pinia'
 import { useUserStore } from '@/stores/user'
+import { App as CapApp } from '@capacitor/app'
 
 export default {
   name: 'App',
@@ -55,6 +56,27 @@ export default {
     window.addEventListener('auth-success', this.fetchUser);
     
     this.fetchUser();
+
+    // Intercept Android hardware Back button / swipe back gesture
+    const isCapacitor = typeof window !== 'undefined' && window.Capacitor;
+    if (isCapacitor) {
+      CapApp.addListener('backButton', () => {
+        // If login dialog is open, just close it instead of exiting or routing back
+        if (this.loginDialogVisible) {
+          this.loginDialogVisible = false;
+          return;
+        }
+        
+        // Define top-level tabs where back button should close/exit the App
+        const topLevelPaths = ['/', '/store', '/profile'];
+        if (topLevelPaths.includes(this.$route.path)) {
+          CapApp.exitApp();
+        } else {
+          // Otherwise go back to the previous screen
+          this.$router.back();
+        }
+      });
+    }
   },
   beforeDestroy() {
     window.removeEventListener('resize', this.handleResize);
