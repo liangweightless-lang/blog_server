@@ -4,7 +4,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "build:android": "pnpm install && pnpm run build && npx cap sync android && npx cap open android"
   },
   "dependencies": {
     "@amap/amap-jsapi-loader": "^1.0.1",
