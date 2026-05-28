@@ -6,7 +6,7 @@
         <div class="waterfall-item" v-for="article in articles" :key="article.id">
           <a-card class="xhs-card" hoverable :bordered="false" :body-style="{ padding: '0px' }" @click="viewArticle(article)">
             <!-- 封面图：有图则使用img标签自适应高度，无图则使用随机高度占位 -->
-            <div v-if="article.coverUrl" class="xhs-cover-img">
+            <div v-if="isValidUrl(article.coverUrl)" class="xhs-cover-img">
               <img :src="article.coverUrl" alt="cover" />
             </div>
             <div v-else class="xhs-cover-placeholder" :style="{ background: getGradient(article.id), height: getRandomHeight(article.id) + 'px' }">
@@ -75,6 +75,11 @@ export default {
     },
     viewArticle(article) {
       this.$router.push(`/article/${article.id}`)
+    },
+    isValidUrl(url) {
+      if (!url) return false;
+      const s = url.trim();
+      return !s.startsWith('<') && !s.includes('html') && !s.includes('DOCTYPE');
     },
     formatContent(content) {
       if (!content) return ''

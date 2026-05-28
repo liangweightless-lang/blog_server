@@ -3,7 +3,7 @@
     <a-form :model="homeConfigForm" layout="vertical" style="max-width: 600px; margin-top: 20px;">
       <a-form-item label="首页头像">
         <a-upload
-          action="/api/files/upload"
+          :action="uploadAction"
           :show-file-list="false"
           @success="handleHomeAvatarSuccess"
           @before-upload="beforeProductImageUpload">
@@ -20,7 +20,7 @@
       </a-form-item>
       <a-form-item label="微信二维码">
         <a-upload
-          action="/api/files/upload"
+          :action="uploadAction"
           :show-file-list="false"
           @success="handleWechatQrSuccess"
           @before-upload="beforeProductImageUpload">
@@ -84,6 +84,12 @@ export default {
   created() {
     this.fetchHomeConfig();
   },
+  computed: {
+    uploadAction() {
+      const base = (axios.defaults.baseURL || '').replace(/\/$/, '');
+      return base + '/api/files/upload';
+    }
+  },
   methods: {
     getAuthHeader() {
       return { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
@@ -116,12 +122,30 @@ export default {
     },
     handleHomeAvatarSuccess(fileItem) {
       const res = fileItem.response;
-      this.homeConfigForm.avatarUrl = (res && res.url) ? res.url : res;
+      if (typeof res === 'string' && (res.trim().startsWith('<!DOCTYPE') || res.trim().startsWith('<html'))) {
+        Message.error('图片上传失败，服务器返回了错误的格式。');
+        return;
+      }
+      let url = (res && res.url) ? res.url : (typeof res === 'string' ? res : '');
+      if (url && (url.trim().startsWith('<!DOCTYPE') || url.trim().startsWith('<html'))) {
+        Message.error('图片上传失败，服务器返回了错误的格式。');
+        return;
+      }
+      this.homeConfigForm.avatarUrl = url;
       Message.success('头像上传成功');
     },
     handleWechatQrSuccess(fileItem) {
       const res = fileItem.response;
-      this.homeConfigForm.wechatQrUrl = (res && res.url) ? res.url : res;
+      if (typeof res === 'string' && (res.trim().startsWith('<!DOCTYPE') || res.trim().startsWith('<html'))) {
+        Message.error('二维码上传失败，服务器返回了错误的格式。');
+        return;
+      }
+      let url = (res && res.url) ? res.url : (typeof res === 'string' ? res : '');
+      if (url && (url.trim().startsWith('<!DOCTYPE') || url.trim().startsWith('<html'))) {
+        Message.error('二维码上传失败，服务器返回了错误的格式。');
+        return;
+      }
+      this.homeConfigForm.wechatQrUrl = url;
       Message.success('二维码上传成功');
     },
     async saveHomeConfig() {

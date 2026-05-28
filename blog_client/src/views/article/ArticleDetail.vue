@@ -225,12 +225,17 @@ export default {
         if (this.article.mediaUrls) {
           try {
             let urls = JSON.parse(this.article.mediaUrls)
-            // In Capacitor, relative /uploads/ paths won't resolve — prepend backend base URL
-            if (axios.defaults.baseURL) {
-              const base = axios.defaults.baseURL.replace(/\/$/, '')
-              urls = urls.map(u => (typeof u === 'string' && u.startsWith('/uploads/')) ? base + u : u)
+            if (Array.isArray(urls)) {
+              urls = urls.filter(u => typeof u === 'string' && !u.trim().startsWith('<') && !u.includes('html'));
+              // In Capacitor, relative /uploads/ paths won't resolve — prepend backend base URL
+              if (axios.defaults.baseURL) {
+                const base = axios.defaults.baseURL.replace(/\/$/, '')
+                urls = urls.map(u => (typeof u === 'string' && u.startsWith('/uploads/')) ? base + u : u)
+              }
+              this.mediaUrls = urls
+            } else {
+              this.mediaUrls = []
             }
-            this.mediaUrls = urls
           } catch (e) {
             this.mediaUrls = []
           }

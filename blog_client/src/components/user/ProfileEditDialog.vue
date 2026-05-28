@@ -10,7 +10,7 @@
       <a-form :model="profileForm" layout="vertical">
         <a-form-item label="头像">
           <a-upload
-            action="/api/files/upload"
+            :action="uploadAction"
             :show-file-list="false"
             @success="handleAvatarSuccess"
             @before-upload="beforeAvatarUpload">
@@ -86,6 +86,10 @@ export default {
       set(val) {
         this.$emit('update:show', val);
       }
+    },
+    uploadAction() {
+      const base = (axios.defaults.baseURL || '').replace(/\/$/, '');
+      return base + '/api/files/upload';
     }
   },
   watch: {
@@ -134,7 +138,16 @@ export default {
     },
     handleAvatarSuccess(fileItem) {
       const res = fileItem.response;
-      this.profileForm.avatarUrl = (res && res.url) ? res.url : res;
+      if (typeof res === 'string' && (res.trim().startsWith('<!DOCTYPE') || res.trim().startsWith('<html'))) {
+        Message.error('头像上传失败，服务器返回了错误的格式。');
+        return;
+      }
+      let url = (res && res.url) ? res.url : (typeof res === 'string' ? res : '');
+      if (url && (url.trim().startsWith('<!DOCTYPE') || url.trim().startsWith('<html'))) {
+        Message.error('头像上传失败，服务器返回了错误的格式。');
+        return;
+      }
+      this.profileForm.avatarUrl = url;
       Message.success('头像上传成功');
     },
     beforeAvatarUpload(file) {

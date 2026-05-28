@@ -16,7 +16,7 @@
     <!-- 真实的上传照片区 -->
     <div class="xhs-upload-area">
       <a-upload
-        action="/api/files/upload"
+        :action="uploadAction"
         list-type="picture-card"
         v-model:file-list="fileList"
         @success="handleUploadSuccess"
@@ -85,10 +85,29 @@ export default {
   created() {
     this.fetchProducts();
   },
+  computed: {
+    uploadAction() {
+      const base = (axios.defaults.baseURL || '').replace(/\/$/, '');
+      return base + '/api/files/upload';
+    }
+  },
   methods: {
     handleUploadSuccess(fileItem) {
       const res = fileItem.response;
-      fileItem.uploadedUrl = (res && res.url) ? res.url : res;
+      if (typeof res === 'string' && (res.trim().startsWith('<!DOCTYPE') || res.trim().startsWith('<html'))) {
+        Message.error('文件上传失败，服务器返回了错误的格式。');
+        fileItem.status = 'error';
+        fileItem.uploadedUrl = '';
+        return;
+      }
+      let url = (res && res.url) ? res.url : (typeof res === 'string' ? res : '');
+      if (url && (url.trim().startsWith('<!DOCTYPE') || url.trim().startsWith('<html'))) {
+        Message.error('文件上传失败，服务器返回了错误的格式。');
+        fileItem.status = 'error';
+        fileItem.uploadedUrl = '';
+        return;
+      }
+      fileItem.uploadedUrl = url;
     },
     handleUploadError(fileItem) {
       Message.error('文件上传失败，请重试');
@@ -114,7 +133,11 @@ export default {
       const urls = this.fileList.map(f => {
         if (f.uploadedUrl) return f.uploadedUrl;
         const r = f.response;
-        return r ? (typeof r === 'string' ? r : r.url) : f.url;
+        let url = r ? (typeof r === 'string' ? r : r.url) : f.url;
+        if (url && (url.trim().startsWith('<!DOCTYPE') || url.trim().startsWith('<html'))) {
+          return null;
+        }
+        return url;
       }).filter(Boolean);
       this.form.mediaUrls = JSON.stringify(urls);
       this.form.coverUrl = urls.length > 0 ? urls[0] : '';

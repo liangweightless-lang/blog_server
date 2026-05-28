@@ -95,7 +95,7 @@
             </a-form-item>
             <a-form-item label="商品图片">
               <a-upload
-                action="/api/files/upload"
+                :action="uploadAction"
                 :show-file-list="false"
                 @success="handleProductImageSuccess"
                 @before-upload="beforeProductImageUpload">
@@ -201,6 +201,12 @@ export default {
   beforeUnmount() {
     window.removeEventListener('resize', this.handleResize);
   },
+  computed: {
+    uploadAction() {
+      const base = (axios.defaults.baseURL || '').replace(/\/$/, '');
+      return base + '/api/files/upload';
+    }
+  },
   methods: {
     handleResize() {
       // isMobile handled via props
@@ -291,7 +297,16 @@ export default {
     },
     handleProductImageSuccess(fileItem) {
       const res = fileItem.response;
-      this.productForm.image = (res && res.url) ? res.url : res;
+      if (typeof res === 'string' && (res.trim().startsWith('<!DOCTYPE') || res.trim().startsWith('<html'))) {
+        Message.error('图片上传失败，服务器返回了错误的格式。');
+        return;
+      }
+      let url = (res && res.url) ? res.url : (typeof res === 'string' ? res : '');
+      if (url && (url.trim().startsWith('<!DOCTYPE') || url.trim().startsWith('<html'))) {
+        Message.error('图片上传失败，服务器返回了错误的格式。');
+        return;
+      }
+      this.productForm.image = url;
       Message.success('图片上传成功');
     },
     beforeProductImageUpload(file) {
