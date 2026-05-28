@@ -20,5 +20,5 @@ EXPOSE 8081
 # -XX:+UseContainerSupport: 确保 JVM 正确感知 Docker 容器的内存限制
 # -Duser.timezone: 统一容器时区为上海
 # -Xmx: 建议在 docker-compose 中通过 environment 设置，或者此处给个保守值
-ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-Duser.timezone=Asia/Shanghai", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-Djava.awt.headless=true", "-Duser.timezone=Asia/Shanghai", "-jar", "app.jar"]
 
