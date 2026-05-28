@@ -417,3 +417,57 @@ export default {
   font-weight: 800;
 }
 </style>
+
+<style>
+@media (max-width: 768px) {
+  /* 将 Arco 默认的中间弹窗重置为小红书同款【底部半屏抽屉弹窗】 */
+  .arco-modal-container {
+    align-items: flex-end !important; /* 强制对齐到屏幕最底部 */
+  }
+  
+  .buy-modal.arco-modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 24px 24px 0 0 !important; /* 顶部左、右大圆角 */
+    padding-bottom: calc(12px + env(safe-area-inset-bottom)) !important; /* 留出手机底部安全区 */
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.08) !important;
+    animation: slide-up 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+  
+  .buy-modal .arco-modal-header {
+    border-bottom: none !important;
+    padding: 24px 20px 12px 20px !important;
+    text-align: center;
+    position: relative;
+  }
+  
+  .buy-modal .arco-modal-title {
+    font-weight: 800 !important;
+    font-size: 17px !important;
+    color: #1D2129 !important;
+    width: 100%;
+    justify-content: center; /* 标题居中 */
+  }
+  
+  .buy-modal .arco-modal-body {
+    padding: 0 20px 20px 20px !important;
+    max-height: 70vh !important; /* 限制抽屉最大高度为屏幕的 70% */
+    overflow-y: auto !important; /* 启用内部滚动 */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* 绘制小红书标志性的顶部【灰色拖拽条/指示条】 */
+  .buy-modal .arco-modal-header::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 5px;
+    background: #E5E6EB;
+    border-radius: 3px;
+  }
+}
+</style>
