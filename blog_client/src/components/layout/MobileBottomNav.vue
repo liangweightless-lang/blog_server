@@ -47,7 +47,7 @@ export default {
   border-radius: 32px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.6);
-  z-index: 2000;
+  z-index: 99;
   padding: 0 10px;
 }
 .nav-item {
