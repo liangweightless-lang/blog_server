@@ -224,7 +224,13 @@ export default {
         this.article = (res.data && res.data.data) ? res.data.data : {}
         if (this.article.mediaUrls) {
           try {
-            this.mediaUrls = JSON.parse(this.article.mediaUrls)
+            let urls = JSON.parse(this.article.mediaUrls)
+            // In Capacitor, relative /uploads/ paths won't resolve — prepend backend base URL
+            if (axios.defaults.baseURL) {
+              const base = axios.defaults.baseURL.replace(/\/$/, '')
+              urls = urls.map(u => (typeof u === 'string' && u.startsWith('/uploads/')) ? base + u : u)
+            }
+            this.mediaUrls = urls
           } catch (e) {
             this.mediaUrls = []
           }

@@ -45,10 +45,10 @@ axios.interceptors.response.use(
           if (obj.startsWith('/uploads/')) {
             return baseURL + obj;
           }
-          // If it's a rich-text HTML string containing relative upload source paths
+          // If it's a rich-text HTML or JSON string containing relative upload paths
           if (obj.includes('/uploads/')) {
-            // Replace src="/uploads/ or href="/uploads/ with full absolute path
-            return obj.replace(/(src|href)=["']\/uploads\//g, `$1="${baseURL}/uploads/`);
+            // Replace all occurrences of "/uploads/ or '/uploads/ (covers src=, href=, JSON arrays, etc.)
+            return obj.replace(/(["'])(\/uploads\/)/g, `$1${baseURL}/uploads/`);
           }
           return obj;
         }
