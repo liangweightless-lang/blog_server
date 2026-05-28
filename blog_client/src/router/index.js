@@ -19,6 +19,12 @@ const routes = [
     component: () => import('../views/product/Store.vue')
   },
   {
+    path: '/product/:id',
+    name: 'ProductDetail',
+    component: () => import('../views/product/ProductDetail.vue'),
+    meta: { hideHeaderMobile: true, hideBottomNav: true }
+  },
+  {
     path: '/product/group/:id',
     name: 'GroupDetail',
     component: () => import('../views/product/GroupDetail.vue'),

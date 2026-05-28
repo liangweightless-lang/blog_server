@@ -25,13 +25,15 @@
     <a-grid :cols="{ xs: 2, sm: 2, md: 3 }" :colGap="12" :rowGap="24">
       <a-grid-item v-for="product in products" :key="product.id" class="product-col">
         <a-card class="product-card" hoverable :bordered="false" :body-style="{ padding: '0px' }">
-          <div class="product-image-wrapper">
-            <a-image :src="product.image" class="product-image" :alt="product.name" width="100%" height="100%" fit="cover" />
+          <div class="product-image-wrapper" @click="$router.push(`/product/${product.id}`)">
+            <img :src="product.image" class="product-image" :alt="product.name" />
             <div class="product-badge" v-if="product.isDigital">品牌甄选</div>
           </div>
           <div class="product-info">
-            <h3 class="product-name">{{ product.name }}</h3>
-            <p class="product-desc">{{ product.description }}</p>
+            <div class="product-clickable" @click="$router.push(`/product/${product.id}`)">
+              <h3 class="product-name">{{ product.name }}</h3>
+              <p class="product-desc">{{ product.description }}</p>
+            </div>
             <div class="product-bottom">
               <span class="product-price">¥{{ product.price }}</span>
               <div class="button-group">
@@ -256,6 +258,14 @@ export default {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.product-clickable {
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.product-clickable:active {
+  opacity: 0.6;
 }
 
 .product-bottom {
