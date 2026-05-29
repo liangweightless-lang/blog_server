@@ -16,7 +16,7 @@
         <a-table-column title="文章信息">
           <template #cell="{ record }">
             <div style="font-weight: 600; font-size: 14px; color: #1D2129;">{{ record.title }}</div>
-            <div style="font-size: 12px; color: #86909C; margin-top: 4px;">{{ formatTime(record.createTime) }}</div>
+            <div style="font-size: 12px; color: #86909C; margin-top: 4px;">{{ $formatTime(record.createTime) }}</div>
           </template>
         </a-table-column>
         <a-table-column title="数据" :width="100">
@@ -42,7 +42,7 @@
             <h4 class="card-title">{{ article.title }}</h4>
             <div class="card-meta">
               <span class="stat-badge"><icon-heart /> {{ article.likesCount || 0 }}</span>
-              <span class="card-time">{{ formatTime(article.createTime) }}</span>
+              <span class="card-time">{{ $formatTime(article.createTime) }}</span>
             </div>
           </div>
           <div class="card-actions" style="display: flex; gap: 8px;">
@@ -96,7 +96,8 @@
 </template>
 
 <script>
-import axios from 'axios';
+import { getArticles, updateArticle, deleteArticle } from '@/api/article';
+import { getProducts } from '@/api/product';
 import { Message, Modal } from '@arco-design/web-vue';
 
 export default {
@@ -126,7 +127,7 @@ export default {
   },
   computed: {
     uploadAction() {
-      const base = (axios.defaults.baseURL || '').replace(/\/$/, '');
+      const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
       return base + '/api/files/upload';
     }
   },
@@ -137,14 +138,10 @@ export default {
     getAuthHeader() {
       return { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
     },
-    formatTime(timeStr) {
-      if (!timeStr) return '';
-      return new Date(timeStr).toLocaleString();
-    },
     async fetchArticles() {
       this.loadingArticles = true;
       try {
-        const res = await axios.get('/api/articles');
+        const res = await getArticles();
         this.articles = res.data.data || [];
       } catch (error) {
         Message.error('加载文章失败');
@@ -161,7 +158,7 @@ export default {
         content: '确定要删除这篇日常吗？',
         onOk: async () => {
           try {
-            await axios.delete(`/api/articles/${article.id}`, { headers: this.getAuthHeader() });
+            await deleteArticle(article.id);
             Message.success('已删除');
             this.fetchArticles();
           } catch (error) {
@@ -172,7 +169,7 @@ export default {
     },
     async fetchProducts() {
       try {
-        const res = await axios.get('/api/products');
+        const res = await getProducts();
         this.products = res.data.data || [];
       } catch (e) {
         console.error('加载商品列表失败', e);
@@ -254,9 +251,7 @@ export default {
       this.editForm.coverUrl = urls.length > 0 ? urls[0] : '';
       
       try {
-        await axios.put(`/api/articles/${this.editForm.id}`, this.editForm, {
-          headers: this.getAuthHeader()
-        });
+        await updateArticle(this.editForm.id, this.editForm);
         Message.success('文章修改成功！');
         this.editModalVisible = false;
         this.fetchArticles();

@@ -45,11 +45,11 @@
         </div>
         <div class="info-row">
           <span class="info-label">创建时间</span>
-          <span class="info-value">{{ formatTime(order.createTime) }}</span>
+          <span class="info-value">{{ $formatTime(order.createTime) }}</span>
         </div>
         <div class="info-row" v-if="order.payTime">
           <span class="info-label">支付时间</span>
-          <span class="info-value">{{ formatTime(order.payTime) }}</span>
+          <span class="info-value">{{ $formatTime(order.payTime) }}</span>
         </div>
         <div class="info-row">
           <span class="info-label">订单类型</span>
@@ -112,11 +112,6 @@ export default {
     handlePay() {
       this.$emit('pay', this.order);
       this.visible = false;
-    },
-    formatTime(timeStr) {
-      if (!timeStr) return '';
-      const d = new Date(timeStr);
-      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
     },
     getStatusText(status) {
       const texts = ['等待付款', '买家已付款', '交易关闭', '卖家已发货'];

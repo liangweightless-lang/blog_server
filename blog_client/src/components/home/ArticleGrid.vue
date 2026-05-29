@@ -37,7 +37,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import { getHomeConfig } from '@/api/common';
 
 export default {
   name: 'ArticleGrid',
@@ -65,7 +65,7 @@ export default {
   methods: {
     async fetchHomeConfig() {
       try {
-        const res = await axios.get('/api/home/config');
+        const res = await getHomeConfig();
         if (res.data && res.data.data) {
           this.homeConfig = res.data.data;
         }

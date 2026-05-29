@@ -17,7 +17,7 @@
                 {{ record.orderType === 'GROUP' ? '拼团' : '个买' }}
               </a-tag>
             </div>
-            <div style="font-size: 12px; color: #999;">地址: {{ record.shippingAddress || '无' }} | 时间: {{ formatTime(record.createTime) }}</div>
+            <div style="font-size: 12px; color: #999;">地址: {{ record.shippingAddress || '无' }} | 时间: {{ $formatTime(record.createTime) }}</div>
           </template>
         </a-table-column>
         <a-table-column title="实付" :width="120">
@@ -70,7 +70,7 @@
             </div>
           </div>
           <div class="card-footer">
-            <span class="card-time">{{ formatTime(order.createTime) }}</span>
+            <span class="card-time">{{ $formatTime(order.createTime) }}</span>
             <a-button v-if="order.status === 1" size="small" type="primary" status="success" shape="round" @click="handleShip(order)">标记发货</a-button>
           </div>
         </div>
@@ -81,7 +81,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import { getOrdersAdmin, shipOrder } from '@/api/order';
 import { Message } from '@arco-design/web-vue';
 
 export default {
@@ -105,14 +105,10 @@ export default {
     getAuthHeader() {
       return { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
     },
-    formatTime(timeStr) {
-      if (!timeStr) return '';
-      return new Date(timeStr).toLocaleString();
-    },
     async fetchOrders() {
       this.loadingOrders = true;
       try {
-        const res = await axios.get('/api/orders', { headers: this.getAuthHeader() });
+        const res = await getOrdersAdmin();
         this.orders = res.data.data;
       } catch (error) {
         Message.error('加载订单列表失败');
@@ -130,7 +126,7 @@ export default {
     },
     async handleShip(order) {
       try {
-        await axios.post(`/api/orders/${order.id}/ship`, {}, { headers: this.getAuthHeader() });
+        await shipOrder(order.id);
         Message.success('发货成功');
         this.fetchOrders();
       } catch (error) {

@@ -40,7 +40,7 @@
                   <div class="order-main-info">
                     <p class="order-pname">{{ order.productName || '商品ID: ' + order.productId }}</p>
                     <p class="order-spec" v-if="order.selectedSpec">规格: {{ order.selectedSpec }}</p>
-                    <p class="order-time">{{ formatTime(order.createTime) }}</p>
+                    <p class="order-time">{{ $formatTime(order.createTime) }}</p>
                   </div>
                   <div class="order-price-info" style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
                     <span class="price-val">¥{{ order.amount }}</span>
@@ -110,8 +110,10 @@
 </template>
 
 <script>
-import axios from 'axios';
 import { Message } from '@arco-design/web-vue';
+import { getMyFavorites } from '@/api/article';
+import { getMyOrders, createAlipay } from '@/api/order';
+import { getProducts } from '@/api/product';
 import UserHeader from '@/components/user/UserHeader.vue';
 import UserStats from '@/components/user/UserStats.vue';
 import UserToolList from '@/components/user/UserToolList.vue';
@@ -180,13 +182,10 @@ export default {
       }
     },
     async fetchMyFavorites() {
-      const token = localStorage.getItem('token');
-      if (!token) return;
+      if (!this.user) return;
       this.loadingFavorites = true;
       try {
-        const res = await axios.get('/api/favorites/me', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const res = await getMyFavorites();
         this.favoriteArticles = res.data.data || [];
       } catch (error) {
         console.error('获取收藏失败');
@@ -230,13 +229,12 @@ export default {
       };
     },
     async fetchMyOrders() {
-      const token = localStorage.getItem('token');
-      if (!token) return;
+      if (!this.user) return;
       this.loadingOrders = true;
       try {
         const [orderRes, prodRes] = await Promise.all([
-          axios.get('/api/orders/me', { headers: { 'Authorization': `Bearer ${token}` } }),
-          axios.get('/api/products').catch(() => ({ data: { data: [] } }))
+          getMyOrders(),
+          getProducts().catch(() => ({ data: { data: [] } }))
         ]);
         
         const products = prodRes.data.data || [];
@@ -263,22 +261,14 @@ export default {
       const texts = ['待支付', '已支付', '已取消', '已发货'];
       return texts[status] || '未知';
     },
-    formatTime(timeStr) {
-      if (!timeStr) return '';
-      const d = new Date(timeStr);
-      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-    },
     showOrderDetail(order) {
       this.selectedOrder = order;
       this.orderDetailVisible = true;
     },
     async handleContinuePay(order) {
-      const token = localStorage.getItem('token');
-      if (!token) return Message.warning('请先登录');
+      if (!this.user) return Message.warning('请先登录');
       try {
-        const payRes = await axios.post(`/api/pay/alipay/create?orderId=${order.id}`, {}, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const payRes = await createAlipay(order.id);
         const formHtml = payRes.data.data;
         
         // 业界标准做法：打开新窗口并将支付宝返回的 HTML 表单直接写入新窗口

@@ -34,7 +34,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import { getHomeConfig } from '@/api/common';
 import { Message } from '@arco-design/web-vue';
 import AMapLoader from '@amap/amap-jsapi-loader';
 
@@ -103,7 +103,7 @@ export default {
     },
     async fetchMapConfig() {
       try {
-        const res = await axios.get('/api/home/config');
+        const res = await getHomeConfig();
         if (res.data && res.data.data) {
           this.amapKey = res.data.data.amapKey || '';
           this.amapSecurityCode = res.data.data.amapSecurityCode || '';

@@ -42,7 +42,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import { getCaptcha, authAction } from '@/api/user';
 import { Message } from '@arco-design/web-vue';
 
 export default {
@@ -115,7 +115,7 @@ export default {
     },
     async fetchCaptcha() {
       try {
-        const res = await axios.get('/api/auth/captcha');
+        const res = await getCaptcha();
         if (res.data && res.data.data) {
           this.registerForm.captchaKey = res.data.data.captchaKey;
           this.captchaImage = res.data.data.captchaImage;
@@ -143,7 +143,7 @@ export default {
       this.loading = true;
       try {
         const endpoint = isLogin ? '/api/users/login' : '/api/users/register';
-        const res = await axios.post(endpoint, form);
+        const res = await authAction(endpoint, form);
         const data = res.data.data;
         localStorage.setItem('token', data.token);
         this.visible = false;

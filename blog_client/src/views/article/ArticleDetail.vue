@@ -60,7 +60,7 @@
         <h1 class="article-title">{{ article.title }}</h1>
         <div class="article-text" v-html="formatContent(article.content)"></div>
         <div class="article-meta">
-          <span class="post-time">{{ formatDate(article.createTime) }}</span>
+          <span class="post-time">{{ $formatDate(article.createTime) }}</span>
         </div>
 
         <!-- 创作者推荐商品卡片 (已封装组件) -->
@@ -135,7 +135,10 @@
 </template>
 
 <script>
-import axios from 'axios'
+import request from '@/utils/request'
+import { getArticleDetail, likeArticle, checkFavoriteStatus as getFavoriteStatus, toggleFavorite as apiToggleFavorite } from '@/api/article'
+import { getProductDetail } from '@/api/product'
+import { getHomeConfig } from '@/api/common'
 import { Message, Modal } from '@arco-design/web-vue'
 import ArticleProductCard from '@/components/article/ArticleProductCard.vue'
 import CommentSection from '@/components/article/CommentSection.vue'
@@ -178,7 +181,7 @@ export default {
   methods: {
     async fetchHomeConfig() {
       try {
-        const res = await axios.get('/api/home/config');
+        const res = await getHomeConfig();
         if (res.data && res.data.data) {
           this.homeConfig = res.data.data;
         }
@@ -191,9 +194,7 @@ export default {
       if (!token) return;
       const id = this.$route.params.id;
       try {
-        const res = await axios.get(`/api/favorites/status/${id}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const res = await getFavoriteStatus(id);
         this.isFavorited = res.data.data;
       } catch (e) {
         console.error('获取收藏状态失败');
@@ -207,9 +208,7 @@ export default {
       }
       const id = this.$route.params.id;
       try {
-        await axios.post('/api/favorites/toggle', { articleId: id }, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        await apiToggleFavorite(id);
         this.isFavorited = !this.isFavorited;
         Message.success(this.isFavorited ? '收藏成功' : '已取消收藏');
         window.dispatchEvent(new CustomEvent('favorites-updated'));
@@ -220,7 +219,7 @@ export default {
     async fetchArticle() {
       const id = this.$route.params.id
       try {
-        const res = await axios.get(`/api/articles/${id}`)
+        const res = await getArticleDetail(id)
         this.article = (res.data && res.data.data) ? res.data.data : {}
         if (this.article.mediaUrls) {
           try {
@@ -228,8 +227,8 @@ export default {
             if (Array.isArray(urls)) {
               urls = urls.filter(u => typeof u === 'string' && !u.trim().startsWith('<') && !u.includes('html'));
               // In Capacitor, relative /uploads/ paths won't resolve — prepend backend base URL
-              if (axios.defaults.baseURL) {
-                const base = axios.defaults.baseURL.replace(/\/$/, '')
+              if (request.defaults.baseURL) {
+                const base = request.defaults.baseURL.replace(/\/$/, '')
                 urls = urls.map(u => (typeof u === 'string' && u.startsWith('/uploads/')) ? base + u : u)
               }
               this.mediaUrls = urls
@@ -251,7 +250,7 @@ export default {
     },
     async fetchProduct(productId) {
       try {
-        const res = await axios.get(`/api/products/${productId}`)
+        const res = await getProductDetail(productId)
         this.product = (res.data && res.data.data) ? res.data.data : null;
       } catch (error) {
         console.error('获取商品详情失败', error)
@@ -261,16 +260,6 @@ export default {
       if (!content) return ''
       const safeContent = DOMPurify.sanitize(content)
       return safeContent.replace(/\n/g, '<br>')
-    },
-    formatDate(dateStr) {
-      if (!dateStr) return ''
-      const date = new Date(dateStr)
-      return `${date.getMonth() + 1}-${date.getDate()}`
-    },
-    formatTime(dateStr) {
-      if (!dateStr) return ''
-      const date = new Date(dateStr)
-      return `${date.getMonth() + 1}-${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
     },
     async submitComment() {
       if (!this.newComment.trim() || this.submitting) return;
@@ -287,7 +276,7 @@ export default {
     async likeArticle() {
       const id = this.$route.params.id;
       try {
-        await axios.post(`/api/articles/${id}/like`);
+        await likeArticle(id);
         if (this.article.likesCount === undefined || this.article.likesCount === null) {
           this.article.likesCount = 0;
         }

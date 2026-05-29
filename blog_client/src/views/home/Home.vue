@@ -18,7 +18,7 @@
 </template>
 
 <script>
-import axios from 'axios'
+import axios from '@/utils/request'
 import ProfileHero from '@/components/home/ProfileHero.vue'
 import ArticleGrid from '@/components/home/ArticleGrid.vue'
 import SearchBar from '@/components/common/SearchBar.vue'

@@ -1,22 +1,17 @@
 import axios from 'axios';
+import { Message } from '@arco-design/web-vue';
 
-// Configure default axios instance
-axios.defaults.timeout = 10000;
+// 1. 创建独立的 Axios 实例，不污染全局
+const request = axios.create({
+  // 优先使用环境变量，其次根据是否在 Capacitor (App) 中设置回退地址
+  baseURL: import.meta.env?.VITE_API_BASE_URL || 
+          (typeof window !== 'undefined' && window.Capacitor ? 'https://caibread.com' : ''),
+  timeout: 10000
+});
 
-// Detect if running inside Capacitor (mobile App)
-const isCapacitor = typeof window !== 'undefined' && (window.hasOwnProperty('Capacitor') || window.Capacitor);
-if (isCapacitor) {
-  // 【本地开发测试】如果在电脑模拟器上测试本地运行的后端：
-  // axios.defaults.baseURL = 'http://10.0.2.2:8081';
-
-  // 【云服务器环境】如果是测试部署在云服务器上的后端，请将下方地址修改为您云服务器的真实域名或公网IP（例如 https://api.yourdomain.com）
-  axios.defaults.baseURL = 'https://caibread.com';
-}
-
-// Request Interceptor
-axios.interceptors.request.use(
+// 2. 请求拦截器
+request.interceptors.request.use(
   (config) => {
-    // Add token to headers if it exists
     const token = localStorage.getItem('token');
     if (token) {
       if (!config.headers) {
@@ -26,59 +21,35 @@ axios.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response Interceptor
-axios.interceptors.response.use(
+// 3. 响应拦截器
+request.interceptors.response.use(
   (response) => {
-    // Automatically map relative image paths starting with /uploads/ to the full backend URL in Capacitor
-    if (axios.defaults.baseURL && response.data) {
-      const baseURL = axios.defaults.baseURL.replace(/\/$/, ''); // Remove trailing slash if exists
-      
-      // Recursive helper to replace relative /uploads/ URLs in the response payload
-      const mapAssetUrls = (obj) => {
-        if (typeof obj === 'string') {
-          // If it's a direct relative path (e.g. /uploads/image.png)
-          if (obj.startsWith('/uploads/')) {
-            return baseURL + obj;
-          }
-          // If it's a rich-text HTML or JSON string containing relative upload paths
-          if (obj.includes('/uploads/')) {
-            // Replace all occurrences of "/uploads/ or '/uploads/ (covers src=, href=, JSON arrays, etc.)
-            return obj.replace(/(["'])(\/uploads\/)/g, `$1${baseURL}/uploads/`);
-          }
-          return obj;
-        }
-        if (Array.isArray(obj)) {
-          return obj.map(item => mapAssetUrls(item));
-        }
-        if (obj !== null && typeof obj === 'object') {
-          for (const key in obj) {
-            if (obj.hasOwnProperty(key)) {
-              obj[key] = mapAssetUrls(obj[key]);
-            }
-          }
-        }
-        return obj;
-      };
-      
-      response.data = mapAssetUrls(response.data);
-    }
+    // 后端现已直接返回完整的 OSS/CDN 链接，前端直接无损放行
     return response;
   },
   (error) => {
-    // Handle 401 Unauthorized
-    if (error.response && error.response.status === 401) {
-      // Token is invalid or expired
-      localStorage.removeItem('token');
-      // Trigger global event to show login dialog
-      window.dispatchEvent(new CustomEvent('auth-expired'));
+    // 统一的错误拦截处理
+    if (error.response) {
+      const { status, data } = error.response;
+      
+      if (status === 401) {
+        localStorage.removeItem('token');
+        window.dispatchEvent(new CustomEvent('auth-expired'));
+      } else {
+        // 统一弹出后端的错误提示，避免组件到处写 catch Message.error
+        // 注意：某些静默请求可能不需要报错提示，这里为了演示保留全局提示
+        if (data && data.message) {
+           Message.error(data.message);
+        }
+      }
+    } else {
+      Message.error('网络连接异常或请求超时');
     }
     return Promise.reject(error);
   }
 );
 
-export default axios;
+export default request;

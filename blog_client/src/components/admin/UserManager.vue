@@ -21,7 +21,7 @@
         </a-table-column>
         <a-table-column title="加入时间" :width="180">
           <template #cell="{ record }">
-            <span style="font-size: 12px; color: #999;">{{ formatTime(record.createTime) }}</span>
+            <span style="font-size: 12px; color: #999;">{{ $formatTime(record.createTime) }}</span>
           </template>
         </a-table-column>
       </template>
@@ -45,7 +45,7 @@
             </div>
             <div class="card-meta">
               <span class="points-text">{{ user.points }} 积分</span>
-              <span class="card-time">{{ formatTime(user.createTime) }}</span>
+              <span class="card-time">{{ $formatTime(user.createTime) }}</span>
             </div>
           </div>
         </div>
@@ -56,7 +56,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import { getUserList } from '@/api/user';
 import { Message } from '@arco-design/web-vue';
 
 export default {
@@ -80,14 +80,10 @@ export default {
     getAuthHeader() {
       return { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
     },
-    formatTime(timeStr) {
-      if (!timeStr) return '';
-      return new Date(timeStr).toLocaleString();
-    },
     async fetchUsers() {
       this.loadingUsers = true;
       try {
-        const res = await axios.get('/api/users', { headers: this.getAuthHeader() });
+        const res = await getUserList();
         this.users = res.data.data;
       } catch (error) {
         Message.error('加载用户列表失败');

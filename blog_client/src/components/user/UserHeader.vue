@@ -45,7 +45,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import { userCheckIn } from '@/api/user';
 import { Message } from '@arco-design/web-vue';
 
 export default {
@@ -79,9 +79,7 @@ export default {
         if (this.loading) return;
         this.loading = true;
         try {
-          const res = await axios.post('/api/users/checkin', {}, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-          });
+          const res = await userCheckIn();
           Message.success(res.data.message);
           window.dispatchEvent(new CustomEvent('refresh-user'));
         } catch (error) {

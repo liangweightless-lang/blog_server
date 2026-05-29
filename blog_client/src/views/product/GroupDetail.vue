@@ -93,7 +93,8 @@
 </template>
 
 <script>
-import axios from 'axios';
+import { getGroupDetail, getGroupMembers, getMyGroups } from '@/api/product';
+import { getProductDetail } from '@/api/product';
 import { Message } from '@arco-design/web-vue';
 import GroupActionModal from '@/components/product/GroupActionModal.vue';
 import { mapState } from 'pinia'
@@ -138,13 +139,13 @@ export default {
     async fetchData() {
       try {
         this.loading = true;
-        const res = await axios.get(`/api/groups/${this.id}`);
+        const res = await getGroupDetail(this.id);
         this.group = res.data.data;
         
-        const memRes = await axios.get(`/api/groups/${this.id}/members`);
+        const memRes = await getGroupMembers(this.id);
         this.members = memRes.data.data || [];
         
-        const prodRes = await axios.get(`/api/products/${this.group.productId}`);
+        const prodRes = await getProductDetail(this.group.productId);
         this.product = prodRes.data.data;
       } catch (e) {
         Message.error('获取拼团信息失败');
@@ -157,7 +158,7 @@ export default {
       const token = localStorage.getItem('token');
       if (!token) return;
       try {
-        const res = await axios.get('/api/groups/me', { headers: { 'Authorization': `Bearer ${token}` } });
+        const res = await getMyGroups();
         const myGroups = res.data.data || [];
         this.isMember = myGroups.some(g => g.id === parseInt(this.id));
       } catch (e) {

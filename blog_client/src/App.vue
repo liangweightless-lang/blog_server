@@ -52,28 +52,28 @@ export default {
     window.addEventListener('open-login', this.showLogin);
     window.addEventListener('auth-expired', this.handleAuthExpired);
     
-    // Auth success event to trigger fetchUser
+    // 监听授权成功事件，触发获取用户信息
     window.addEventListener('auth-success', this.fetchUser);
     window.addEventListener('refresh-user', this.fetchUser);
     
     this.fetchUser();
 
-    // Intercept Android hardware Back button / swipe back gesture
+    // 拦截 Android 硬件返回键 / 侧滑返回手势
     const isCapacitor = typeof window !== 'undefined' && window.Capacitor;
     if (isCapacitor) {
       CapApp.addListener('backButton', () => {
-        // If login dialog is open, just close it instead of exiting or routing back
+        // 如果登录弹窗处于打开状态，仅关闭弹窗而不是退出应用或返回上一页
         if (this.loginDialogVisible) {
           this.loginDialogVisible = false;
           return;
         }
         
-        // Define top-level tabs where back button should close/exit the App
+        // 定义顶级标签页路径，在这些页面点击返回键将退出应用
         const topLevelPaths = ['/', '/store', '/profile'];
         if (topLevelPaths.includes(this.$route.path)) {
           CapApp.exitApp();
         } else {
-          // Otherwise go back to the previous screen
+          // 否则返回上一级页面
           this.$router.back();
         }
       });
@@ -91,7 +91,7 @@ export default {
     handleAuthExpired() {
       this.clearUser();
       this.showLogin();
-      // Optional: if on a protected route, redirect to home
+      // 可选：如果处于受保护的路由中，则重定向到首页
       if (this.$route.path === '/profile' || this.$route.path.startsWith('/admin')) {
         this.$router.push('/');
       }
@@ -110,11 +110,11 @@ export default {
 body {
   margin: 0;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Helvetica, "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
-  background: linear-gradient(180deg, #FAFAFA 0%, #F4F6F9 100%); /* Modern soft gradient background */
+  background: linear-gradient(180deg, #FAFAFA 0%, #F4F6F9 100%); /* 现代感柔和渐变背景 */
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: #1D2129; /* Darker grey for better readability */
+  color: #1D2129; /* 深灰色以提高可读性 */
   letter-spacing: 0.2px;
   box-sizing: border-box;
 }
@@ -124,7 +124,7 @@ body {
 }
 
 .main-content {
-  padding: 20px 10px 100px 10px; /* Enhanced mobile padding, bottom padding accounts for floating nav */
+  padding: 20px 10px 100px 10px; /* 增强移动端内边距，底部留白以适配悬浮导航栏 */
   max-width: 1000px;
   margin: 0 auto;
   width: 100%;
@@ -135,6 +135,36 @@ body {
 @media (min-width: 768px) {
   .main-content {
     padding: 30px 15px 40px 15px;
+  }
+}
+
+/* ===== 全局移动端体验优化 ===== */
+@media (max-width: 768px) {
+  /* 优化 Toast 提示：更大、更圆润、阴影更深 */
+  .arco-message {
+    padding: 12px 20px !important;
+    border-radius: 30px !important;
+    font-size: 14px !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  
+  /* 解决长弹窗“不知道能不能滑”的问题：强制显示自定义滚动条 */
+  .arco-modal-body::-webkit-scrollbar,
+  .arco-drawer-body::-webkit-scrollbar {
+    width: 4px;
+    background-color: transparent;
+  }
+  .arco-modal-body::-webkit-scrollbar-thumb,
+  .arco-drawer-body::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.15);
+    border-radius: 10px;
+  }
+  .arco-modal-body::-webkit-scrollbar-thumb:active,
+  .arco-drawer-body::-webkit-scrollbar-thumb:active {
+    background-color: rgba(0, 0, 0, 0.3);
   }
 }
 </style>

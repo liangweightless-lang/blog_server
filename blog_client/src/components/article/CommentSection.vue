@@ -9,7 +9,7 @@
         <div class="comment-body">
           <div class="comment-author">{{ comment.authorName }}</div>
           <div class="comment-content">{{ comment.content }}</div>
-          <div class="comment-time">{{ formatTime(comment.createTime) }}</div>
+          <div class="comment-time">{{ $formatTime(comment.createTime) }}</div>
         </div>
       </div>
     </div>
@@ -20,7 +20,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import { getComments, postComment } from '@/api/article';
 import { Message } from '@arco-design/web-vue';
 
 export default {
@@ -50,7 +50,7 @@ export default {
   methods: {
     async fetchComments() {
       try {
-        const res = await axios.get(`/api/comments/article/${this.articleId}`);
+        const res = await getComments(this.articleId);
         this.comments = (res.data && res.data.data) ? res.data.data : [];
         this.$emit('update-count', this.comments.length);
       } catch (error) {
@@ -61,7 +61,7 @@ export default {
       if (!content.trim() || this.submitting) return false;
       this.submitting = true;
       try {
-        await axios.post('/api/comments', {
+        await postComment({
           articleId: this.articleId,
           content: content.trim()
         });
@@ -74,11 +74,6 @@ export default {
       } finally {
         this.submitting = false;
       }
-    },
-    formatTime(dateStr) {
-      if (!dateStr) return '';
-      const date = new Date(dateStr);
-      return `${date.getMonth() + 1}-${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
     }
   }
 }

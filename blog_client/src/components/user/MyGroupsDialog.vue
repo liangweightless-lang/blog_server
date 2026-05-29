@@ -10,7 +10,7 @@
             <a-image :src="group.productImage" class="group-img" width="50" height="50" fit="cover" />
             <div class="group-info" style="flex: 1; min-width: 0;">
               <p class="group-pname">{{ group.productName }}</p>
-              <p class="group-time">{{ formatTime(group.createTime) }}</p>
+              <p class="group-time">{{ $formatTime(group.createTime) }}</p>
             </div>
             <div class="group-status-box">
               <a-tag :color="getStatusType(group.status)" size="small">
@@ -35,7 +35,8 @@
 </template>
 
 <script>
-import axios from 'axios';
+import { getMyGroups } from '@/api/product';
+import { getProducts } from '@/api/product';
 import { Message } from '@arco-design/web-vue';
 
 export default {
@@ -86,8 +87,8 @@ export default {
       this.loadingGroups = true;
       try {
         const [groupRes, prodRes] = await Promise.all([
-          axios.get('/api/groups/me', { headers: { 'Authorization': `Bearer ${token}` } }),
-          axios.get('/api/products').catch(() => ({ data: { data: [] } }))
+          getMyGroups(),
+          getProducts().catch(() => ({ data: { data: [] } }))
         ]);
         
         const products = prodRes.data.data || [];
@@ -117,10 +118,6 @@ export default {
     goToGroupDetail(group) {
       this.visible = false;
       this.$router.push(`/product/group/${group.id}`);
-    },
-    formatTime(timeStr) {
-      if (!timeStr) return '';
-      return new Date(timeStr).toLocaleString();
     },
     handleCancel() {
       this.visible = false;

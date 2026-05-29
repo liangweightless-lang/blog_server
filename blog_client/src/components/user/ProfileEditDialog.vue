@@ -45,7 +45,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import { updateUserProfile } from '@/api/user';
 import { Message } from '@arco-design/web-vue';
 import MapLocationDialog from '@/components/common/MapLocationDialog.vue';
 import { mapState } from 'pinia'
@@ -88,7 +88,7 @@ export default {
       }
     },
     uploadAction() {
-      const base = (axios.defaults.baseURL || '').replace(/\/$/, '');
+      const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
       return base + '/api/files/upload';
     }
   },
@@ -120,9 +120,7 @@ export default {
       const token = localStorage.getItem('token');
       this.updating = true;
       try {
-        await axios.put('/api/users/profile', this.profileForm, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        await updateUserProfile(this.profileForm);
         Message.success('个人信息更新成功');
         this.visible = false;
         this.$emit('updated');

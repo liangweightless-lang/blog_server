@@ -165,7 +165,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import { getProducts, updateProduct, saveProduct, deleteProduct } from '@/api/product';
 import { Message, Modal } from '@arco-design/web-vue';
 
 export default {
@@ -203,7 +203,7 @@ export default {
   },
   computed: {
     uploadAction() {
-      const base = (axios.defaults.baseURL || '').replace(/\/$/, '');
+      const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
       return base + '/api/files/upload';
     }
   },
@@ -217,7 +217,7 @@ export default {
     async fetchProducts() {
       this.loadingProducts = true;
       try {
-        const res = await axios.get('/api/products');
+        const res = await getProducts();
         this.products = res.data.data;
       } catch (error) {
         Message.error('加载商品失败');
@@ -269,9 +269,9 @@ export default {
         delete submitData.specsList;
 
         if (this.isEditing) {
-          await axios.put(`/api/products/${this.productForm.id}`, submitData, { headers: this.getAuthHeader() });
+          await updateProduct(this.productForm.id, submitData);
         } else {
-          await axios.post('/api/products', submitData, { headers: this.getAuthHeader() });
+          await saveProduct(submitData);
         }
         Message.success('保存成功');
         this.productDialogVisible = false;
@@ -286,7 +286,7 @@ export default {
         content: '确定要下架并删除该商品吗？',
         onOk: async () => {
           try {
-            await axios.delete(`/api/products/${product.id}`, { headers: this.getAuthHeader() });
+            await deleteProduct(product.id);
             Message.success('已下架');
             this.fetchProducts();
           } catch (error) {

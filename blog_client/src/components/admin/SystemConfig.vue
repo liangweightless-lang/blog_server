@@ -62,7 +62,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import { getHomeConfig, updateHomeConfig } from '@/api/common';
 import { Message } from '@arco-design/web-vue';
 
 export default {
@@ -86,7 +86,7 @@ export default {
   },
   computed: {
     uploadAction() {
-      const base = (axios.defaults.baseURL || '').replace(/\/$/, '');
+      const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
       return base + '/api/files/upload';
     }
   },
@@ -96,7 +96,7 @@ export default {
     },
     async fetchHomeConfig() {
       try {
-        const res = await axios.get('/api/home/config');
+        const res = await getHomeConfig();
         if (res.data && res.data.data) {
           const data = res.data.data;
           this.homeConfigForm = {
@@ -157,7 +157,7 @@ export default {
         };
         delete payload.tagsString;
         
-        await axios.post('/api/home/config', payload, { headers: this.getAuthHeader() });
+        await updateHomeConfig(payload);
         Message.success('系统配置保存成功！');
       } catch (error) {
         Message.error(error.response?.data?.message || '保存失败');

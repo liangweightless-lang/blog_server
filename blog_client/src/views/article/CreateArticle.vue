@@ -63,7 +63,8 @@
 </template>
 
 <script>
-import axios from 'axios'
+import { saveArticle } from '@/api/article'
+import { getProducts } from '@/api/product'
 import { Message } from '@arco-design/web-vue'
 
 export default {
@@ -87,7 +88,7 @@ export default {
   },
   computed: {
     uploadAction() {
-      const base = (axios.defaults.baseURL || '').replace(/\/$/, '');
+      const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
       return base + '/api/files/upload';
     }
   },
@@ -114,7 +115,7 @@ export default {
     },
     async fetchProducts() {
       try {
-        const res = await axios.get('/api/products');
+        const res = await getProducts();
         this.products = (res.data && res.data.data) ? res.data.data : [];
       } catch (error) {
         console.error('获取商品列表失败');
@@ -145,9 +146,7 @@ export default {
       this.submitting = true
       try {
         const token = localStorage.getItem('token');
-        const res = await axios.post('/api/articles', this.form, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
+        const res = await saveArticle(this.form)
         if (res.data && res.data.data) {
           Message.success('日记发布成功！')
           this.$router.push('/admin')

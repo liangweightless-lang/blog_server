@@ -55,7 +55,8 @@
 </template>
 
 <script>
-import axios from 'axios';
+import { joinGroup, startGroup } from '@/api/product';
+import { createAlipay } from '@/api/order';
 import { Message } from '@arco-design/web-vue';
 import { mapState } from 'pinia'
 import { useUserStore } from '@/stores/user'
@@ -129,21 +130,18 @@ export default {
       
       this.processing = true;
       try {
-        const token = localStorage.getItem('token');
-        const headers = { 'Authorization': `Bearer ${token}` };
-        
         let orderId = null;
         
         if (this.actionType === 'join') {
           if (!this.groupId) throw new Error("Missing groupId for join");
-          const res = await axios.post(`/api/groups/${this.groupId}/join`, { address: this.orderAddress }, { headers });
+          const res = await joinGroup(this.groupId, { address: this.orderAddress });
           orderId = res.data.data.orderId;
         } else {
-          const res = await axios.post('/api/groups/start', { productId: this.product.id, address: this.orderAddress }, { headers });
+          const res = await startGroup({ productId: this.product.id, address: this.orderAddress });
           orderId = res.data.data.orderId;
         }
         
-        const payRes = await axios.post(`/api/pay/alipay/create?orderId=${orderId}`, {}, { headers });
+        const payRes = await createAlipay(orderId);
         const formHtml = payRes.data.data;
         const div = document.createElement('div');
         div.innerHTML = formHtml;

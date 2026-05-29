@@ -102,7 +102,8 @@
 </template>
 
 <script>
-import axios from 'axios';
+import { getProductDetail } from '@/api/product';
+import { redeemOrder } from '@/api/order';
 import { Message } from '@arco-design/web-vue';
 import ProductBuyModal from '@/components/product/ProductBuyModal.vue';
 import GroupActionModal from '@/components/product/GroupActionModal.vue';
@@ -142,7 +143,7 @@ export default {
     async fetchProduct() {
       const id = this.$route.params.id;
       try {
-        const res = await axios.get(`/api/products/${id}`);
+        const res = await getProductDetail(id);
         this.product = (res.data && res.data.data) ? res.data.data : {};
       } catch (error) {
         Message.error('获取商品信息失败');
@@ -170,7 +171,7 @@ export default {
         return Message.warning('请先登录再兑换');
       }
       try {
-        await axios.post('/api/orders/redeem', {
+        await redeemOrder({
           productId: this.product.id,
           address: '积分直接兑换，暂无收货地址'
         });

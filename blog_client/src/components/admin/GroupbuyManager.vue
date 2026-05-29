@@ -5,7 +5,7 @@
         <a-table-column title="商品/发起人">
           <template #cell="{ record }">
             <div style="font-weight: bold; font-size: 15px; color: #333; margin-bottom: 4px;">{{ record.productName }}</div>
-            <div style="font-size: 12px; color: #999;">发起人: {{ record.initiatorNickname }} | 截止: {{ formatTime(record.expireTime) }}</div>
+            <div style="font-size: 12px; color: #999;">发起人: {{ record.initiatorNickname }} | 截止: {{ $formatTime(record.expireTime) }}</div>
           </template>
         </a-table-column>
         <a-table-column title="进度" :width="200">
@@ -50,7 +50,7 @@
             </div>
             <div class="card-info">
               <span class="label">截止时间:</span>
-              <span class="time-text">{{ formatTime(group.expireTime) }}</span>
+              <span class="time-text">{{ $formatTime(group.expireTime) }}</span>
             </div>
             <div class="progress-box">
               <div class="progress-header">
@@ -77,7 +77,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import { getGroups, forceGroupSuccess, forceGroupFail } from '@/api/product';
 import { Message, Modal } from '@arco-design/web-vue';
 
 export default {
@@ -101,14 +101,10 @@ export default {
     getAuthHeader() {
       return { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
     },
-    formatTime(timeStr) {
-      if (!timeStr) return '';
-      return new Date(timeStr).toLocaleString();
-    },
     async fetchGroups() {
       this.loadingGroups = true;
       try {
-        const res = await axios.get('/api/groups', { headers: this.getAuthHeader() });
+        const res = await getGroups();
         this.groupbuys = res.data.data;
       } catch (error) {
         Message.error('加载拼团列表失败');
@@ -130,7 +126,7 @@ export default {
         content: '确定要手动强制该团【成团】吗？所有成员订单将变为待发货。',
         onOk: async () => {
           try {
-            await axios.post(`/api/groups/${group.id}/force-success`, {}, { headers: this.getAuthHeader() });
+            await forceGroupSuccess(group.id);
             Message.success('操作成功，已强制成团');
             this.fetchGroups();
           } catch (e) {
@@ -145,7 +141,7 @@ export default {
         content: '确定要【强制失败】该团吗？系统将自动取消订单并退回成员积分！',
         onOk: async () => {
           try {
-            await axios.post(`/api/groups/${group.id}/force-fail`, {}, { headers: this.getAuthHeader() });
+            await forceGroupFail(group.id);
             Message.success('已强制失败并退款');
             this.fetchGroups();
           } catch (e) {

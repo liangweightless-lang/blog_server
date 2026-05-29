@@ -140,7 +140,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import { createOrder, createAlipay } from '@/api/order';
 import { Message } from '@arco-design/web-vue';
 import { mapState, mapActions } from 'pinia'
 import { useUserStore } from '@/stores/user'
@@ -235,18 +235,16 @@ export default {
 
       this.loading = true;
       try {
-        const orderRes = await axios.post('/api/orders/create', { 
+        const orderRes = await createOrder({ 
           productId: this.product.id,
           pointsToUse: this.usePoints ? this.pointsToUse : 0,
           spec: this.specString,
           address: this.shippingAddress
-        }, { headers: { 'Authorization': `Bearer ${token}` } });
+        });
 
         const orderId = orderRes.data.data.id;
 
-        const payRes = await axios.post(`/api/pay/alipay/create?orderId=${orderId}`, {}, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const payRes = await createAlipay(orderId);
 
         const formHtml = payRes.data.data;
         

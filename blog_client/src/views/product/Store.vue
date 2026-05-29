@@ -64,7 +64,8 @@
 </template>
 
 <script>
-import axios from 'axios';
+import { getActiveGroups, getProducts } from '@/api/product';
+import { redeemOrder } from '@/api/order';
 import { Message } from '@arco-design/web-vue';
 import ProductBuyModal from '@/components/product/ProductBuyModal.vue';
 import GroupActionModal from '@/components/product/GroupActionModal.vue';
@@ -109,14 +110,14 @@ export default {
     ...mapActions(useUserStore, ['updatePoints']),
     async fetchActiveGroups() {
       try {
-        const res = await axios.get('/api/groups/active');
+        const res = await getActiveGroups();
         this.activeGroups = res.data.data;
       } catch (error) {
         console.error('获取拼团列表失败');
       }
     },
     async handleStartGroup(product) {
-      if (!localStorage.getItem('token')) {
+      if (!this.userInfo) {
         return Message.warning('请先登录再发起拼团');
       }
       this.currentProduct = product;
@@ -136,11 +137,11 @@ export default {
       }
     },
     async handleRedeem(product) {
-      if (!localStorage.getItem('token')) {
+      if (!this.userInfo) {
         return Message.warning('请先登录再兑换');
       }
       try {
-        await axios.post('/api/orders/redeem', { 
+        await redeemOrder({ 
           productId: product.id,
           address: '积分直接兑换，暂无收货地址' // Added to bypass @NotBlank validation
         });
@@ -152,14 +153,14 @@ export default {
     },
     async fetchProducts() {
       try {
-        const res = await axios.get('/api/products');
+        const res = await getProducts();
         this.products = res.data.data || [];
       } catch (error) {
         Message.error('获取商品列表失败');
       }
     },
     handleBuy(product) {
-      if (!localStorage.getItem('token')) {
+      if (!this.userInfo) {
         return Message.warning('请先登录后再进行购买');
       }
       this.currentProduct = product;

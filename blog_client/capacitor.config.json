@@ -5,5 +5,12 @@
   "server": {
     "url": "https://caibread.com",
     "cleartext": true
+  },
+  "plugins": {
+    "StatusBar": {
+      "overlaysWebView": false,
+      "style": "DARK",
+      "backgroundColor": "#FAFAFA"
+    }
   }
 }
