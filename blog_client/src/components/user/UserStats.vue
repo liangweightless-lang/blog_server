@@ -33,14 +33,14 @@ export default {
   position: relative;
 }
 .stats-bar-card {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: var(--glass-bg, rgba(255, 255, 255, 0.85));
+  backdrop-filter: var(--glass-blur, blur(16px));
+  -webkit-backdrop-filter: var(--glass-blur, blur(16px));
+  border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: 16px;
   display: flex;
   padding: 18px 0;
-  box-shadow: 0 8px 24px rgba(255, 126, 103, 0.08), 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0,0,0,0.02);
   max-width: 600px;
   margin: 0 auto;
 }

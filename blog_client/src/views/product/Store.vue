@@ -1,28 +1,67 @@
 <template>
   <div class="store-container">
 
-    <!-- 活跃拼团区 -->
-    <div v-if="activeGroups.length > 0" class="group-buy-section">
-      <h2 class="section-title"><icon-clock-circle /> 正在拼团</h2>
+    <!-- 社区快团区 -->
+    <div v-if="campaigns.length > 0" class="group-buy-section">
+      <h2 class="section-title" style="color: #FF5A34;"><icon-fire /> 社区快团</h2>
       <a-grid :cols="{ xs: 1, sm: 2, md: 3 }" :colGap="20" :rowGap="20">
-        <a-grid-item v-for="group in activeGroups" :key="group.id">
-          <a-card class="group-card" hoverable :bordered="false" :body-style="{ padding: '16px', display: 'flex', width: '100%', alignItems: 'center' }">
-            <div class="group-info">
-              <span class="product-name">{{ group.productName }}</span>
-              <span class="initiator">团长: {{ group.initiatorNickname }}</span>
-              <div class="progress-bar">
-                <a-progress :percent="group.currentNum / group.requiredNum" size="small">
-                  <template #text>{{ group.currentNum }}/{{ group.requiredNum }}</template>
-                </a-progress>
+        <a-grid-item v-for="campaign in campaigns" :key="campaign.id">
+          <a-card class="campaign-card" hoverable :bordered="false" :body-style="{ padding: '20px' }" @click="$router.push(`/campaign/${campaign.id}`)" style="cursor: pointer;">
+            <div class="campaign-header">
+              <h3 class="campaign-title">{{ campaign.title }}</h3>
+              <a-tag color="red" size="small" class="campaign-tag">进行中</a-tag>
+            </div>
+            <div class="campaign-details">
+              <div class="detail-row">
+                <icon-location class="detail-icon" /> 
+                <span class="detail-text">提货点: <span class="detail-highlight">{{ campaign.deliveryLocation?.name || '未知' }}</span></span>
+              </div>
+              <div class="detail-row">
+                <icon-clock-circle class="detail-icon" /> 
+                <div class="detail-text" style="display: flex; align-items: center;">
+                  距结束: <a-countdown :value="new Date(campaign.endTime).getTime()" format="D 天 H 时 m 分 s 秒" :value-style="{color: '#FF5A34', fontSize: '13px', fontWeight: 'bold', marginLeft: '4px'}" />
+                </div>
               </div>
             </div>
-            <a-button type="primary" status="warning" size="small" shape="round" @click="$router.push(`/product/group/${group.id}`)">查看详情</a-button>
+            
+            <div class="campaign-progress" v-if="campaign.targetNum > 0" style="margin-bottom: 12px;">
+               <div style="display: flex; justify-content: space-between; font-size: 12px; color: #86909c; margin-bottom: 4px;">
+                 <span>已跟团 {{ campaign.currentNum || 0 }} 人</span>
+                 <span>目标 {{ campaign.targetNum }} 人</span>
+               </div>
+               <a-progress :percent="Math.min((campaign.currentNum || 0) / campaign.targetNum, 1)" size="small" color="#FF5A34" />
+            </div>
+            
+            <div v-if="campaign.joinedAvatars && campaign.joinedAvatars.length > 0" class="joined-avatars">
+              <a-avatar-group :size="24" :max-count="5">
+                <a-avatar v-for="(avatar, idx) in campaign.joinedAvatars" :key="idx">
+                  <img :src="avatar" />
+                </a-avatar>
+              </a-avatar-group>
+              <span class="joined-text">等 {{ campaign.currentNum }} 人已跟团</span>
+            </div>
+            
+            <div class="campaign-products-preview" v-if="campaign.products && campaign.products.length > 0">
+              <div class="preview-imgs">
+                <img v-for="cp in campaign.products.slice(0, 4)" :key="cp.id" :src="cp.product?.image" class="preview-img" />
+                <div v-if="campaign.products.length > 4" class="preview-more">+{{ campaign.products.length - 4 }}</div>
+              </div>
+              <div class="preview-text">
+                <span class="price-start">¥{{ getMinPrice(campaign) }}<span class="price-suffix">起</span></span>
+                <span class="count-text">共 {{ campaign.products.length }} 款</span>
+              </div>
+            </div>
+            
+            <a-button type="primary" class="campaign-btn" shape="round" long @click.stop="$router.push(`/campaign/${campaign.id}`)">立即跟团</a-button>
           </a-card>
         </a-grid-item>
       </a-grid>
     </div>
 
-    <a-grid :cols="{ xs: 2, sm: 2, md: 3 }" :colGap="12" :rowGap="24">
+    <!-- 普通单品区 -->
+    <div class="product-grid" style="margin-top: 32px;">
+      <h2 class="section-title" style="color: #1D2129; margin-bottom: 16px;"><icon-apps /> 发现好物 <span style="font-size: 13px; color: #86909C; font-weight: normal; margin-left: 8px;">单品自由选购</span></h2>
+      <a-grid :cols="{ xs: 2, sm: 2, md: 3 }" :colGap="12" :rowGap="24">
       <a-grid-item v-for="product in products" :key="product.id" class="product-col">
         <a-card class="product-card" hoverable :bordered="false" :body-style="{ padding: '0px' }">
           <div class="product-image-wrapper" @click="$router.push(`/product/${product.id}`)">
@@ -38,14 +77,15 @@
               <span class="product-price">¥{{ product.price }}</span>
               <div class="button-group">
                 <a-button type="text" style="color: #E6A23C; font-size: 12px; padding: 0 4px;" @click="handleRedeem(product)">1000积分兑换</a-button>
-                <a-button type="primary" size="small" shape="round" @click="handleBuy(product)">立即购买</a-button>
-                <a-button v-if="isMonday" type="primary" status="warning" size="small" shape="round" @click="handleStartGroup(product)">发起拼团</a-button>
+                <a-button type="primary" size="small" shape="round" class="buy-btn" @click="handleBuy(product)">立即购买</a-button>
+                <a-button v-if="isMonday" type="primary" status="warning" size="small" shape="round" class="group-btn" @click="handleStartGroup(product)">发起拼团</a-button>
               </div>
             </div>
           </div>
         </a-card>
       </a-grid-item>
     </a-grid>
+    </div>
 
     <!-- 订单确认业务组件 (已封装) -->
     <ProductBuyModal 
@@ -60,17 +100,24 @@
       :product="currentProduct"
       :groupId="currentGroupId"
       @success="handleGroupSuccess" />
+      
+    <!-- 管理员专属发起团购按钮 (快团团模式) -->
+    <div v-if="isAdmin" class="admin-fab-mini" @click="$router.push('/admin/campaign/create')">
+      <icon-plus />
+    </div>
   </div>
 </template>
 
 <script>
 import { getActiveGroups, getProducts } from '@/api/product';
+import { getCampaigns } from '@/api/campaign';
 import { redeemOrder } from '@/api/order';
 import { Message } from '@arco-design/web-vue';
 import ProductBuyModal from '@/components/product/ProductBuyModal.vue';
 import GroupActionModal from '@/components/product/GroupActionModal.vue';
 import { mapState, mapActions } from 'pinia'
 import { useUserStore } from '@/stores/user'
+import dayjs from 'dayjs'
 
 export default {
   name: 'Store',
@@ -87,12 +134,16 @@ export default {
       products: [],
       currentGroupId: null,
       activeGroups: [],
+      campaigns: [], // 社区快团数据
       isMonday: new Date().getDay() === 1,
       isMobile: window.innerWidth <= 768
     }
   },
   computed: {
-    ...mapState(useUserStore, ['userInfo'])
+    ...mapState(useUserStore, ['userInfo']),
+    isAdmin() {
+      return this.userInfo && this.userInfo.role === 'ADMIN';
+    }
   },
   created() {
     this.fetchProducts().then(() => {
@@ -105,16 +156,34 @@ export default {
       }
     });
     this.fetchActiveGroups();
+    this.fetchCampaigns();
   },
   methods: {
     ...mapActions(useUserStore, ['updatePoints']),
+    getMinPrice(campaign) {
+      if (!campaign.products || campaign.products.length === 0) return 0;
+      return Math.min(...campaign.products.map(p => p.groupPrice)).toFixed(2);
+    },
     async fetchActiveGroups() {
       try {
         const res = await getActiveGroups();
         this.activeGroups = res.data.data;
       } catch (error) {
-        console.error('获取拼团列表失败');
+        console.error('获取单品拼团列表失败');
       }
+    },
+    async fetchCampaigns() {
+      try {
+        const res = await getCampaigns();
+        // 只显示状态为 1 (进行中) 的快团
+        this.campaigns = (res.data.data || []).filter(c => c.status === 1);
+      } catch (error) {
+        console.error('获取社区快团列表失败');
+      }
+    },
+    formatTime(time) {
+      if (!time) return '未知';
+      return dayjs(time).format('MM-DD HH:mm');
     },
     async handleStartGroup(product) {
       if (!this.userInfo) {
@@ -172,7 +241,7 @@ export default {
 
 <style scoped>
 .store-container {
-  padding: 10px 0 40px;
+  padding: 10px 0 100px; /* Increased bottom padding to avoid bottom nav overlap */
 }
 
 
@@ -278,7 +347,20 @@ export default {
 .product-price {
   font-size: 24px;
   font-weight: 800;
-  color: #FF7E67;
+  color: #FF4B2B;
+}
+
+.buy-btn {
+  background: var(--brand-gradient, linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%));
+  border: none;
+  font-weight: bold;
+  box-shadow: 0 4px 12px rgba(255, 75, 43, 0.2);
+}
+
+.group-btn {
+  background: linear-gradient(135deg, #F5A623 0%, #F57C00 100%);
+  border: none;
+  font-weight: bold;
 }
 
 .buy-dialog-content {
@@ -372,5 +454,181 @@ export default {
   gap: 8px;
 }
 
+/* 悬浮按钮样式 (仿照 Home.vue) */
+.admin-fab-mini {
+  position: fixed;
+  right: 24px;
+  bottom: 100px;
+  background: rgba(40, 40, 40, 0.85); /* Premium dark glass */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #FFD700; /* Gold plus */
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  z-index: 1000;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  font-size: 28px;
+}
 
+.admin-fab-mini:hover {
+  transform: scale(1.1) rotate(90deg);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.3);
+  background: rgba(20, 20, 20, 0.9);
+}
+
+.admin-fab-mini:active {
+  transform: scale(0.9);
+}
+
+@media (max-width: 768px) {
+  .admin-fab-mini {
+    right: 20px;
+    bottom: 100px;
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+  }
+}
+
+/* 社区快团优化样式 */
+.campaign-card {
+  background: linear-gradient(180deg, #FFFFFF 0%, #FFF7F5 100%) !important;
+  border-radius: 16px;
+  box-shadow: 0 6px 16px rgba(255, 90, 52, 0.05) !important;
+  border: 1px solid rgba(255, 90, 52, 0.1);
+  transition: all 0.3s ease;
+}
+.campaign-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(255, 90, 52, 0.1) !important;
+}
+.campaign-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+.campaign-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #1D2129;
+  line-height: 1.4;
+}
+.campaign-tag {
+  border-radius: 12px;
+  font-weight: bold;
+}
+.campaign-details {
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 20px;
+}
+.detail-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.detail-row:last-child {
+  margin-bottom: 0;
+}
+.detail-icon {
+  color: #FF5A34;
+  margin-right: 8px;
+  font-size: 14px;
+}
+.detail-text {
+  font-size: 13px;
+  color: #86909C;
+}
+.detail-highlight {
+  color: #1D2129;
+  font-weight: 600;
+  margin-left: 4px;
+}
+.campaign-btn {
+  background: linear-gradient(135deg, #FF7E67 0%, #FF5A34 100%);
+  border: none;
+  font-weight: bold;
+  font-size: 15px;
+  height: 40px;
+  box-shadow: 0 4px 12px rgba(255, 90, 52, 0.3);
+}
+.campaign-btn:hover {
+  background: linear-gradient(135deg, #FF8E79 0%, #FF6B47 100%);
+}
+
+.campaign-products-preview {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.preview-imgs {
+  display: flex;
+  gap: 8px;
+}
+.preview-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #E5E6EB;
+}
+.preview-more {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: #F7F8FA;
+  color: #86909C;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #C9CDD4;
+}
+.preview-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+}
+.price-start {
+  color: #F53F3F;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+.price-suffix {
+  font-size: 12px;
+  font-weight: normal;
+  margin-left: 2px;
+}
+.count-text {
+  font-size: 12px;
+  color: #86909C;
+  margin-top: 2px;
+}
+
+.joined-avatars {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  background: rgba(255, 90, 52, 0.05);
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+.joined-text {
+  font-size: 12px;
+  color: #86909C;
+  margin-left: 8px;
+}
 </style>

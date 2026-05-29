@@ -111,6 +111,10 @@ export default {
   /* 全局安全区高度变量，后续任何新页面都可以直接使用 var(--safe-top) */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --brand-primary: #FF4B2B;
+  --brand-gradient: linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%);
+  --glass-bg: rgba(255, 255, 255, 0.75);
+  --glass-blur: blur(30px);
 }
 
 body {

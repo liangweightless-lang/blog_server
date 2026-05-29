@@ -15,6 +15,9 @@ public class Product {
     private Boolean isDigital;
     private Integer stock;
     private String specs; // JSON format
+    private Long categoryId;
+    @com.baomidou.mybatisplus.annotation.TableField(exist = false)
+    private String categoryName;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 }

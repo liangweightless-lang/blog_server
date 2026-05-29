@@ -6,32 +6,40 @@
     <div class="tools-list">
       <div class="tool-cell" @click="$emit('address')">
         <div class="cell-left">
-          <icon-location class="tool-icon" style="color: #409EFF" />
+          <div class="icon-wrapper" style="background: rgba(64, 158, 255, 0.1);">
+            <icon-location class="tool-icon" style="color: #409EFF" />
+          </div>
           <span>收货地址</span>
         </div>
-        <icon-right />
+        <icon-right class="cell-right-icon" />
       </div>
       <div class="tool-cell" @click="$emit('invite')">
         <div class="cell-left">
-          <icon-gift class="tool-icon" style="color: #F56C6C" />
+          <div class="icon-wrapper" style="background: rgba(245, 108, 108, 0.1);">
+            <icon-gift class="tool-icon" style="color: #F56C6C" />
+          </div>
           <span>邀请有礼</span>
         </div>
-        <icon-right />
+        <icon-right class="cell-right-icon" />
       </div>
       <div class="tool-cell" @click="$emit('groups')">
         <div class="cell-left">
-          <icon-user-group class="tool-icon" style="color: #67C23A" />
+          <div class="icon-wrapper" style="background: rgba(103, 194, 58, 0.1);">
+            <icon-user-group class="tool-icon" style="color: #67C23A" />
+          </div>
           <span>我的拼团</span>
         </div>
-        <icon-right />
+        <icon-right class="cell-right-icon" />
       </div>
 
       <div class="tool-cell" @click="$emit('logout')">
         <div class="cell-left">
-          <icon-poweroff class="tool-icon" style="color: #909399" />
+          <div class="icon-wrapper" style="background: rgba(144, 147, 153, 0.1);">
+            <icon-poweroff class="tool-icon" style="color: #909399" />
+          </div>
           <span>退出登录</span>
         </div>
-        <icon-right />
+        <icon-right class="cell-right-icon" />
       </div>
     </div>
   </a-card>
@@ -90,10 +98,22 @@ export default {
   gap: 12px;
 }
 .tool-icon {
-  font-size: 20px;
+  font-size: 18px;
+}
+.icon-wrapper {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .cell-left span {
   font-size: 14px;
-  color: #303133;
+  color: #1D2129;
+  font-weight: 500;
+}
+.cell-right-icon {
+  color: #C9CDD4;
 }
 </style>

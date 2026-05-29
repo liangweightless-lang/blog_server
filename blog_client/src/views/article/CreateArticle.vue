@@ -16,11 +16,9 @@
     <!-- 真实的上传照片区 -->
     <div class="xhs-upload-area">
       <a-upload
-        :action="uploadAction"
+        :custom-request="customUploadRequest"
         list-type="picture-card"
         v-model:file-list="fileList"
-        @success="handleUploadSuccess"
-        @error="handleUploadError"
         multiple
         image-preview
         accept="image/*,video/*"
@@ -29,19 +27,74 @@
       <div class="upload-tip" style="font-size: 12px; color: #D3C1BA; margin-top: 8px;">支持多张图片与短视频上传</div>
     </div>
 
+    <!-- 图片裁剪弹窗 -->
+    <ImageCropperDialog 
+      v-model:show="cropModalVisible" 
+      :image-url="cropImageUrl" 
+      :current-file="currentCropFile"
+      @confirm="finishCurrentCrop" 
+      @cancel="cancelCrop" 
+    />
+
     <!-- 标题与内容输入区 -->
     <div class="xhs-editor-area">
       <input class="xhs-title-input" v-model="form.title" placeholder="填写标题会有更多赞哦~" />
       <div class="xhs-divider"></div>
-      <textarea class="xhs-content-input" v-model="form.content" placeholder="添加正文" rows="12"></textarea>
+      
+      <!-- 富文本编辑器区 -->
+      <RichTextEditor v-model="form.content" :custom-upload="customUploadImage" />
     </div>
 
     <!-- 小红书特色底部操作栏 -->
     <div class="xhs-bottom-actions">
-      <div class="action-item"><span class="icon">#</span> 参与话题</div>
-      <div class="action-item"><span class="icon">@</span> 提醒谁看</div>
-      <div class="action-item"><icon-location /> 添加地点</div>
+      <!-- 已添加的话题 -->
+      <div 
+        class="action-item active-pill" 
+        v-for="(tag, index) in form.tags" 
+        :key="index"
+        @click="topicVisible = true"
+      >
+        <span class="icon">#</span> {{ tag }}
+      </div>
+      
+      <!-- 话题入口 -->
+      <div class="action-item" @click="topicVisible = true" v-if="!form.tags || form.tags.length === 0">
+        <span class="icon">#</span> 参与话题
+      </div>
+
+      <!-- 暂未开放的 @ 功能 -->
+      <div class="action-item" style="opacity: 0.5; cursor: not-allowed;">
+        <span class="icon">@</span> 提醒谁看
+      </div>
+
+      <!-- 已添加的地点 -->
+      <div 
+        class="action-item active-pill" 
+        v-if="form.location"
+        @click="mapVisible = true"
+      >
+        <icon-location /> <span style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ form.location }}</span>
+      </div>
+
+      <!-- 地点入口 -->
+      <div class="action-item" @click="mapVisible = true" v-else>
+        <icon-location /> 添加地点
+      </div>
     </div>
+    
+    <!-- 话题编辑弹窗 -->
+    <a-modal v-model:visible="topicVisible" title="添加话题" :footer="false" :width="isMobile ? '90%' : '500px'" unmount-on-close>
+      <div style="padding: 10px 0;">
+        <div style="margin-bottom: 15px; color: #86909C; font-size: 13px;">输入你想参与的话题，按回车键确认。</div>
+        <a-input-tag v-model="form.tags" placeholder="输入话题后按回车..." allow-clear :max-tag-count="5" size="large" />
+      </div>
+      <div style="margin-top: 30px; display: flex; justify-content: flex-end;">
+        <a-button type="primary" shape="round" @click="topicVisible = false">确定</a-button>
+      </div>
+    </a-modal>
+
+    <!-- 高德地图选点组件 -->
+    <MapLocationDialog v-model:show="mapVisible" @select="handleMapSelect" />
 
     <!-- 关联商品选择 -->
     <div class="xhs-product-link">
@@ -66,25 +119,43 @@
 import { saveArticle } from '@/api/article'
 import { getProducts } from '@/api/product'
 import { Message } from '@arco-design/web-vue'
+import request from '@/utils/request'
+import MapLocationDialog from '@/components/common/MapLocationDialog.vue'
+import ImageCropperDialog from '@/components/common/ImageCropperDialog.vue'
+import RichTextEditor from '@/components/common/RichTextEditor.vue'
 
 export default {
   name: 'CreateArticle',
+  components: { MapLocationDialog, ImageCropperDialog, RichTextEditor },
   data() {
     return {
       fileList: [],
       form: {
         title: '',
         content: '',
+        productId: null,
+        tags: [],
+        location: '',
         coverUrl: '',
-        mediaUrls: '[]',
-        productId: null
+        mediaUrls: '[]'
       },
       products: [],
-      submitting: false
+      submitting: false,
+      topicVisible: false,
+      mapVisible: false,
+      isMobile: window.innerWidth <= 768,
+      cropQueue: [],
+      isCropping: false,
+      cropModalVisible: false,
+      cropImageUrl: '',
+      cropResolve: null,
+      cropReject: null,
+      currentCropFile: null
     }
   },
   created() {
     this.fetchProducts();
+    window.addEventListener('resize', this.handleResize);
   },
   computed: {
     uploadAction() {
@@ -92,26 +163,122 @@ export default {
       return base + '/api/files/upload';
     }
   },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.handleResize);
+  },
   methods: {
-    handleUploadSuccess(fileItem) {
-      const res = fileItem.response;
-      if (typeof res === 'string' && (res.trim().startsWith('<!DOCTYPE') || res.trim().startsWith('<html'))) {
-        Message.error('文件上传失败，服务器返回了错误的格式。');
-        fileItem.status = 'error';
-        fileItem.uploadedUrl = '';
-        return;
-      }
-      let url = (res && res.url) ? res.url : (typeof res === 'string' ? res : '');
-      if (url && (url.trim().startsWith('<!DOCTYPE') || url.trim().startsWith('<html'))) {
-        Message.error('文件上传失败，服务器返回了错误的格式。');
-        fileItem.status = 'error';
-        fileItem.uploadedUrl = '';
-        return;
-      }
-      fileItem.uploadedUrl = url;
+    handleResize() {
+      this.isMobile = window.innerWidth <= 768;
     },
-    handleUploadError(fileItem) {
-      Message.error('文件上传失败，请重试');
+    handleMapSelect(address) {
+      this.form.location = address;
+    },
+    // ---- 图片裁剪队列逻辑 ----
+    startCrop(file) {
+      return new Promise((resolve, reject) => {
+        this.cropQueue.push({ file, resolve, reject });
+        this.processCropQueue();
+      });
+    },
+    processCropQueue() {
+      if (this.isCropping || this.cropQueue.length === 0) return;
+      this.isCropping = true;
+      const { file, resolve, reject } = this.cropQueue[0];
+      
+      this.currentCropFile = file;
+      this.cropResolve = resolve;
+      this.cropReject = reject;
+      
+      // 非图片（比如视频）直接跳过裁剪
+      if (file.type && !file.type.startsWith('image/')) {
+        this.finishCurrentCrop(file);
+        return;
+      }
+      
+      this.cropImageUrl = URL.createObjectURL(file);
+      this.cropModalVisible = true;
+    },
+    finishCurrentCrop(resultFile) {
+      this.cropModalVisible = false;
+      if (this.cropImageUrl) {
+        URL.revokeObjectURL(this.cropImageUrl);
+      }
+      const item = this.cropQueue.shift();
+      if (item && item.resolve && resultFile) item.resolve(resultFile);
+      this.isCropping = false;
+      this.processCropQueue();
+    },
+    cancelCrop() {
+      const item = this.cropQueue.shift();
+      if (item && item.reject) item.reject(new Error('用户取消裁剪'));
+      this.cropModalVisible = false;
+      if (this.cropImageUrl) {
+        URL.revokeObjectURL(this.cropImageUrl);
+      }
+      this.isCropping = false;
+      this.processCropQueue();
+    },
+
+    // ---- Arco Upload 自定义上传拦截 ----
+    async customUploadRequest(option) {
+      const { onProgress, onError, onSuccess, fileItem, name } = option;
+      try {
+        const file = fileItem.file; // original JS File object
+        const croppedFile = await this.startCrop(file);
+        
+        const formData = new FormData();
+        formData.append(name || 'file', croppedFile);
+        
+        const token = localStorage.getItem('token');
+        const res = await request.post('/api/files/upload', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'Authorization': token ? `Bearer ${token}` : ''
+          },
+          onUploadProgress: (progressEvent) => {
+            let percent = 0;
+            if (progressEvent.total) {
+              percent = progressEvent.loaded / progressEvent.total;
+            }
+            onProgress(percent);
+          }
+        });
+        if (res.data && res.data.url) {
+          onSuccess(res.data);
+        } else {
+          onError(new Error('服务器未返回URL'));
+        }
+      } catch (e) {
+        if (e.message !== '用户取消裁剪') Message.error('相册上传失败');
+        onError(e);
+      }
+    },
+
+    // ---- WangEditor 富文本图片上传拦截 ----
+    async customUploadImage(file, insertFn) {
+      try {
+        const croppedFile = await this.startCrop(file);
+        
+        const formData = new FormData();
+        formData.append('file', croppedFile);
+        const token = localStorage.getItem('token');
+        const res = await request.post('/api/files/upload', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'Authorization': token ? `Bearer ${token}` : ''
+          }
+        });
+        if (res.data && res.data.url) {
+          let url = res.data.url;
+          const base = (request.defaults.baseURL || '').replace(/\/$/, '');
+          if (url.startsWith('/uploads/') && base) url = base + url;
+          insertFn(url, file.name, url);
+        } else {
+          Message.error('正文图片上传失败');
+        }
+      } catch (error) {
+        if (error.message !== '用户取消裁剪') Message.error('图片上传异常');
+      }
     },
     async fetchProducts() {
       try {
@@ -140,13 +307,17 @@ export default {
         }
         return url;
       }).filter(Boolean);
-      this.form.mediaUrls = JSON.stringify(urls);
-      this.form.coverUrl = urls.length > 0 ? urls[0] : '';
+      
+      const payload = {
+        ...this.form,
+        tags: this.form.tags && this.form.tags.length > 0 ? JSON.stringify(this.form.tags) : null,
+        mediaUrls: JSON.stringify(urls)
+      };
+      payload.coverUrl = urls.length > 0 ? urls[0] : '';
 
       this.submitting = true
       try {
-        const token = localStorage.getItem('token');
-        const res = await saveArticle(this.form)
+        const res = await saveArticle(payload)
         if (res.data && res.data.data) {
           Message.success('日记发布成功！')
           this.$router.push('/admin')
@@ -311,6 +482,11 @@ export default {
 }
 .action-item:active {
   transform: scale(0.95);
+}
+.action-item.active-pill {
+  background: rgba(255, 126, 103, 0.1);
+  border-color: rgba(255, 126, 103, 0.3);
+  color: #FF7E67;
 }
 .action-item .icon {
   font-weight: 800;

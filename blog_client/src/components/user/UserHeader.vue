@@ -12,8 +12,9 @@
       </div>
       <div class="header-actions">
         <a-button 
-          :type="isCheckedIn ? 'primary' : 'primary'" 
-          :status="isCheckedIn ? 'success' : 'warning'"
+          :type="isCheckedIn ? 'primary' : 'outline'" 
+          :status="isCheckedIn ? 'success' : 'normal'"
+          class="checkin-btn"
           size="small" 
           shape="round" 
           :disabled="isCheckedIn"
@@ -22,7 +23,7 @@
         >
           {{ isCheckedIn ? '今日已签到' : '每日签到' }}
         </a-button>
-        <a-button shape="circle" size="small" @click="$emit('edit')" style="margin-left: 8px;">
+        <a-button shape="circle" size="small" class="edit-btn" @click="$emit('edit')" style="margin-left: 8px;">
           <icon-edit />
         </a-button>
       </div>
@@ -95,20 +96,14 @@ export default {
 
 <style scoped>
 .user-profile-header {
-  background: linear-gradient(135deg, #FF7E67, #FF9E8D, #FFAE9B);
-  background-size: 200% 200%;
-  animation: gradientFlow 8s ease infinite;
+  background: var(--brand-gradient, linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%));
   padding: calc(50px + env(safe-area-inset-top, 0px)) 20px 70px;
   color: white;
   position: relative;
   overflow: hidden;
 }
 
-@keyframes gradientFlow {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
+
 
 .user-profile-header::after {
   content: '';
@@ -131,6 +126,21 @@ export default {
   margin: 0 auto;
   position: relative;
   z-index: 2;
+}
+.checkin-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  color: white;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.checkin-btn:not([disabled]):hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+.edit-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.4);
 }
 .user-info-main {
   display: flex;
@@ -186,16 +196,16 @@ export default {
 .admin-vip-banner {
   margin: 25px auto 0;
   max-width: 600px;
-  background: rgba(40, 40, 40, 0.65);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 215, 0, 0.2);
+  background: var(--glass-bg, rgba(255, 255, 255, 0.85));
+  backdrop-filter: var(--glass-blur, blur(30px));
+  -webkit-backdrop-filter: var(--glass-blur, blur(30px));
+  border: 1px solid rgba(255, 215, 0, 0.6);
   border-radius: 16px;
   padding: 16px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 32px rgba(250, 140, 22, 0.1);
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   position: relative;
@@ -206,13 +216,13 @@ export default {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0; height: 100%;
-  background: linear-gradient(135deg, rgba(255,215,0,0.1) 0%, transparent 100%);
+  background: linear-gradient(135deg, rgba(255,215,0,0.05) 0%, transparent 100%);
   pointer-events: none;
 }
 .admin-vip-banner:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
-  border-color: rgba(255, 215, 0, 0.4);
+  box-shadow: 0 12px 40px rgba(250, 140, 22, 0.15);
+  border-color: rgba(255, 215, 0, 0.8);
 }
 .admin-vip-banner:active {
   transform: translateY(1px);
@@ -225,7 +235,8 @@ export default {
 .vip-icon-wrapper {
   width: 40px;
   height: 40px;
-  background: rgba(255, 215, 0, 0.15);
+  background: linear-gradient(135deg, #FFF7D6, #FFF0B3);
+  border: 1px solid rgba(250, 140, 22, 0.2);
   border-radius: 50%;
   display: flex;
   justify-content: center;
@@ -233,7 +244,7 @@ export default {
 }
 .vip-icon {
   font-size: 20px;
-  color: #FFD700;
+  color: #FA8C16;
 }
 .vip-text {
   display: flex;
@@ -243,13 +254,15 @@ export default {
 .vip-title {
   font-size: 15px;
   font-weight: bold;
-  color: #FFF;
-  background: linear-gradient(90deg, #FFD700, #FFA500);
+  background: linear-gradient(90deg, #FA8C16, #FAAD14);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .vip-subtitle {
   font-size: 12px;
-  color: rgba(255,255,255,0.6);
+  color: #86909C;
+}
+.admin-vip-banner .arco-icon-right {
+  color: #86909C;
 }
 </style>

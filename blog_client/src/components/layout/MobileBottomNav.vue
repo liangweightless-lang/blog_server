@@ -38,15 +38,15 @@ export default {
   left: 20px;
   right: 20px;
   height: 64px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   display: flex;
   justify-content: space-around;
   align-items: center;
   border-radius: 32px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.02);
+  border: 0.5px solid rgba(255, 255, 255, 0.9);
   z-index: 99;
   padding: 0 10px;
 }
@@ -55,7 +55,7 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #8C6A5D;
+  color: #86909C;
   font-size: 11px;
   flex: 1;
   height: 100%;
@@ -70,7 +70,7 @@ export default {
   transform: translate(-50%, -50%) scale(0);
   width: 50px;
   height: 50px;
-  background: rgba(255, 126, 103, 0.1);
+  background: rgba(255, 75, 43, 0.08);
   border-radius: 50%;
   transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   z-index: -1;
@@ -84,10 +84,10 @@ export default {
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .nav-item.active {
-  color: #FF7E67;
+  color: var(--brand-primary);
 }
 .nav-item.active i {
-  font-weight: bold;
+  font-weight: 800;
   transform: translateY(-2px);
 }
 .nav-item.active::before {

@@ -9,7 +9,7 @@ import java.util.List;
 @Mapper
 public interface ProductMapper extends BaseMapper<Product> {
 
-    @Select("SELECT * FROM product ORDER BY id ASC")
+    @Select("SELECT p.*, c.name as categoryName FROM product p LEFT JOIN product_category c ON p.category_id = c.id ORDER BY p.id ASC")
     List<Product> findAll();
 
     @Select("SELECT * FROM product WHERE id = #{id}")

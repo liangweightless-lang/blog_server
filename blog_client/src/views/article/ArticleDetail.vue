@@ -59,6 +59,18 @@
       <div class="xhs-detail-content">
         <h1 class="article-title">{{ article.title }}</h1>
         <div class="article-text" v-html="formatContent(article.content)"></div>
+
+        <!-- 话题与地点展示区 -->
+        <div class="article-tags-location" v-if="displayTags.length > 0 || article.location" style="margin-bottom: 24px;">
+          <div class="tags-container" v-if="displayTags.length > 0" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+            <span v-for="tag in displayTags" :key="tag" style="color: #2b579a; font-weight: 600; font-size: 15px; cursor: pointer;">
+              #{{ tag }}
+            </span>
+          </div>
+          <div class="location-container" v-if="article.location" style="display: inline-flex; align-items: center; background: #f5f5f5; padding: 6px 14px; border-radius: 14px; font-size: 12px; color: #4E5969; font-weight: 500;">
+            <icon-location style="margin-right: 4px;" /> {{ article.location }}
+          </div>
+        </div>
         <div class="article-meta">
           <span class="post-time">{{ $formatDate(article.createTime) }}</span>
         </div>
@@ -173,6 +185,17 @@ export default {
       }
     }
   },
+  computed: {
+    displayTags() {
+      if (!this.article.tags) return [];
+      try {
+        const tags = JSON.parse(this.article.tags);
+        return Array.isArray(tags) ? tags : [];
+      } catch (e) {
+        return [];
+      }
+    }
+  },
   created() {
     this.fetchArticle()
     this.checkFavoriteStatus()
@@ -259,6 +282,10 @@ export default {
     formatContent(content) {
       if (!content) return ''
       const safeContent = DOMPurify.sanitize(content)
+      // 判断如果是富文本内容，则不再简单地将所有换行符替换为 br
+      if (safeContent.includes('<p>') || safeContent.includes('<li>') || safeContent.includes('<img')) {
+        return safeContent
+      }
       return safeContent.replace(/\n/g, '<br>')
     },
     async submitComment() {
@@ -552,8 +579,22 @@ export default {
   line-height: 1.8;
   margin-bottom: 24px;
   letter-spacing: 0.3px;
-  white-space: pre-wrap; /* Ensure newlines and spaces are preserved */
   word-wrap: break-word;
+}
+
+:deep(.article-text p) {
+  margin: 10px 0;
+}
+
+:deep(.article-text img) {
+  max-width: 100%;
+  border-radius: 12px;
+  margin: 10px 0;
+}
+
+:deep(.article-text ul), :deep(.article-text ol) {
+  padding-left: 20px;
+  margin: 10px 0;
 }
 
 .article-meta {

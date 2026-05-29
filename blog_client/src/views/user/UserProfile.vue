@@ -18,38 +18,14 @@
         <a-tab-pane key="orders">
           <template #title><icon-storage /> 我的订单</template>
           <div class="tab-content-wrapper">
-            <a-empty v-if="orders.length === 0" description="暂无订单记录" style="margin: 40px 0;">
-              <template #image><icon-gift style="font-size: 48px; color: #D3C1BA; opacity: 0.5;" /></template>
-            </a-empty>
-            <a-list v-else class="order-full-list" :bordered="false" :split="false">
-              <a-list-item 
-                v-for="order in orders" 
-                :key="order.id" 
-                class="order-card-item" 
-                @click="showOrderDetail(order)" 
-                style="cursor: pointer;"
-              >
-                <div class="order-card-header">
-                  <span class="order-id">订单号: {{ order.id.substring(0, 12) }}...</span>
-                  <a-tag :color="getOrderStatusColor(order.status)" size="small">
-                    {{ getOrderStatusText(order.status) }}
-                  </a-tag>
-                </div>
-                <div class="order-card-body">
-                  <a-image :src="order.productImage" class="full-order-img" width="60" height="60" fit="cover" />
-                  <div class="order-main-info">
-                    <p class="order-pname">{{ order.productName || '商品ID: ' + order.productId }}</p>
-                    <p class="order-spec" v-if="order.selectedSpec">规格: {{ order.selectedSpec }}</p>
-                    <p class="order-time">{{ $formatTime(order.createTime) }}</p>
-                  </div>
-                  <div class="order-price-info" style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
-                    <span class="price-val">¥{{ order.amount }}</span>
-                    <a-button v-if="order.status === 0" type="primary" size="small" shape="round" style="background-color: #FF7E67;" @click.stop="handleContinuePay(order)">去支付</a-button>
-                  </div>
-                </div>
-              </a-list-item>
-              <p class="list-end-tip">已展示全部 {{ orders.length }} 个订单</p>
-            </a-list>
+            <OrderList :orders="orders" @detail="showOrderDetail" @pay="handleContinuePay" />
+          </div>
+        </a-tab-pane>
+        
+        <a-tab-pane key="campaignOrders">
+          <template #title><icon-fire /> 我的跟团</template>
+          <div class="tab-content-wrapper">
+            <CampaignOrderList :orders="campaignOrders" />
           </div>
         </a-tab-pane>
       </a-tabs>
@@ -113,6 +89,7 @@
 import { Message } from '@arco-design/web-vue';
 import { getMyFavorites } from '@/api/article';
 import { getMyOrders, createAlipay } from '@/api/order';
+import { getMyCampaignOrders } from '@/api/campaign';
 import { getProducts } from '@/api/product';
 import UserHeader from '@/components/user/UserHeader.vue';
 import UserStats from '@/components/user/UserStats.vue';
@@ -121,6 +98,8 @@ import ArticleGrid from '@/components/home/ArticleGrid.vue';
 import ProfileEditDialog from '@/components/user/ProfileEditDialog.vue';
 import MyGroupsDialog from '@/components/user/MyGroupsDialog.vue';
 import OrderDetailDialog from '@/components/user/OrderDetailDialog.vue';
+import OrderList from '@/components/user/OrderList.vue';
+import CampaignOrderList from '@/components/user/CampaignOrderList.vue';
 import { mapState, mapActions } from 'pinia'
 import { useUserStore } from '@/stores/user'
 
@@ -133,11 +112,14 @@ export default {
     ArticleGrid,
     ProfileEditDialog,
     MyGroupsDialog,
-    OrderDetailDialog
+    OrderDetailDialog,
+    OrderList,
+    CampaignOrderList
   },
   data() {
     return {
       orders: [],
+      campaignOrders: [],
       loadingOrders: false,
       editDialogVisible: false,
       inviteDialogVisible: false,
@@ -155,6 +137,7 @@ export default {
     this.loadUserAndForm();
     this.fetchMyFavorites();
     this.fetchMyOrders();
+    this.fetchMyCampaignOrders();
     window.addEventListener('resize', this.handleResize);
   },
   beforeUnmount() {
@@ -179,6 +162,8 @@ export default {
         this.fetchMyFavorites();
       } else if (key === 'orders') {
         this.fetchMyOrders();
+      } else if (key === 'campaignOrders') {
+        this.fetchMyCampaignOrders();
       }
     },
     async fetchMyFavorites() {
@@ -253,13 +238,14 @@ export default {
         this.loadingOrders = false;
       }
     },
-    getOrderStatusColor(status) {
-      const types = ['gray', 'green', 'red', 'blue'];
-      return types[status] || 'gray';
-    },
-    getOrderStatusText(status) {
-      const texts = ['待支付', '已支付', '已取消', '已发货'];
-      return texts[status] || '未知';
+    async fetchMyCampaignOrders() {
+      if (!this.user) return;
+      try {
+        const res = await getMyCampaignOrders();
+        this.campaignOrders = res.data.data || [];
+      } catch (error) {
+        console.error('加载跟团记录失败', error);
+      }
     },
     showOrderDetail(order) {
       this.selectedOrder = order;
@@ -332,89 +318,20 @@ export default {
   background-color: transparent !important;
 }
 
+:deep(.arco-tabs-tab-active) {
+  color: var(--brand-primary, #FF4B2B) !important;
+  font-weight: 800 !important;
+}
+
+:deep(.arco-tabs-nav-ink) {
+  background-color: var(--brand-primary, #FF4B2B) !important;
+  height: 3px !important;
+  border-radius: 2px;
+}
+
 .tab-content-wrapper {
   padding: 15px 0;
   min-height: 200px;
-}
-
-/* Order Card Styles */
-.order-full-list {
-  padding: 0 10px;
-}
-.order-card-item {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  padding: 16px;
-  margin-bottom: 16px;
-  border: 1px solid rgba(255, 255, 255, 1);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.03);
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-}
-.order-card-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(0,0,0,0.06);
-  border-color: rgba(255, 126, 103, 0.15);
-}
-
-.order-card-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: 1px dashed rgba(0,0,0,0.06);
-}
-.order-id {
-  font-size: 13px;
-  color: #86909C;
-}
-
-.order-card-body {
-  display: flex;
-  gap: 15px;
-}
-.full-order-img {
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-.order-main-info {
-  flex: 1;
-}
-.order-pname {
-  margin: 0 0 6px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #1D2129;
-  line-height: 1.4;
-}
-.order-spec {
-  margin: 0 0 4px;
-  font-size: 12px;
-  color: #86909C;
-}
-.order-time {
-  margin: 0;
-  font-size: 11px;
-  color: #C9CDD4;
-}
-
-.order-price-info {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 10px;
-}
-.price-val {
-  font-size: 16px;
-  font-weight: 800;
-  color: #FF7E67;
-}
-
-.list-end-tip {
-  text-align: center;
-  font-size: 12px;
-  color: #C9CDD4;
-  margin: 20px 0;
 }
 
 /* Invite Dialog Styles */
@@ -441,67 +358,6 @@ export default {
 .invite-tip {
   font-size: 12px;
   color: #909399;
-  margin-top: 15px;
-}
-:deep(.arco-list-item.order-card-item) {
-  padding: 15px;
-}
-.order-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px dashed #eee;
-}
-.order-id {
-  font-size: 11px;
-  color: #999;
-}
-.order-card-body {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-.full-order-img {
-  width: 60px;
-  height: 60px;
-  border-radius: 8px;
-  flex-shrink: 0;
-  background-color: #f5f7fa;
-  object-fit: cover;
-}
-.order-main-info {
-  flex: 1;
-}
-.order-pname {
-  font-weight: bold;
-  font-size: 14px;
-  color: #333;
-  margin-bottom: 4px;
-}
-.order-spec {
-  font-size: 11px;
-  color: #FF7E67;
-  background: #FFF0ED;
-  padding: 2px 6px;
-  border-radius: 4px;
-  display: inline-block;
-  margin-bottom: 4px;
-}
-.order-time {
-  font-size: 11px;
-  color: #bbb;
-}
-.price-val {
-  font-weight: bold;
-  font-size: 16px;
-  color: #F56C6C;
-}
-.list-end-tip {
-  text-align: center;
-  font-size: 12px;
-  color: #ccc;
   margin-top: 15px;
 }
 </style>

@@ -25,6 +25,12 @@ const routes = [
     meta: { hideHeaderMobile: true, hideBottomNav: true }
   },
   {
+    path: '/campaign/:id',
+    name: 'CampaignDetail',
+    component: () => import('../views/product/CampaignDetail.vue'),
+    meta: { hideHeaderMobile: true, hideBottomNav: true }
+  },
+  {
     path: '/product/group/:id',
     name: 'GroupDetail',
     component: () => import('../views/product/GroupDetail.vue'),
@@ -41,6 +47,12 @@ const routes = [
     name: 'AdminDashboard',
     component: () => import('../views/admin/AdminDashboard.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin/campaign/create',
+    name: 'CreateCampaign',
+    component: () => import('../views/admin/campaign/CreateCampaign.vue'),
+    meta: { requiresAuth: true, hideBottomNav: true }
   },
   {
     path: '/profile',
