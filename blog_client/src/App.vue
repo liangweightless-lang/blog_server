@@ -54,6 +54,7 @@ export default {
     
     // Auth success event to trigger fetchUser
     window.addEventListener('auth-success', this.fetchUser);
+    window.addEventListener('refresh-user', this.fetchUser);
     
     this.fetchUser();
 
@@ -83,6 +84,7 @@ export default {
     window.removeEventListener('open-login', this.showLogin);
     window.removeEventListener('auth-expired', this.handleAuthExpired);
     window.removeEventListener('auth-success', this.fetchUser);
+    window.removeEventListener('refresh-user', this.fetchUser);
   },
   methods: {
     ...mapActions(useUserStore, ['fetchUser', 'clearUser']),
