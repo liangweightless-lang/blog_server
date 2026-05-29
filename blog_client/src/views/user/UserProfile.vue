@@ -314,7 +314,6 @@ export default {
 
 <style scoped>
 .user-center-container {
-  background: linear-gradient(180deg, #FDFDFD 0%, #F4F6F9 100%);
   min-height: 100vh;
   padding-bottom: 80px;
 }

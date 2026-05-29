@@ -9,7 +9,9 @@ import java.security.Key;
 import java.util.Date;
 
 public class JwtUtils {
-    private static final Key SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    // 使用固定的密钥，避免每次重启服务器导致 Token 失效
+    private static final String SECRET = "blog_server_jwt_secret_key_needs_to_be_long_enough_for_hs256_!@#";
+    private static final Key SECRET_KEY = Keys.hmacShaKeyFor(SECRET.getBytes(java.nio.charset.StandardCharsets.UTF_8));
     private static final long EXPIRATION_TIME = 86400000; // 1 day
 
     public static String generateToken(Long userId, String username, String role) {

@@ -98,7 +98,7 @@ export default {
   background: linear-gradient(135deg, #FF7E67, #FF9E8D, #FFAE9B);
   background-size: 200% 200%;
   animation: gradientFlow 8s ease infinite;
-  padding: 50px 20px 70px;
+  padding: calc(50px + env(safe-area-inset-top, 0px)) 20px 70px;
   color: white;
   position: relative;
   overflow: hidden;

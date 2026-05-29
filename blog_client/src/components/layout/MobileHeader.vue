@@ -42,12 +42,14 @@ export default {
 
 <style scoped>
 .mobile-header {
-  height: 50px;
-  background: #FFF;
+  height: calc(50px + env(safe-area-inset-top, 0px));
+  background: rgba(250, 250, 250, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 15px;
+  padding: env(safe-area-inset-top, 0px) 15px 0;
   border-bottom: 1px solid #FDF0E6;
   position: sticky;
   top: 0;

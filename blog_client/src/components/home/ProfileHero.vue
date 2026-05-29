@@ -165,7 +165,7 @@ export default {
 @media (max-width: 768px) {
   .hero-section {
     height: auto;
-    padding: 24px 15px;
+    padding: calc(24px + env(safe-area-inset-top, 0px)) 15px 24px;
     border-radius: 16px;
   }
   .avatar {

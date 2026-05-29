@@ -107,6 +107,12 @@ export default {
 </script>
 
 <style>
+:root {
+  /* 全局安全区高度变量，后续任何新页面都可以直接使用 var(--safe-top) */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 body {
   margin: 0;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Helvetica, "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
@@ -140,6 +146,11 @@ body {
 
 /* ===== 全局移动端体验优化 ===== */
 @media (max-width: 768px) {
+  /* 调整 Toast 容器位置，避免被刘海/灵动岛遮挡 */
+  .arco-message-list {
+    top: max(60px, env(safe-area-inset-top, 60px)) !important;
+  }
+
   /* 优化 Toast 提示：更大、更圆润、阴影更深 */
   .arco-message {
     padding: 12px 20px !important;
