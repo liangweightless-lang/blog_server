@@ -9,7 +9,7 @@
           <a-card class="campaign-card" hoverable :bordered="false" :body-style="{ padding: '20px' }" @click="$router.push(`/campaign/${campaign.id}`)" style="cursor: pointer;">
             <div class="campaign-header">
               <h3 class="campaign-title">{{ campaign.title }}</h3>
-              <a-tag color="red" size="small" class="campaign-tag">进行中</a-tag>
+              <a-tag color="#FF4B2B" size="small" class="campaign-tag">进行中</a-tag>
             </div>
             <div class="campaign-details">
               <div class="detail-row">
@@ -19,7 +19,7 @@
               <div class="detail-row">
                 <icon-clock-circle class="detail-icon" /> 
                 <div class="detail-text" style="display: flex; align-items: center;">
-                  距结束: <a-countdown :value="new Date(campaign.endTime).getTime()" format="D 天 H 时 m 分 s 秒" :value-style="{color: '#FF5A34', fontSize: '13px', fontWeight: 'bold', marginLeft: '4px'}" />
+                  距结束: <a-countdown :value="new Date(campaign.endTime).getTime()" format="D 天 H 时 m 分 s 秒" :value-style="{color: '#FF4B2B', fontSize: '13px', fontWeight: 'bold', marginLeft: '4px'}" />
                 </div>
               </div>
             </div>
@@ -29,7 +29,7 @@
                  <span>已跟团 {{ campaign.currentNum || 0 }} 人</span>
                  <span>目标 {{ campaign.targetNum }} 人</span>
                </div>
-               <a-progress :percent="Math.min((campaign.currentNum || 0) / campaign.targetNum, 1)" size="small" color="#FF5A34" />
+               <a-progress :percent="Math.min((campaign.currentNum || 0) / campaign.targetNum, 1)" size="small" color="#FF4B2B" />
             </div>
             
             <div v-if="campaign.joinedAvatars && campaign.joinedAvatars.length > 0" class="joined-avatars">
@@ -241,7 +241,7 @@ export default {
 
 <style scoped>
 .store-container {
-  padding: 10px 0 100px; /* Increased bottom padding to avoid bottom nav overlap */
+  padding: 10px 0 120px; /* Increased bottom padding to avoid bottom nav overlap */
 }
 
 
@@ -458,7 +458,7 @@ export default {
 .admin-fab-mini {
   position: fixed;
   right: 24px;
-  bottom: 100px;
+  bottom: 110px;
   background: rgba(40, 40, 40, 0.85); /* Premium dark glass */
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -490,7 +490,7 @@ export default {
 @media (max-width: 768px) {
   .admin-fab-mini {
     right: 20px;
-    bottom: 100px;
+    bottom: 110px;
     width: 50px;
     height: 50px;
     font-size: 24px;
@@ -541,7 +541,7 @@ export default {
   margin-bottom: 0;
 }
 .detail-icon {
-  color: #FF5A34;
+  color: #FF4B2B;
   margin-right: 8px;
   font-size: 14px;
 }
@@ -555,15 +555,15 @@ export default {
   margin-left: 4px;
 }
 .campaign-btn {
-  background: linear-gradient(135deg, #FF7E67 0%, #FF5A34 100%);
+  background: var(--brand-gradient, linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%));
   border: none;
   font-weight: bold;
   font-size: 15px;
   height: 40px;
-  box-shadow: 0 4px 12px rgba(255, 90, 52, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 75, 43, 0.3);
 }
 .campaign-btn:hover {
-  background: linear-gradient(135deg, #FF8E79 0%, #FF6B47 100%);
+  background: linear-gradient(135deg, #FF5A34 0%, #FF2A55 100%);
 }
 
 .campaign-products-preview {
@@ -574,22 +574,23 @@ export default {
 }
 .preview-imgs {
   display: flex;
-  gap: 8px;
+  gap: 12px;
 }
 .preview-img {
-  width: 44px;
-  height: 44px;
-  border-radius: 8px;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
   object-fit: cover;
   border: 1px solid #E5E6EB;
 }
 .preview-more {
-  width: 44px;
-  height: 44px;
-  border-radius: 8px;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
   background: #F7F8FA;
   color: #86909C;
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: bold;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -602,8 +603,8 @@ export default {
   justify-content: center;
 }
 .price-start {
-  color: #F53F3F;
-  font-size: 16px;
+  color: #FF4B2B;
+  font-size: 20px;
   font-weight: 800;
   line-height: 1.2;
 }
@@ -621,9 +622,9 @@ export default {
 .joined-avatars {
   display: flex;
   align-items: center;
-  margin-bottom: 12px;
-  background: rgba(255, 90, 52, 0.05);
-  padding: 6px 10px;
+  margin-bottom: 16px;
+  background: rgba(255, 75, 43, 0.05);
+  padding: 8px 12px;
   border-radius: 8px;
 }
 .joined-text {

@@ -1,10 +1,15 @@
 <template>
   <div class="group-detail-container">
-    <div class="back-nav" @click="$router.back()">
-      <icon-left /> 返回商城
+    <!-- 顶部导航 -->
+    <div class="detail-header">
+      <div class="header-back" @click="$router.back()">
+        <icon-left style="font-size: 22px;" />
+      </div>
+      <span class="header-title">拼团详情</span>
+      <div class="header-placeholder"></div>
     </div>
 
-    <div v-if="loading" class="loading-state">
+    <div v-if="loading" class="loading-state" style="padding: 40px 16px;">
       <a-skeleton animation>
         <a-space direction="vertical" :style="{width:'100%'}" size="large">
           <a-skeleton-line :rows="10" />
@@ -13,12 +18,12 @@
     </div>
 
     <div v-else-if="group" class="detail-content">
-      <!-- 1. 商品概览卡片 -->
-      <div class="product-summary-card">
+      <!-- 商品概览卡片 -->
+      <div class="section-card product-summary-card">
         <img :src="product.image" class="product-img">
         <div class="product-text">
-          <h2 class="title">{{ product.name }}</h2>
-          <p class="desc">{{ product.description }}</p>
+          <h2 class="p-title">{{ product.name }}</h2>
+          <p class="p-desc">{{ product.description }}</p>
           <div class="price-box">
             <span class="group-price">拼团价 ¥{{ product.groupPrice || (product.price * 0.8).toFixed(2) }}</span>
             <span class="origin-price">单买价 ¥{{ product.price }}</span>
@@ -26,15 +31,14 @@
         </div>
       </div>
 
-      <!-- 2. 拼团进度与倒计时 -->
-      <div class="status-card" :class="getStatusClass(group.status)">
+      <!-- 拼团进度与倒计时 -->
+      <div class="section-card status-card" :class="getStatusClass(group.status)">
         <div class="status-header">
           <span class="status-tag">{{ getStatusText(group.status) }}</span>
           <div class="countdown" v-if="group.status === 0">
             剩余: <span class="time-value">{{ countdownText }}</span>
           </div>
         </div>
-        
         <div class="progress-section">
           <div class="progress-info">
             <span>已凑齐 <b>{{ group.currentNum }}</b> 人</span>
@@ -44,36 +48,36 @@
             :percent="group.currentNum / group.requiredNum" 
             :stroke-width="12" 
             :show-text="false"
-            color="#FF7E67" />
+            color="#FF4B2B" />
         </div>
       </div>
 
-      <!-- 3. 参团成员 -->
-      <div class="members-section">
-        <h3 class="section-title">参团成员</h3>
+      <!-- 参团成员 -->
+      <div class="section-card members-section">
+        <h3 class="card-title"><icon-user-group /> 参团成员</h3>
         <div class="member-list">
           <div v-for="(member, index) in members" :key="member.userId || index" class="member-item" :class="{ initiator: index === 0 }">
             <div class="avatar-box">
-              <a-avatar :image-url="member.avatarUrl || '/img/avatar.png'" :size="40"></a-avatar>
+              <a-avatar :image-url="member.avatarUrl || '/img/avatar.png'" :size="44"></a-avatar>
               <span class="badge" v-if="index === 0">团长</span>
             </div>
-            <span class="name">{{ member.nickname || '匿名用户' }}</span>
+            <span class="member-name">{{ member.nickname || '匿名用户' }}</span>
           </div>
           <!-- 占位符 -->
           <div v-for="i in Math.max(0, group.requiredNum - group.currentNum)" :key="'empty-'+i" class="member-item empty">
             <div class="avatar-placeholder">?</div>
-            <span class="name">待加入</span>
+            <span class="member-name">待加入</span>
           </div>
         </div>
       </div>
 
-      <!-- 4. 操作按钮 -->
+      <!-- 底部操作按钮 -->
       <div class="action-footer" v-if="group.status === 0">
         <a-button 
           type="primary" 
-          status="warning"
           class="join-btn" 
           shape="round" 
+          size="large"
           @click="showJoinDialog = true"
           :disabled="isMember">
           {{ isMember ? '您已在团中' : '立即加入拼团' }}
@@ -202,210 +206,270 @@ export default {
 
 <style scoped>
 .group-detail-container {
-  padding: 15px;
   max-width: 600px;
   margin: 0 auto;
   min-height: 100vh;
-  background: #f8f9fa;
+  background: transparent;
+  padding-bottom: 120px;
 }
 
-.back-nav {
+/* 顶部导航栏 */
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+.header-back {
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 14px;
-  color: #909399;
-  margin-bottom: 20px;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.04);
   cursor: pointer;
+  transition: all 0.2s;
+  color: #1D2129;
+}
+.header-back:active {
+  transform: scale(0.9);
+  background: rgba(0, 0, 0, 0.08);
+}
+.header-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1D2129;
+}
+.header-placeholder {
+  width: 36px;
 }
 
+/* 通用卡片 */
+.section-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 20px;
+  padding: 20px;
+  margin: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+}
+
+/* 商品概览 */
 .product-summary-card {
-  background: white;
-  border-radius: 16px;
-  padding: 15px;
   display: flex;
-  gap: 15px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  margin-bottom: 20px;
+  gap: 16px;
 }
-
 .product-img {
   width: 100px;
   height: 100px;
   object-fit: cover;
-  border-radius: 12px;
+  border-radius: 16px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
 }
-
 .product-text {
   flex: 1;
+  min-width: 0;
 }
-
-.product-text .title {
-  margin: 0 0 5px 0;
-  font-size: 18px;
-  color: #2c3e50;
+.p-title {
+  margin: 0 0 6px 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: #1D2129;
+  line-height: 1.4;
 }
-
-.product-text .desc {
+.p-desc {
   font-size: 12px;
-  color: #909399;
-  margin-bottom: 10px;
+  color: #86909C;
+  margin: 0 0 10px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
-
 .price-box {
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
-
 .group-price {
-  color: #FF7E67;
-  font-weight: bold;
+  color: #FF4B2B;
+  font-weight: 800;
   font-size: 16px;
 }
-
 .origin-price {
   font-size: 11px;
-  color: #C0C4CC;
+  color: #C9CDD4;
   text-decoration: line-through;
 }
 
+/* 拼团状态 */
 .status-card {
-  background: white;
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  margin-bottom: 20px;
   text-align: center;
 }
-
 .status-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
-
 .status-tag {
-  padding: 4px 12px;
+  padding: 4px 14px;
   border-radius: 20px;
   font-size: 12px;
-  font-weight: bold;
+  font-weight: 700;
 }
-
-.status-active .status-tag { background: #FFE4D6; color: #FF7E67; }
-.status-success .status-tag { background: #e1f3d8; color: #67C23A; }
-.status-fail .status-tag { background: #fef0f0; color: #F56C6C; }
-
+.status-active .status-tag {
+  background: linear-gradient(135deg, rgba(255,75,43,0.1) 0%, rgba(255,65,108,0.1) 100%);
+  color: #FF4B2B;
+}
+.status-success .status-tag {
+  background: rgba(0, 180, 42, 0.1);
+  color: #00B42A;
+}
+.status-fail .status-tag {
+  background: rgba(245, 63, 63, 0.1);
+  color: #F53F3F;
+}
 .countdown {
   font-size: 12px;
-  color: #909399;
+  color: #86909C;
 }
-
 .time-value {
-  color: #FF7E67;
-  font-weight: bold;
+  color: #FF4B2B;
+  font-weight: 700;
 }
-
 .progress-info {
   display: flex;
   justify-content: space-between;
   font-size: 13px;
   margin-bottom: 8px;
-  color: #606266;
+  color: #4E5969;
+  font-weight: 600;
+}
+.progress-info b {
+  color: #FF4B2B;
+  font-size: 16px;
 }
 
-.members-section {
-  background: white;
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  margin-bottom: 100px;
+/* 参团成员 */
+.card-title {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: #1D2129;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-
-.section-title {
-  font-size: 15px;
-  margin-top: 0;
-  margin-bottom: 15px;
-  color: #303133;
+.card-title svg {
+  color: #FF4B2B;
 }
-
 .member-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 15px;
+  gap: 16px;
 }
-
 .member-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
-  width: 60px;
+  gap: 6px;
+  width: 64px;
 }
-
 .avatar-box {
   position: relative;
 }
-
 .avatar-box .badge {
   position: absolute;
-  bottom: -5px;
+  bottom: -6px;
   left: 50%;
   transform: translateX(-50%);
-  background: #FF7E67;
+  background: var(--brand-gradient, linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%));
   color: white;
   font-size: 10px;
-  padding: 2px 6px;
+  padding: 2px 8px;
   border-radius: 10px;
   white-space: nowrap;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(255,75,43,0.3);
 }
-
-.name {
+.member-name {
   font-size: 11px;
-  color: #606266;
+  color: #86909C;
   width: 100%;
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: 600;
 }
-
 .avatar-placeholder {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  background: #F2F6FC;
-  border: 1px dashed #DCDFE6;
+  background: rgba(0,0,0,0.03);
+  border: 2px dashed #C9CDD4;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #C0C4CC;
+  color: #C9CDD4;
+  font-size: 16px;
+  font-weight: 700;
 }
 
+/* 底部操作 */
 .action-footer {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  background: white;
-  padding: 15px 20px 30px;
-  box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(0,0,0,0.05);
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.04);
+  padding: 14px 20px;
+  padding-bottom: calc(14px + env(safe-area-inset-bottom));
   text-align: center;
-  z-index: 10;
+  z-index: 100;
+  max-width: 600px;
+  margin: 0 auto;
 }
-
 .join-btn {
   width: 100%;
   font-size: 16px;
-  font-weight: bold;
-  height: 45px;
+  font-weight: 800;
+  height: 48px;
+  background: var(--brand-gradient, linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%)) !important;
+  border: none !important;
+  box-shadow: 0 6px 20px rgba(255, 75, 43, 0.35);
 }
-
+.join-btn[disabled] {
+  background: #C9CDD4 !important;
+  box-shadow: none;
+}
 .share-tip {
   font-size: 12px;
-  color: #909399;
-  margin-top: 10px;
+  color: #86909C;
+  margin: 10px 0 0;
 }
 
-
+@media (max-width: 768px) {
+  .section-card {
+    margin: 12px;
+    padding: 16px;
+    border-radius: 16px;
+  }
+}
 </style>

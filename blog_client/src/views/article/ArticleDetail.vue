@@ -85,7 +85,7 @@
         <div class="footer-input-box">
           <a-input v-model="newComment" placeholder="说点什么..." size="large" class="custom-input" @press-enter="submitComment">
             <template #append>
-              <a-button type="primary" @click="submitComment" style="background: #FF7E67; border: none;">发送</a-button>
+              <a-button type="primary" @click="submitComment" style="background: var(--brand-gradient, linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%)); border: none;">发送</a-button>
             </template>
           </a-input>
         </div>
@@ -609,7 +609,8 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 12px 24px;
-  background: rgba(255, 255, 255, 0.85);
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   position: fixed;
@@ -619,7 +620,7 @@ export default {
   z-index: 100;
   border-top: 1px solid rgba(0, 0, 0, 0.05);
   box-shadow: 0 -4px 20px rgba(0,0,0,0.03);
-  max-width: 1000px; /* match main-content width */
+  max-width: 1000px;
   margin: 0 auto;
 }
 
@@ -835,13 +836,22 @@ export default {
     height: 200px;
   }
   .xhs-detail-footer {
-    padding: 12px 16px;
-  }
-  .footer-actions {
-    gap: 12px;
+    padding: 10px 16px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+    flex-direction: column;
+    gap: 10px;
   }
   .footer-input-box {
-    margin-right: 12px;
+    margin-right: 0;
+    width: 100%;
+  }
+  .footer-actions {
+    width: 100%;
+    justify-content: space-around;
+    gap: 0;
+  }
+  .action-btn span {
+    font-size: 11px;
   }
   
   :deep(.custom-share-modal) {
