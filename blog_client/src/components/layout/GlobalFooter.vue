@@ -1,7 +1,7 @@
 <template>
   <a-layout-footer class="global-footer">
     <div class="footer-content">
-      <div class="footer-links">
+      <div v-if="showStore" class="footer-links">
         <a href="javascript:void(0)">关于我们</a>
         <a-divider direction="vertical" />
         <a href="javascript:void(0)">联系我们</a>
@@ -32,7 +32,12 @@
 
 <script>
 export default {
-  name: 'GlobalFooter'
+  name: 'GlobalFooter',
+  computed: {
+    showStore() {
+      return import.meta.env.VITE_SHOW_STORE !== 'false';
+    }
+  }
 }
 </script>
 
