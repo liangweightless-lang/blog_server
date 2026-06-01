@@ -76,9 +76,9 @@
       <div class="section-card products-card">
         <h3 class="card-title"><icon-apps /> 选购商品</h3>
         <div v-for="item in campaign.products" :key="item.id" class="product-item">
-          <img :src="item.product.image" class="product-img" />
+          <img :src="item.product?.image" class="product-img" />
           <div class="product-info">
-            <div class="product-name">{{ item.product.name }}</div>
+            <div class="product-name">{{ item.product?.name }}</div>
             <div class="product-price-row">
               <span class="product-price">¥{{ item.groupPrice }}</span>
               <span class="product-stock">{{ item.stockLimit === -1 ? '不限量' : `剩余${item.stockLimit}件` }}</span>

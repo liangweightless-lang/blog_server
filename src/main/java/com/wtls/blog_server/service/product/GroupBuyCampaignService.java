@@ -72,11 +72,15 @@ public class GroupBuyCampaignService {
         QueryWrapper<CampaignProduct> productQuery = new QueryWrapper<>();
         productQuery.eq("campaign_id", campaign.getId()).orderByAsc("sort_order");
         List<CampaignProduct> cProducts = campaignProductMapper.selectList(productQuery);
+        List<CampaignProduct> validProducts = new java.util.ArrayList<>();
         for (CampaignProduct cp : cProducts) {
             Product p = productMapper.selectById(cp.getProductId());
-            cp.setProduct(p);
+            if (p != null) {
+                cp.setProduct(p);
+                validProducts.add(cp);
+            }
         }
-        campaign.setProducts(cProducts);
+        campaign.setProducts(validProducts);
         
         // 统计已参团人数 (独立的订单数)
         QueryWrapper<CampaignOrder> orderQuery = new QueryWrapper<>();
