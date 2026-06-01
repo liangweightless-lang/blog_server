@@ -8,7 +8,8 @@ RUN pnpm install
 COPY . .
 # 限制 Node 内存为 512MB，防止 2G 小机器 OOM
 ENV NODE_OPTIONS="--max-old-space-size=512"
-RUN pnpm run build
+ARG APP_ENV=production
+RUN pnpm run build --mode ${APP_ENV}
 
 # 第二阶段：使用 Nginx 部署静态文件
 FROM nginx:alpine

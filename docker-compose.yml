@@ -22,12 +22,12 @@ services:
     container_name: blog_backend
     restart: always
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_PROFILES_ACTIVE=${APP_ENV:-prod}
     ports:
       - "8081:8081"
     volumes:
       - ./uploads:/app/uploads
-      - ./src/main/resources/application-prod.properties:/app/config/application-prod.properties:ro
+      - ./src/main/resources/application-${APP_ENV:-prod}.properties:/app/config/application-${APP_ENV:-prod}.properties:ro
     depends_on:
       - mysql_server
 
@@ -35,6 +35,8 @@ services:
     build:
       context: ./blog_client
       dockerfile: Dockerfile
+      args:
+        - APP_ENV=${APP_ENV:-production}
     container_name: blog_frontend
     restart: always
     ports:
