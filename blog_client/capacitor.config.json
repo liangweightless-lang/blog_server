@@ -2,10 +2,6 @@
   "appId": "com.liangweightless.blog",
   "appName": "小柴包",
   "webDir": "dist",
-  "server": {
-    "url": "https://caibread.com",
-    "cleartext": true
-  },
   "plugins": {
     "StatusBar": {
       "overlaysWebView": true,
