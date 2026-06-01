@@ -26,10 +26,14 @@ public class JwtUtils {
     }
 
     public static Claims parseToken(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(SECRET_KEY)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(SECRET_KEY)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (io.jsonwebtoken.JwtException e) {
+            throw new com.wtls.blog_server.exception.UnauthorizedException("登录状态已过期或无效，请重新登录");
+        }
     }
 }
