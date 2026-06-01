@@ -4,7 +4,7 @@
       <icon-home />
       <span>首页</span>
     </div>
-    <div class="nav-item" :class="{ active: $route.path === '/store' }" @click="$router.push('/store')">
+    <div v-if="showStore" class="nav-item" :class="{ active: $route.path === '/store' }" @click="$router.push('/store')">
       <icon-gift />
       <span>橱窗</span>
     </div>
@@ -18,6 +18,11 @@
 <script>
 export default {
   name: 'MobileBottomNav',
+  computed: {
+    showStore() {
+      return import.meta.env.VITE_SHOW_STORE !== 'false';
+    }
+  },
   methods: {
     handleProfileClick() {
       const token = localStorage.getItem('token');

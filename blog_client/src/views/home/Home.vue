@@ -12,11 +12,11 @@
         <a-tab-pane key="all" title="推荐" />
         <a-tab-pane key="lifestyle" title="生活方式" />
         <a-tab-pane key="brand" title="独立品牌" />
-        <a-tab-pane key="baking" title="烘焙日常" />
+        <a-tab-pane key="baking" title="手作记录" />
       </a-tabs>
     </div>
 
-    <ArticleGrid :articles="filteredArticles" :campaigns="campaigns" :loading="loading" />
+    <ArticleGrid :articles="filteredArticles" :campaigns="showStore ? campaigns : []" :loading="loading" />
     
     <!-- 管理员专属悬浮按钮 -->
     <div v-if="isAdmin" class="admin-fab-mini" @click="$router.push('/create')">
@@ -59,12 +59,15 @@ export default {
     isAdmin() {
       return this.user && this.user.role === 'ADMIN'
     },
+    showStore() {
+      return import.meta.env.VITE_SHOW_STORE !== 'false';
+    },
     filteredArticles() {
       if (this.activeCategory === 'all') return this.articles;
       const tagMap = {
         'lifestyle': '生活方式',
         'brand': '独立品牌',
-        'baking': '烘焙日常'
+        'baking': '手作记录'
       };
       return this.articles.filter(a => a.tags && a.tags.includes(tagMap[this.activeCategory]));
     }

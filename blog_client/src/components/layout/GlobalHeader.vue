@@ -6,7 +6,7 @@
     <div class="nav-menu">
       <a-menu :selected-keys="[$route.path]" mode="horizontal" style="background-color: transparent;" @menu-item-click="(key) => $router.push(key)">
         <a-menu-item key="/">品牌故事</a-menu-item>
-        <a-menu-item key="/store">Ta的灵感橱窗</a-menu-item>
+        <a-menu-item v-if="showStore" key="/store">Ta的灵感橱窗</a-menu-item>
         <a-menu-item v-if="user && user.role === 'ADMIN'" key="/admin">后台管理</a-menu-item>
       </a-menu>
     </div>
@@ -55,6 +55,9 @@ export default {
     ...mapState(useUserStore, ['userInfo']),
     user() {
       return this.userInfo;
+    },
+    showStore() {
+      return import.meta.env.VITE_SHOW_STORE !== 'false';
     }
   },
   created() {

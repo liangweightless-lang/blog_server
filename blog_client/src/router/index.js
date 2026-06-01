@@ -69,6 +69,14 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token');
+  
+  // 商城模块开关：备案期间拦截所有商城相关路由
+  const showStore = import.meta.env.VITE_SHOW_STORE !== 'false';
+  if (!showStore && (to.path === '/store' || to.path.startsWith('/product') || to.path.startsWith('/campaign'))) {
+    next('/');
+    return;
+  }
+  
   if (to.meta.requiresAuth && !token) {
     window.dispatchEvent(new CustomEvent('open-login'));
     next('/');
