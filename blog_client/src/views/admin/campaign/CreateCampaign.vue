@@ -1,6 +1,6 @@
 <template>
   <div class="create-campaign-container">
-    <a-page-header title="设置团购" subtitle="快团团模式" @back="$router.back()" style="background: white;" />
+    <a-page-header :title="isEdit ? '编辑团购' : '设置团购'" subtitle="快团团模式" @back="$router.back()" style="background: white;" />
     
     <a-tabs v-model:active-key="activeTab" class="campaign-tabs">
       <a-tab-pane key="intro" title="介绍">
@@ -83,7 +83,7 @@
     </a-tabs>
 
     <div class="bottom-action-bar">
-      <a-button type="primary" status="success" size="large" long shape="round" :loading="saving" @click="publishCampaign">发布团购</a-button>
+      <a-button type="primary" status="success" size="large" long shape="round" :loading="saving" @click="publishCampaign">{{ isEdit ? '保存修改' : '发布团购' }}</a-button>
     </div>
 
     <!-- 商品选择弹窗 -->
@@ -109,7 +109,7 @@
 </template>
 
 <script>
-import { getActiveDeliveryLocations, createCampaign } from '@/api/campaign';
+import { getActiveDeliveryLocations, createCampaign, getCampaignById, updateCampaign } from '@/api/campaign';
 import { getProducts } from '@/api/product';
 import { Message } from '@arco-design/web-vue';
 import dayjs from 'dayjs';
@@ -118,6 +118,8 @@ export default {
   name: 'CreateCampaign',
   data() {
     return {
+      isEdit: false,
+      campaignId: null,
       activeTab: 'intro',
       saving: false,
       form: {
@@ -142,14 +144,42 @@ export default {
   created() {
     this.fetchLocations();
     this.fetchAllProducts();
+    if (this.$route.params.id) {
+      this.isEdit = true;
+      this.campaignId = this.$route.params.id;
+      this.loadCampaignData();
+    }
   },
   methods: {
+    async loadCampaignData() {
+      try {
+        const res = await getCampaignById(this.campaignId);
+        const data = res.data.data;
+        if (data) {
+          this.form.title = data.title;
+          this.form.intro = data.intro || '';
+          this.form.deliveryLocationId = data.deliveryLocationId;
+          this.form.startTime = dayjs(data.startTime).format('YYYY-MM-DD HH:mm:ss');
+          this.form.endTime = dayjs(data.endTime).format('YYYY-MM-DD HH:mm:ss');
+          this.form.deliveryTime = data.deliveryTime ? dayjs(data.deliveryTime).format('YYYY-MM-DD HH:mm:ss') : '';
+          this.form.targetNum = data.targetNum || 0;
+          this.form.products = (data.products || []).map(p => ({
+            productId: p.productId,
+            groupPrice: p.groupPrice,
+            stockLimit: p.stockLimit,
+            product: p.product
+          }));
+        }
+      } catch (e) {
+        Message.error('加载活动数据失败');
+      }
+    },
     async fetchLocations() {
       this.loadingLocations = true;
       try {
         const res = await getActiveDeliveryLocations();
         this.locations = res.data.data || [];
-        if (this.locations.length > 0) {
+        if (this.locations.length > 0 && !this.isEdit && !this.form.deliveryLocationId) {
           this.form.deliveryLocationId = this.locations[0].id;
         }
       } catch (e) {
@@ -227,13 +257,18 @@ export default {
             stockLimit: p.stockLimit
           }))
         };
-        await createCampaign(payload);
-        Message.success('团购发布成功！');
+        if (this.isEdit) {
+          await updateCampaign(this.campaignId, payload);
+          Message.success('修改已保存！');
+        } else {
+          await createCampaign(payload);
+          Message.success('团购发布成功！');
+        }
         this.$router.back();
       } catch (e) {
-        Message.error('发布失败');
+        Message.error(this.isEdit ? '保存失败' : '发布失败');
       } finally {
-        this.saving = true;
+        this.saving = false;
       }
     }
   }

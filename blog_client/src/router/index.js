@@ -55,6 +55,12 @@ const routes = [
     meta: { requiresAuth: true, hideBottomNav: true }
   },
   {
+    path: '/admin/campaign/edit/:id',
+    name: 'EditCampaign',
+    component: () => import('../views/admin/campaign/CreateCampaign.vue'),
+    meta: { requiresAuth: true, hideBottomNav: true }
+  },
+  {
     path: '/profile',
     name: 'UserProfile',
     component: () => import('../views/user/UserProfile.vue'),

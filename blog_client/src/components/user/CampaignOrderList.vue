@@ -19,8 +19,17 @@
           <div class="order-main-info" style="width: 100%;">
             <p class="order-pname">{{ order.campaign?.title || '团购活动' }}</p>
             <p class="order-spec" style="background: transparent; color: #86909c; padding: 0;">提货点: {{ order.campaign?.deliveryLocation?.name || '未知' }}</p>
-            <div v-for="item in order.items" :key="item.id" style="font-size: 12px; color: #4E5969; margin-top: 4px;">
-               {{ item.product?.name }} x {{ item.quantity }}
+            <div class="m-order-items" style="margin-top: 10px;">
+              <div v-for="item in order.items" :key="item.id" style="display: flex; gap: 10px; margin-bottom: 8px; align-items: center;">
+                <img :src="item.productImage" style="width: 48px; height: 48px; object-fit: cover; border-radius: 8px; background: #f2f3f5; box-shadow: 0 2px 8px rgba(0,0,0,0.05);" v-if="item.productImage" />
+                <div v-else style="width: 48px; height: 48px; border-radius: 8px; background: #f2f3f5; display: flex; align-items: center; justify-content: center; color: #bbb;">
+                  <icon-image />
+                </div>
+                <div style="flex: 1; display: flex; flex-direction: column;">
+                  <span style="font-size: 13px; font-weight: 600; color: #1D2129; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ item.productName || '商品' }}</span>
+                  <span style="font-size: 12px; color: #86909C; margin-top: 4px;">x {{ item.quantity }}</span>
+                </div>
+              </div>
             </div>
             <p class="order-time" style="margin-top: 8px;">{{ $formatTime(order.createTime) }}</p>
           </div>

@@ -29,11 +29,11 @@ export default defineConfig({
     port: 8080,
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8081',
+        target: 'https://test.caibread.com', // 指向服务器 dev
         changeOrigin: true
       },
       '/uploads': {
-        target: 'http://127.0.0.1:8081',
+        target: 'https://test.caibread.com', // 指向服务器 dev
         changeOrigin: true
       }
     }

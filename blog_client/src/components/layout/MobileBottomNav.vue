@@ -39,21 +39,20 @@ export default {
 <style scoped>
 .mobile-bottom-nav {
   position: fixed;
-  bottom: 20px;
-  left: 20px;
-  right: 20px;
-  height: 64px;
-  background: var(--glass-bg);
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: calc(60px + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   display: flex;
   justify-content: space-around;
   align-items: center;
-  border-radius: 32px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.02);
-  border: 0.5px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.04);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
   z-index: 99;
-  padding: 0 10px;
 }
 .nav-item {
   display: flex;

@@ -181,5 +181,37 @@ body {
   .arco-drawer-body::-webkit-scrollbar-thumb:active {
     background-color: rgba(0, 0, 0, 0.3);
   }
+
+  /* 解决弹窗在移动端超出屏幕宽度的问题，并避免居中偏移 */
+  .arco-modal, .arco-modal-simple {
+    width: auto !important;
+    max-width: calc(100vw - 32px) !important;
+    margin: 0 16px !important;
+    box-sizing: border-box !important;
+  }
+  
+  .arco-modal-body, .arco-modal-header {
+    word-break: break-all !important;
+  }
+
+  /* 统一将部分特定弹窗在移动端转为底部抽屉式，并确保宽度100% */
+  .checkout-modal,
+  .buy-modal,
+  .group-dialog,
+  .custom-share-modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    position: absolute !important;
+    bottom: 0 !important;
+    margin: 0 !important;
+    border-radius: 24px 24px 0 0 !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
+    animation: slideUpModal 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+}
+
+@keyframes slideUpModal {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 </style>

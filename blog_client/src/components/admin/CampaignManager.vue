@@ -23,6 +23,7 @@
               <a-table-column title="操作" :width="280" fixed="right">
               <template #cell="{ record }">
                 <a-button type="text" size="small" status="success" @click="shareCampaign(record)"><icon-share-alt /> 分享</a-button>
+                <a-button type="text" size="small" @click="$router.push('/admin/campaign/edit/' + record.id)"><icon-edit /> 编辑</a-button>
                 <a-button type="text" size="small" @click="viewOrders(record)">查看订单</a-button>
                 <a-button type="text" size="small" status="danger" @click="handleDelete(record)">删除</a-button>
               </template>
@@ -43,6 +44,7 @@
               </div>
               <div class="m-card-actions">
                 <div class="m-action-btn" style="color: #00B42A;" @click="shareCampaign(campaign)"><icon-share-alt /> 分享</div>
+                <div class="m-action-btn" style="color: #FF7D00;" @click="$router.push('/admin/campaign/edit/' + campaign.id)"><icon-edit /> 编辑</div>
                 <div class="m-action-btn" style="color: #165DFF;" @click="viewOrders(campaign)"><icon-list /> 订单</div>
                 <div class="m-action-btn" style="color: #F53F3F;" @click="handleDelete(campaign)"><icon-delete /> 删除</div>
               </div>
