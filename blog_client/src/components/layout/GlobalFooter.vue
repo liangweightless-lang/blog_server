@@ -18,7 +18,7 @@
         <div class="copyright">
           &copy; {{ new Date().getFullYear() }} 小柴包 独立创意工作室 版权所有
           <div class="icp-info" style="margin-top: 8px;">
-            <a href="https://beian.miit.gov.cn/" target="_blank" style="color: #8C6A5D; text-decoration: none; font-size: 13px;">[您的备案号，例如：京ICP备XXXXXXXX号-1]</a>
+            <a href="https://beian.miit.gov.cn/" target="_blank" style="color: #8C6A5D; text-decoration: none; font-size: 13px;">桂ICP备2026011229号-1</a>
           </div>
         </div>
         <div class="wechat-qr">
