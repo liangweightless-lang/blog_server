@@ -58,7 +58,7 @@ public class XunhupayController {
      */
     @PostMapping("/create")
     @Operation(summary = "创建虎皮椒支付宝支付", description = "返回支付跳转URL与二维码URL")
-    public Result<Map<String, Object>> createPay(@RequestParam String orderId) {
+    public Result<Map<String, Object>> createPay(HttpServletRequest request, @RequestParam String orderId) {
         // 1. 查询普通订单或团购订单
         ProductOrder productOrder = orderMapper.selectById(orderId);
         CampaignOrder campaignOrder = null;
@@ -88,7 +88,21 @@ public class XunhupayController {
             return Result.error(400, "订单已支付或已取消");
         }
 
-        // 2. 组装虎皮椒统一下单参数
+        // 2. 动态自适应当前访问域名（支持 test.caibread.com 与 caibread.com 自动匹配）
+        String host = request.getHeader("Host");
+        String scheme = request.getHeader("X-Forwarded-Proto");
+        if (scheme == null || scheme.isEmpty()) {
+            scheme = request.getScheme();
+        }
+        
+        String dynamicNotifyUrl = notifyUrl.trim();
+        String dynamicReturnUrl = returnUrl.trim();
+        if (host != null && !host.contains("localhost") && !host.contains("127.0.0.1")) {
+            dynamicNotifyUrl = scheme + "://" + host + "/api/pay/xunhupay/notify";
+            dynamicReturnUrl = scheme + "://" + host + "/profile";
+        }
+
+        // 3. 组装虎皮椒统一下单参数
         Map<String, String> params = new HashMap<>();
         params.put("version", "1.1");
         params.put("appid", appid.trim());
@@ -96,8 +110,8 @@ public class XunhupayController {
         params.put("total_fee", totalFee);
         params.put("title", title);
         params.put("time", String.valueOf(System.currentTimeMillis() / 1000));
-        params.put("notify_url", notifyUrl.trim());
-        params.put("return_url", returnUrl.trim());
+        params.put("notify_url", dynamicNotifyUrl);
+        params.put("return_url", dynamicReturnUrl);
         params.put("type", "alipay");
         params.put("nonce_str", IdUtil.fastSimpleUUID());
 
