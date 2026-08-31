@@ -18,7 +18,13 @@
         <div class="copyright">
           &copy; {{ new Date().getFullYear() }} 小柴包 独立创意工作室 版权所有
           <div class="icp-info" style="margin-top: 8px;">
-            <a href="https://beian.miit.gov.cn/" target="_blank" style="color: #8C6A5D; text-decoration: none; font-size: 13px;">桂ICP备2026011229号-1</a>
+            <div style="display: flex; justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap;">
+              <a href="https://beian.miit.gov.cn/" target="_blank" style="color: #8C6A5D; text-decoration: none; font-size: 13px;">桂ICP备2026011229号-1</a>
+              <a href="https://beian.mps.gov.cn/#/query/webSearch?code=45092102000254" target="_blank" style="color: #8C6A5D; text-decoration: none; font-size: 13px; display: inline-flex; align-items: center; gap: 4px;">
+                <img src="/img/gongan.png" alt="公安备案" style="width: 14px; height: 14px; vertical-align: middle;" />
+                <span>桂公网安备45092102000254号</span>
+              </a>
+            </div>
           </div>
         </div>
         <div class="wechat-qr">

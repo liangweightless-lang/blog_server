@@ -25,7 +25,7 @@
         <a-tab-pane key="campaignOrders">
           <template #title><icon-fire /> 我的跟团</template>
           <div class="tab-content-wrapper">
-            <CampaignOrderList :orders="campaignOrders" />
+            <CampaignOrderList :orders="campaignOrders" @pay="handleContinuePay" />
           </div>
         </a-tab-pane>
       </a-tabs>
@@ -275,6 +275,7 @@ export default {
     handlePaymentSuccess() {
       this.paymentConfirmVisible = false;
       this.fetchMyOrders();
+      this.fetchMyCampaignOrders();
       Message.success('订单已刷新，请查看最新状态');
     },
     handlePaymentFail() {

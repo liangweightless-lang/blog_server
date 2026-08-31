@@ -127,11 +127,31 @@
         </a-button>
       </div>
     </a-modal>
+
+    <!-- 支付状态确认弹窗 -->
+    <a-modal 
+      v-model:visible="paymentConfirmVisible" 
+      title="支付确认"
+      :footer="false"
+      :mask-closable="false"
+      :closable="false"
+    >
+      <div style="text-align: center; padding: 20px 0;">
+        <icon-check-circle style="font-size: 48px; color: #00B42A; margin-bottom: 20px;" />
+        <h3 style="margin-bottom: 30px;">请在新打开的页面中完成支付</h3>
+        <p style="color: #86909C; margin-bottom: 30px; font-size: 13px;">支付完成前请不要关闭此窗口。完成支付后，请根据您的情况点击下面按钮。</p>
+        <div style="display: flex; justify-content: center; gap: 15px;">
+          <a-button @click="handlePaymentFail">遇到问题，重新支付</a-button>
+          <a-button type="primary" @click="handlePaymentSuccess" style="background-color: #FF7E67;">我已完成支付</a-button>
+        </div>
+      </div>
+    </a-modal>
   </div>
 </template>
 
 <script>
 import { getCampaignById, createCampaignOrder } from '@/api/campaign';
+import { createAlipay } from '@/api/order';
 import { Message } from '@arco-design/web-vue';
 import dayjs from 'dayjs';
 import { mapState } from 'pinia';
@@ -146,6 +166,7 @@ export default {
       cart: {},
       checkoutVisible: false,
       submitting: false,
+      paymentConfirmVisible: false,
       orderForm: {
         contactName: '',
         contactPhone: '',
@@ -270,18 +291,41 @@ export default {
           remark: this.orderForm.remark,
           items: items
         };
-        await createCampaignOrder(this.campaign.id, payload);
-        Message.success('跟团成功！请按时前往自提点取货。');
+        
+        // 创建跟团订单
+        const orderRes = await createCampaignOrder(this.campaign.id, payload);
+        const orderId = orderRes.data.data.id;
+
+        // 调起支付宝支付
+        const payRes = await createAlipay(orderId);
+        const formHtml = payRes.data.data;
+
+        const newWindow = window.open('', '_blank');
+        if (newWindow) {
+          newWindow.document.write(formHtml);
+          newWindow.document.close();
+          this.paymentConfirmVisible = true;
+        } else {
+          Message.warning('支付页面被浏览器拦截，请在地址栏右侧允许弹出窗口');
+        }
+
         this.checkoutVisible = false;
-        setTimeout(() => {
-          this.$router.push('/profile');
-        }, 1500);
       } catch (e) {
-        Message.error('跟团失败');
+        Message.error(e.response?.data?.message || '跟团下单失败');
         return false;
       } finally {
         this.submitting = false;
       }
+    },
+    handlePaymentSuccess() {
+      this.paymentConfirmVisible = false;
+      Message.success('跟团订单已刷新');
+      this.$router.push('/profile');
+    },
+    handlePaymentFail() {
+      this.paymentConfirmVisible = false;
+      Message.info('您可以稍后在“我的跟团”中继续支付');
+      this.$router.push('/profile');
     }
   }
 }

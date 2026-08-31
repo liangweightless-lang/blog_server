@@ -2,11 +2,15 @@ package com.wtls.blog_server.controller.pay;
 
 import com.alipay.api.AlipayClient;
 import com.alipay.api.request.AlipayTradePagePayRequest;
+import com.alipay.api.request.AlipayTradeWapPayRequest;
 import com.alipay.api.internal.util.AlipaySignature;
 import com.wtls.blog_server.common.Result;
 import com.wtls.blog_server.entity.product.ProductOrder;
+import com.wtls.blog_server.entity.product.CampaignOrder;
 import com.wtls.blog_server.mapper.product.ProductOrderMapper;
+import com.wtls.blog_server.mapper.product.CampaignOrderMapper;
 import com.wtls.blog_server.service.product.ProductOrderService;
+import com.wtls.blog_server.service.product.GroupBuyCampaignService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +33,12 @@ public class AlipayController {
     @Autowired
     private ProductOrderMapper orderMapper;
 
+    @Autowired
+    private CampaignOrderMapper campaignOrderMapper;
+
+    @Autowired
+    private GroupBuyCampaignService campaignService;
+
     @Value("${alipay.alipayPublicKey}")
     private String alipayPublicKey;
 
@@ -36,38 +46,86 @@ public class AlipayController {
     private String notifyUrl;
 
     @PostMapping("/create")
-    @Operation(summary = "唤起支付宝电脑网站收银台")
-    public Result<String> createPay(@RequestParam String orderId) {
-        ProductOrder order = orderMapper.selectById(orderId);
-        if (order == null || order.getStatus() != 0) {
-            return Result.error(400, "无效的订单或状态不正确");
+    @Operation(summary = "唤起支付宝收银台（支持移动端/PC端自适应、普通/团购订单自适应）")
+    public Result<String> createPay(HttpServletRequest request, @RequestParam String orderId) {
+        // 1. 获取客户端 User-Agent 判断是否为移动端
+        String userAgent = request.getHeader("User-Agent");
+        boolean isMobile = userAgent != null && (userAgent.toLowerCase().contains("android") 
+                || userAgent.toLowerCase().contains("iphone") 
+                || userAgent.toLowerCase().contains("mobile")
+                || userAgent.toLowerCase().contains("ipad"));
+
+        // 2. 识别并查询订单（普通订单或团购订单）
+        ProductOrder productOrder = orderMapper.selectById(orderId);
+        CampaignOrder campaignOrder = null;
+        if (productOrder == null) {
+            campaignOrder = campaignOrderMapper.selectById(orderId);
         }
 
-        AlipayTradePagePayRequest request = new AlipayTradePagePayRequest();
-        request.setNotifyUrl(notifyUrl);
+        if (productOrder == null && campaignOrder == null) {
+            return Result.error(400, "订单不存在，无法调起支付");
+        }
 
-        // 这里仅为了回跳前端页面演示，真实场景可以配置为一个回跳前端支付结果页面的地址
-        request.setReturnUrl("http://localhost:8080/user/orders");
+        String outTradeNo = orderId;
+        String totalAmount;
+        String subject;
+        int status;
 
-        String outTradeNo = order.getId();
-        String totalAmount = order.getAmount().toString();
-        String subject = "Blog_Server Order " + outTradeNo;
+        if (productOrder != null) {
+            totalAmount = productOrder.getAmount().toString();
+            subject = "商品订单 " + outTradeNo;
+            status = productOrder.getStatus();
+        } else {
+            totalAmount = campaignOrder.getTotalAmount().toString();
+            subject = "社区团购跟团订单 " + outTradeNo;
+            status = campaignOrder.getStatus();
+        }
 
-        // JSON 参数
-        String bizContent = "{\"out_trade_no\":\"" + outTradeNo + "\","
-                + "\"total_amount\":\"" + totalAmount + "\","
-                + "\"subject\":\"" + subject + "\","
-                + "\"product_code\":\"FAST_INSTANT_TRADE_PAY\"}";
-        
-        request.setBizContent(bizContent);
+        if (status != 0) {
+            return Result.error(400, "订单状态不正确（已支付或已关闭）");
+        }
 
-        try {
-            // 调用 SDK 生成表单 HTML
-            String formHtml = alipayClient.pageExecute(request).getBody();
-            return Result.success(formHtml);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return Result.error(500, "生成支付宝订单失败");
+        // 3. 决定调用 Wap 支付还是 Page 网页支付
+        if (isMobile) {
+            AlipayTradeWapPayRequest wapRequest = new AlipayTradeWapPayRequest();
+            wapRequest.setNotifyUrl(notifyUrl);
+            
+            // 支付成功回跳个人中心页面
+            wapRequest.setReturnUrl("http://localhost:8080/user/profile");
+
+            String bizContent = "{\"out_trade_no\":\"" + outTradeNo + "\","
+                    + "\"total_amount\":\"" + totalAmount + "\","
+                    + "\"subject\":\"" + subject + "\","
+                    + "\"product_code\":\"QUICK_WAP_WAY\"}";
+            wapRequest.setBizContent(bizContent);
+
+            try {
+                String formHtml = alipayClient.pageExecute(wapRequest).getBody();
+                return Result.success(formHtml);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return Result.error(500, "生成移动端支付宝支付页面失败");
+            }
+        } else {
+            AlipayTradePagePayRequest pageRequest = new AlipayTradePagePayRequest();
+            pageRequest.setNotifyUrl(notifyUrl);
+            
+            // 支付成功回跳个人中心页面
+            pageRequest.setReturnUrl("http://localhost:8080/user/profile");
+
+            String bizContent = "{\"out_trade_no\":\"" + outTradeNo + "\","
+                    + "\"total_amount\":\"" + totalAmount + "\","
+                    + "\"subject\":\"" + subject + "\","
+                    + "\"product_code\":\"FAST_INSTANT_TRADE_PAY\"}";
+            pageRequest.setBizContent(bizContent);
+
+            try {
+                String formHtml = alipayClient.pageExecute(pageRequest).getBody();
+                return Result.success(formHtml);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return Result.error(500, "生成电脑端支付宝支付页面失败");
+            }
         }
     }
 
@@ -93,13 +151,23 @@ public class AlipayController {
                 String tradeStatus = params.get("trade_status");
 
                 if ("TRADE_SUCCESS".equals(tradeStatus) || "TRADE_FINISHED".equals(tradeStatus)) {
-                    // 业务处理：状态变更为已支付、增加积分等
-                    // 注意幂等性，handlePaymentSuccess 里有 order.getStatus() != 0 的校验
+                    // 统一回调处理
                     try {
-                        orderService.handlePaymentSuccess(outTradeNo);
-                        System.out.println("订单 " + outTradeNo + " 支付回调处理成功");
+                        ProductOrder pOrder = orderMapper.selectById(outTradeNo);
+                        if (pOrder != null) {
+                            orderService.handlePaymentSuccess(outTradeNo);
+                            System.out.println("普通商品订单 " + outTradeNo + " 支付回调处理成功");
+                        } else {
+                            CampaignOrder cOrder = campaignOrderMapper.selectById(outTradeNo);
+                            if (cOrder != null) {
+                                campaignService.handlePaymentSuccess(outTradeNo);
+                                System.out.println("社区团购订单 " + outTradeNo + " 支付回调处理成功");
+                            } else {
+                                System.err.println("回调订单不存在: " + outTradeNo);
+                            }
+                        }
                     } catch (Exception e) {
-                        System.err.println("订单已处理或处理失败: " + e.getMessage());
+                        System.err.println("订单 " + outTradeNo + " 回调处理失败: " + e.getMessage());
                     }
                 }
                 return "success";

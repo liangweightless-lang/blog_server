@@ -13,6 +13,9 @@
     
     <!-- 全局登录组件 -->
     <LoginDialog :show="loginDialogVisible" @update:show="val => loginDialogVisible = val" />
+
+    <!-- iOS 用户添加到主屏幕指引浮层 -->
+    <IosInstallGuide />
   </a-layout>
 </template>
 
@@ -22,6 +25,7 @@ import MobileHeader from './components/layout/MobileHeader.vue'
 import MobileBottomNav from './components/layout/MobileBottomNav.vue'
 import GlobalFooter from './components/layout/GlobalFooter.vue'
 import LoginDialog from './components/auth/LoginDialog.vue'
+import IosInstallGuide from './components/common/IosInstallGuide.vue'
 import { mapState, mapActions } from 'pinia'
 import { useUserStore } from '@/stores/user'
 import { App as CapApp } from '@capacitor/app'
@@ -33,7 +37,8 @@ export default {
     MobileHeader,
     MobileBottomNav,
     GlobalFooter,
-    LoginDialog
+    LoginDialog,
+    IosInstallGuide
   },
   data() {
     return {

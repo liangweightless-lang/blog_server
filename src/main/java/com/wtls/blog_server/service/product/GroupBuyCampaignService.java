@@ -214,6 +214,38 @@ public class GroupBuyCampaignService {
         orderMapper.updateById(order);
     }
     
+    @Transactional
+    public CampaignOrder handlePaymentSuccess(String orderId) {
+        CampaignOrder order = orderMapper.selectById(orderId);
+        if (order == null || order.getStatus() != 0) {
+            throw new RuntimeException("Invalid order or already paid");
+        }
+
+        // 1. 更新订单状态为已支付（1）
+        order.setStatus(1);
+        order.setUpdateTime(LocalDateTime.now());
+        orderMapper.updateById(order);
+
+        // 2. 安全扣减团购商品库存
+        QueryWrapper<CampaignOrderItem> itemQuery = new QueryWrapper<>();
+        itemQuery.eq("order_id", orderId);
+        List<CampaignOrderItem> items = orderItemMapper.selectList(itemQuery);
+        for (CampaignOrderItem item : items) {
+            QueryWrapper<CampaignProduct> cpQuery = new QueryWrapper<>();
+            cpQuery.eq("campaign_id", order.getCampaignId())
+                   .eq("product_id", item.getProductId());
+            CampaignProduct cp = campaignProductMapper.selectOne(cpQuery);
+            if (cp != null && cp.getStockLimit() != -1) {
+                if (cp.getStockLimit() < item.getQuantity()) {
+                    throw new RuntimeException("商品 " + item.getProductName() + " 库存不足，扣减失败");
+                }
+                cp.setStockLimit(cp.getStockLimit() - item.getQuantity());
+                campaignProductMapper.updateById(cp);
+            }
+        }
+        return order;
+    }
+    
     public List<CampaignOrder> getMyOrders(Long userId) {
         QueryWrapper<CampaignOrder> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", userId).orderByDesc("create_time");

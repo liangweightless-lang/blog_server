@@ -35,6 +35,7 @@
           </div>
           <div class="order-price-info" style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
             <span class="price-val">¥{{ order.totalAmount }}</span>
+            <a-button v-if="order.status === 0" type="primary" size="small" shape="round" style="background-color: #FF7E67;" @click.stop="$emit('pay', order)">去支付</a-button>
           </div>
         </div>
       </a-list-item>
@@ -52,6 +53,7 @@ export default {
       default: () => []
     }
   },
+  emits: ['pay'],
   methods: {
     getStatusColor(status) {
       const colors = { 0: 'orange', 1: 'blue', 2: 'green', 3: 'gray' };
