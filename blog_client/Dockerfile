@@ -6,8 +6,8 @@ COPY package.json pnpm-lock.yaml ./
 RUN pnpm config set registry https://registry.npmmirror.com
 RUN pnpm install
 COPY . .
-# 限制 Node 内存为 512MB，防止 2G 小机器 OOM
-ENV NODE_OPTIONS="--max-old-space-size=512"
+# 调整 Node 内存上限为 1024MB，避免 512MB 导致频繁 Full GC 假死
+ENV NODE_OPTIONS="--max-old-space-size=1024"
 ARG APP_ENV=production
 RUN pnpm run build --mode ${APP_ENV}
 

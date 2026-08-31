@@ -37,5 +37,25 @@ export default defineConfig({
         changeOrigin: true
       }
     }
+  },
+  build: {
+    // 关闭压缩大小报告计算，极大减少 rendering chunks 时的 CPU 与内存消耗（防止 2G 机器卡死）
+    reportCompressedSize: false,
+    // 禁用 sourcemap 减小 50% 内存消耗
+    sourcemap: false,
+    // 使用极速轻量的 esbuild 压缩
+    minify: 'esbuild',
+    chunkSizeWarningLimit: 2000,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('@arco-design')) return 'arco';
+            if (id.includes('vue') || id.includes('pinia')) return 'vendor';
+          }
+        }
+      }
+    }
   }
 })
+
