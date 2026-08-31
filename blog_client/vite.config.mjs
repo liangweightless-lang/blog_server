@@ -38,6 +38,9 @@ export default defineConfig({
       }
     }
   },
+  esbuild: {
+    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : []
+  },
   build: {
     // 关闭压缩大小报告计算，极大减少 rendering chunks 时的 CPU 与内存消耗（防止 2G 机器卡死）
     reportCompressedSize: false,
