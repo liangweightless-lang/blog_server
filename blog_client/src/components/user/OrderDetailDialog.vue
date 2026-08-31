@@ -144,7 +144,10 @@ export default {
 
 <style scoped>
 .order-detail-container {
-  padding: 0 10px;
+  padding: 10px 0;
+  max-height: 75vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .status-header {
   display: flex;

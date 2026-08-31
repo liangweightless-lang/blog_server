@@ -901,19 +901,23 @@ export default {
     padding: 12px;
   }
   :deep(.checkout-modal) {
-    position: absolute !important;
+    position: fixed !important;
     bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
-    border-radius: 24px 24px 0 0;
-    padding-bottom: env(safe-area-inset-bottom);
-    animation: slideUpModal 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    border-radius: 24px 24px 0 0 !important;
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+    animation: slideUpModal 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+    max-height: 85vh;
+    overflow-y: auto;
   }
 }
 
 @keyframes slideUpModal {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
 }
 </style>

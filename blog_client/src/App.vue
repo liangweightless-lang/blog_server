@@ -215,17 +215,30 @@ body {
   .arco-modal, .arco-modal-simple {
     width: auto !important;
     max-width: calc(100vw - 32px) !important;
+    max-height: 88vh !important;
     margin: 0 16px !important;
     box-sizing: border-box !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
   
-  .arco-modal-body, .arco-modal-header {
+  .arco-modal-body {
+    max-height: calc(85vh - 100px) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    word-break: break-all !important;
+  }
+  
+  .arco-modal-header {
     word-break: break-all !important;
   }
 
-  /* 统一将部分特定弹窗在移动端转为底部抽屉式，并确保宽度100% */
+  /* 统一将关键业务弹窗在移动端转为优雅底部抽屉式，并确保宽度100% */
   .checkout-modal,
   .buy-modal,
+  .buy-modal-sheet,
+  .creator-modal-mobile,
   .group-dialog,
   .custom-share-modal,
   .wechat-pay-modal {
@@ -237,8 +250,8 @@ body {
     right: 0 !important;
     margin: 0 !important;
     border-radius: 24px 24px 0 0 !important;
-    padding-bottom: calc(16px + env(safe-area-inset-bottom)) !important;
-    animation: slideUpModal 0.38s cubic-bezier(0.25, 1, 0.5, 1);
+    padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
+    animation: slideUpModal 0.35s cubic-bezier(0.25, 1, 0.5, 1);
   }
 }
 

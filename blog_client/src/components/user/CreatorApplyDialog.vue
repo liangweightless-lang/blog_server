@@ -264,4 +264,29 @@ export default {
   transform: scale(0.96);
   box-shadow: 0 2px 8px rgba(255, 106, 136, 0.25);
 }
+
+@media (max-width: 768px) {
+  :deep(.creator-modal-mobile) {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 24px 24px 0 0 !important;
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+    animation: sheetSlideUp 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+    max-height: 88vh;
+    overflow-y: auto;
+  }
+  .apply-container {
+    padding-bottom: 20px;
+  }
+}
+
+@keyframes sheetSlideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
 </style>
