@@ -73,3 +73,10 @@ export function getMyCampaignOrders() {
     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
   });
 }
+
+export function confirmCampaignOrderPay(orderId) {
+  return request.post(`/api/campaigns/orders/${orderId}/confirm-pay`, {}, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+  });
+}
+

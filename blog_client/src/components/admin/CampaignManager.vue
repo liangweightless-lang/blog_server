@@ -91,13 +91,20 @@
                 <a-tag :color="getOrderStatusColor(record.status)">{{ getOrderStatusText(record.status) }}</a-tag>
               </template>
             </a-table-column>
-            <a-table-column title="操作" :width="120" fixed="right">
+            <a-table-column title="操作" :width="160" fixed="right">
               <template #cell="{ record }">
-                <a-button 
-                  v-if="record.status === 0 || record.status === 1" 
-                  type="primary" status="success" size="small" shape="round" 
-                  @click="handleVerifyOrder(record)"
-                >核销提货</a-button>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                  <a-button 
+                    v-if="record.status === 0" 
+                    type="primary" status="warning" size="small" shape="round" 
+                    @click="handleConfirmCampaignPay(record)"
+                  >确认收款</a-button>
+                  <a-button 
+                    v-if="record.status === 1" 
+                    type="primary" status="success" size="small" shape="round" 
+                    @click="handleVerifyOrder(record)"
+                  >核销提货</a-button>
+                </div>
               </template>
             </a-table-column>
           </template>
@@ -122,7 +129,10 @@
               </div>
               <div class="m-card-footer">
                 <div class="m-total">实收: <span class="m-price">¥{{ order.totalAmount }}</span></div>
-                <a-button v-if="order.status === 0 || order.status === 1" type="primary" size="small" shape="round" class="brand-btn" @click="handleVerifyOrder(order)">核销提货</a-button>
+                <div style="display: flex; gap: 6px;">
+                  <a-button v-if="order.status === 0" type="primary" status="warning" size="small" shape="round" @click="handleConfirmCampaignPay(order)">确认收款</a-button>
+                  <a-button v-if="order.status === 1" type="primary" size="small" shape="round" class="brand-btn" @click="handleVerifyOrder(order)">核销提货</a-button>
+                </div>
               </div>
             </a-card>
             <a-empty v-if="orders.length === 0" description="暂无订单" />
@@ -210,7 +220,17 @@
 </template>
 
 <script>
-import { getCampaigns, deleteCampaign, getCampaignOrders, updateCampaignOrderStatus, getDeliveryLocations, createDeliveryLocation, updateDeliveryLocation, deleteDeliveryLocation } from '@/api/campaign';
+import { 
+  getCampaigns, 
+  deleteCampaign, 
+  getCampaignOrders, 
+  updateCampaignOrderStatus, 
+  confirmCampaignOrderPay,
+  getDeliveryLocations, 
+  createDeliveryLocation, 
+  updateDeliveryLocation, 
+  deleteDeliveryLocation 
+} from '@/api/campaign';
 import { Message, Modal } from '@arco-design/web-vue';
 
 export default {
@@ -316,10 +336,29 @@ export default {
       const map = { 0: '待付款', 1: '已付款', 2: '已提货(核销)', 3: '已退款' };
       return map[status] || '未知';
     },
+    handleConfirmCampaignPay(order) {
+      Modal.confirm({
+        title: '确认收到跟团款项？',
+        content: `确定已在微信或支付宝核对收到跟团订单 #${order.id} (跟团号: ${order.followNumber}) 的 ¥${order.totalAmount} 款项吗？确认后订单将变为已付款。`,
+        okText: '确认已到账',
+        cancelText: '取消',
+        onOk: async () => {
+          try {
+            await confirmCampaignOrderPay(order.id);
+            Message.success('已确认收款，团购订单变为已付款！');
+            this.viewOrders(this.currentCampaign); // 刷新当前活动订单列表
+          } catch (e) {
+            Message.error(e.response?.data?.message || '确认失败');
+          }
+        }
+      });
+    },
     handleVerifyOrder(order) {
       Modal.confirm({
         title: '核销确认',
         content: `确定顾客已经提货了吗？跟团号: ${order.followNumber}`,
+        okText: '确认已提货',
+        cancelText: '取消',
         onOk: async () => {
           try {
             await updateCampaignOrderStatus(order.id, 2); // 2: picked_up

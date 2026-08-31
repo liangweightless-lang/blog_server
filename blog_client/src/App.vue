@@ -154,6 +154,30 @@ body {
 }
 
 /* ===== 全局移动端体验优化 ===== */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: none) and (pointer: coarse), (max-width: 768px) {
+  /* 移动端全局微压感反馈 (Active State) - 媲美原生 App 手感 */
+  button, 
+  .arco-btn,
+  .brand-btn,
+  .clickable-card,
+  .action-btn,
+  .tab-item {
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.15s ease;
+  }
+  
+  button:active:not([disabled]),
+  .arco-btn:active:not([disabled]):not(.arco-btn-disabled),
+  .brand-btn:active:not([disabled]),
+  .clickable-card:active {
+    transform: scale(0.96) !important;
+    opacity: 0.88;
+  }
+}
+
 @media (max-width: 768px) {
   /* 调整 Toast 容器位置，避免被刘海/灵动岛遮挡 */
   .arco-message-list {
@@ -203,15 +227,18 @@ body {
   .checkout-modal,
   .buy-modal,
   .group-dialog,
-  .custom-share-modal {
+  .custom-share-modal,
+  .wechat-pay-modal {
     width: 100% !important;
     max-width: 100% !important;
-    position: absolute !important;
+    position: fixed !important;
     bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
     margin: 0 !important;
     border-radius: 24px 24px 0 0 !important;
-    padding-bottom: env(safe-area-inset-bottom) !important;
-    animation: slideUpModal 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    padding-bottom: calc(16px + env(safe-area-inset-bottom)) !important;
+    animation: slideUpModal 0.38s cubic-bezier(0.25, 1, 0.5, 1);
   }
 }
 

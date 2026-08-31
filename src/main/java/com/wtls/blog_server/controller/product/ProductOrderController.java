@@ -106,4 +106,16 @@ public class ProductOrderController {
         orderService.shipOrder(orderId);
         return Result.success("Order shipped");
     }
+
+    @PostMapping("/{orderId}/confirm-pay")
+    @Operation(summary = "管理员手动确认收款", description = "核对微信商家码到账后，将订单手动流转为已支付")
+    public Result<String> confirmPay(@RequestHeader("Authorization") String authHeader, @PathVariable String orderId) {
+        String token = authHeader.substring(7);
+        Claims claims = JwtUtils.parseToken(token);
+        if (!"ADMIN".equals(claims.get("role", String.class))) {
+            throw new UnauthorizedException("拒绝访问，需要管理员权限");
+        }
+        orderService.handlePaymentSuccess(orderId);
+        return Result.success("订单已成功确认为已支付状态");
+    }
 }

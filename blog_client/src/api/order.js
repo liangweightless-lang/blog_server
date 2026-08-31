@@ -89,3 +89,13 @@ export function checkWechatPayStatus(orderId) {
   return request.get(`/api/pay/wechat/query?orderId=${orderId}`);
 }
 
+/**
+ * 管理员手动确认订单已收款
+ * @param {number|string} orderId - 订单ID
+ * @returns {Promise}
+ */
+export function confirmOrderPay(orderId) {
+  return request.post(`/api/orders/${orderId}/confirm-pay`);
+}
+
+

@@ -26,13 +26,18 @@
             <div style="font-size: 11px; color: #999;" v-if="record.pointsUsed">抵扣: {{ record.pointsUsed }}</div>
           </template>
         </a-table-column>
-        <a-table-column title="状态/操作" :width="150" fixed="right">
+        <a-table-column title="状态/操作" :width="160" fixed="right">
           <template #cell="{ record }">
             <a-tag :color="getOrderStatusColor(record.status)" size="small" style="margin-bottom: 5px; display: block; width: fit-content;">
               {{ getOrderStatusText(record.status) }}
             </a-tag>
-            <div v-if="record.status === 1">
-              <a-button size="small" type="primary" status="success" @click="handleShip(record)">标记发货</a-button>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <a-button v-if="record.status === 0" size="small" type="primary" status="warning" @click="handleConfirmPay(record)">
+                确认收款
+              </a-button>
+              <a-button v-if="record.status === 1" size="small" type="primary" status="success" @click="handleShip(record)">
+                标记发货
+              </a-button>
             </div>
           </template>
         </a-table-column>
@@ -71,7 +76,14 @@
           </div>
           <div class="card-footer">
             <span class="card-time">{{ $formatTime(order.createTime) }}</span>
-            <a-button v-if="order.status === 1" size="small" type="primary" status="success" shape="round" @click="handleShip(order)">标记发货</a-button>
+            <div style="display: flex; gap: 6px;">
+              <a-button v-if="order.status === 0" size="small" type="primary" status="warning" shape="round" @click="handleConfirmPay(order)">
+                确认收款
+              </a-button>
+              <a-button v-if="order.status === 1" size="small" type="primary" status="success" shape="round" @click="handleShip(order)">
+                标记发货
+              </a-button>
+            </div>
           </div>
         </div>
         <a-empty v-if="orders.length === 0 && !loadingOrders" description="暂无订单" />
@@ -81,8 +93,8 @@
 </template>
 
 <script>
-import { getOrdersAdmin, shipOrder } from '@/api/order';
-import { Message } from '@arco-design/web-vue';
+import { getOrdersAdmin, shipOrder, confirmOrderPay } from '@/api/order';
+import { Message, Modal } from '@arco-design/web-vue';
 
 export default {
   name: 'OrderManager',
@@ -123,6 +135,23 @@ export default {
     getOrderStatusText(status) {
       const texts = ['待支付', '已支付', '已取消', '已发货'];
       return texts[status] || '未知';
+    },
+    handleConfirmPay(order) {
+      Modal.confirm({
+        title: '确认收到款项？',
+        content: `确定已在微信或支付宝核对收到订单 #${order.id} 的 ¥${order.amount} 款项吗？确认后订单将变为已支付。`,
+        okText: '确认已到账',
+        cancelText: '取消',
+        onOk: async () => {
+          try {
+            await confirmOrderPay(order.id);
+            Message.success('已确认收款，订单变为已支付！');
+            this.fetchOrders();
+          } catch (e) {
+            Message.error(e.response?.data?.message || '确认失败');
+          }
+        }
+      });
     },
     async handleShip(order) {
       try {

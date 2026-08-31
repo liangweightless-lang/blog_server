@@ -120,4 +120,12 @@ public class GroupBuyCampaignController {
         service.updateOrderStatus(orderId, status);
         return Result.success("Order status updated");
     }
+
+    @PostMapping("/orders/{orderId}/confirm-pay")
+    @Operation(summary = "管理员手动确认团购订单收款", description = "核对微信商家收款码到账后，将跟团订单手动流转为已支付")
+    public Result<String> confirmPay(@RequestHeader("Authorization") String authHeader, @PathVariable String orderId) {
+        checkAdmin(authHeader);
+        service.handlePaymentSuccess(orderId);
+        return Result.success("团购订单已成功确认为已支付状态");
+    }
 }

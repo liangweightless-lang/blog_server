@@ -18,7 +18,7 @@
           </template>
         </a-upload>
       </a-form-item>
-      <a-form-item label="微信二维码">
+      <a-form-item label="微信客服二维码">
         <a-upload
           :action="uploadAction"
           :show-file-list="false"
@@ -29,7 +29,24 @@
               <img v-if="homeConfigForm.wechatQrUrl" :src="homeConfigForm.wechatQrUrl" class="product-upload-preview">
               <div v-else class="product-upload-placeholder">
                 <icon-plus />
-                <span>上传二维码</span>
+                <span>上传客服码</span>
+              </div>
+            </div>
+          </template>
+        </a-upload>
+      </a-form-item>
+      <a-form-item label="微信商家收款码 (用于收银台微信扫码支付)">
+        <a-upload
+          :action="uploadAction"
+          :show-file-list="false"
+          @success="handleWechatMerchantQrSuccess"
+          @before-upload="beforeProductImageUpload">
+          <template #upload-button>
+            <div class="product-image-uploader">
+              <img v-if="homeConfigForm.wechatMerchantQrUrl" :src="homeConfigForm.wechatMerchantQrUrl" class="product-upload-preview">
+              <div v-else class="product-upload-placeholder">
+                <icon-plus />
+                <span>上传商家码</span>
               </div>
             </div>
           </template>
@@ -76,6 +93,7 @@ export default {
         authorBio: '',
         tagsString: '',
         wechatQrUrl: '',
+        wechatMerchantQrUrl: '',
         amapKey: '',
         amapSecurityCode: ''
       }
@@ -105,6 +123,7 @@ export default {
             authorBio: data.authorBio,
             tagsString: data.tags ? data.tags.join(',') : '',
             wechatQrUrl: data.wechatQrUrl || '',
+            wechatMerchantQrUrl: data.wechatMerchantQrUrl || '',
             amapKey: data.amapKey || '',
             amapSecurityCode: data.amapSecurityCode || ''
           };
@@ -146,7 +165,21 @@ export default {
         return;
       }
       this.homeConfigForm.wechatQrUrl = url;
-      Message.success('二维码上传成功');
+      Message.success('客服二维码上传成功');
+    },
+    handleWechatMerchantQrSuccess(fileItem) {
+      const res = fileItem.response;
+      if (typeof res === 'string' && (res.trim().startsWith('<!DOCTYPE') || res.trim().startsWith('<html'))) {
+        Message.error('商家收款码上传失败，服务器返回了错误的格式。');
+        return;
+      }
+      let url = (res && res.url) ? res.url : (typeof res === 'string' ? res : '');
+      if (url && (url.trim().startsWith('<!DOCTYPE') || url.trim().startsWith('<html'))) {
+        Message.error('商家收款码上传失败，服务器返回了错误的格式。');
+        return;
+      }
+      this.homeConfigForm.wechatMerchantQrUrl = url;
+      Message.success('微信商家收款码上传成功！');
     },
     async saveHomeConfig() {
       this.savingConfig = true;
