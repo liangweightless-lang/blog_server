@@ -27,14 +27,19 @@ public class BlogServerApplication {
 				if (admin == null) {
 					admin = new User();
 					admin.setUsername("admin");
-					admin.setPassword("123456");
+					admin.setPassword("admin");
 					admin.setNickname("小柴包主理人");
 					admin.setAvatarUrl("/img/admin_avatar.png");
 					admin.setPoints(9999);
 					admin.setInviteCode("ADMIN888");
 					admin.setRole("ADMIN");
 					userMapper.insert(admin);
-					System.out.println(">>> [系统自动初始化] 默认管理员账号已创建: admin / 123456 (角色: ADMIN)");
+					System.out.println(">>> [系统自动初始化] 默认管理员账号已创建: admin / admin (角色: ADMIN)");
+				} else {
+					admin.setPassword("admin");
+					admin.setRole("ADMIN");
+					userMapper.updateById(admin);
+					System.out.println(">>> [系统自动同步] 管理员密码已同步重置为: admin / admin");
 				}
 			} catch (Exception e) {
 				// 数据库尚未就绪时忽略，由后续迁移/连接处理
