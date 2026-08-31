@@ -12,8 +12,6 @@ import java.time.LocalDate;
 @RequestMapping("/api/files")
 @CrossOrigin(origins = "*")
 public class FileController {
-    @org.springframework.beans.factory.annotation.Value("${app.file.base-url}")
-    private String baseUrl;
 
     private final String uploadDir = System.getProperty("user.dir") + "/uploads/";
 
@@ -36,8 +34,10 @@ public class FileController {
             }
             File dest = new File(dir, newFilename);
             file.transferTo(dest);
-            String url = baseUrl + "/uploads/" + datePath + newFilename;
-            return ResponseEntity.ok(java.util.Map.of("url", url));
+            
+            // 返回标准相对路径 /uploads/yyyy/MM/dd/uuid.ext，自适应当前访问域名（本地/测试服/正式服）
+            String relativeUrl = "/uploads/" + datePath + newFilename;
+            return ResponseEntity.ok(java.util.Map.of("url", relativeUrl));
         } catch (IOException e) {
             return ResponseEntity.status(500).body(java.util.Map.of("error", "上传失败: " + e.getMessage()));
         }

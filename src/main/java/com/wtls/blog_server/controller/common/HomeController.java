@@ -30,6 +30,19 @@ public class HomeController {
         }
     }
 
+    /**
+     * 将包含绝对域名的 URL 归一化为相对路径，避免跨环境加载错乱
+     */
+    private String normalizeUrl(Object urlObj) {
+        if (urlObj == null) return "";
+        String url = String.valueOf(urlObj).trim();
+        int uploadIndex = url.indexOf("/uploads/");
+        if (uploadIndex >= 0) {
+            return url.substring(uploadIndex);
+        }
+        return url;
+    }
+
     @GetMapping("/config")
     public Result<Map<String, Object>> getConfig() {
         Map<String, Object> config = new HashMap<>();
@@ -39,6 +52,14 @@ public class HomeController {
                 String content = new String(Files.readAllBytes(Paths.get(configPath)), StandardCharsets.UTF_8);
                 com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
                 Map<String, Object> map = mapper.readValue(content, Map.class);
+                
+                // 归一化图片路径为相对路径
+                if (map.containsKey("avatarUrl")) {
+                    map.put("avatarUrl", normalizeUrl(map.get("avatarUrl")));
+                }
+                if (map.containsKey("wechatQrUrl")) {
+                    map.put("wechatQrUrl", normalizeUrl(map.get("wechatQrUrl")));
+                }
                 return Result.success(map);
             } catch (IOException e) {
                 // fallback to default
@@ -62,6 +83,15 @@ public class HomeController {
             if (!dir.exists()) {
                 dir.mkdirs();
             }
+
+            // 保存前自动归一化为相对路径
+            if (config.containsKey("avatarUrl")) {
+                config.put("avatarUrl", normalizeUrl(config.get("avatarUrl")));
+            }
+            if (config.containsKey("wechatQrUrl")) {
+                config.put("wechatQrUrl", normalizeUrl(config.get("wechatQrUrl")));
+            }
+
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
             String json = mapper.writeValueAsString(config);
             Files.write(Paths.get(configPath), json.getBytes(StandardCharsets.UTF_8));
