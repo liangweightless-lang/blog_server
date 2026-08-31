@@ -196,7 +196,7 @@
 
 <script>
 import { getCampaignById, createCampaignOrder } from '@/api/campaign';
-import { createAlipay, createWechatPay } from '@/api/order';
+import { createAlipay, createWechatPay, createXunhupay } from '@/api/order';
 import { Message } from '@arco-design/web-vue';
 import dayjs from 'dayjs';
 import { mapState } from 'pinia';
@@ -362,17 +362,35 @@ export default {
             this.wechatQrVisible = true;
           }
         } else {
-          // 调起支付宝支付
-          const payRes = await createAlipay(orderId);
-          const formHtml = payRes.data.data;
+          // 调起支付宝支付 (优先使用虎皮椒免签约全自动通道)
+          try {
+            const xunhuRes = await createXunhupay(orderId);
+            const payData = xunhuRes.data.data;
+            if (payData && payData.payUrl) {
+              const isMobile = window.innerWidth <= 768;
+              if (isMobile) {
+                window.location.href = payData.payUrl;
+              } else {
+                const newWin = window.open(payData.payUrl, '_blank');
+                if (!newWin) {
+                  window.location.href = payData.payUrl;
+                }
+                this.paymentConfirmVisible = true;
+              }
+            }
+          } catch (xunhuErr) {
+            // 回退普通支付宝表单
+            const payRes = await createAlipay(orderId);
+            const formHtml = payRes.data.data;
 
-          const newWindow = window.open('', '_blank');
-          if (newWindow) {
-            newWindow.document.write(formHtml);
-            newWindow.document.close();
-            this.paymentConfirmVisible = true;
-          } else {
-            Message.warning('支付页面被浏览器拦截，请在地址栏右侧允许弹出窗口');
+            const newWindow = window.open('', '_blank');
+            if (newWindow) {
+              newWindow.document.write(formHtml);
+              newWindow.document.close();
+              this.paymentConfirmVisible = true;
+            } else {
+              Message.warning('支付页面被浏览器拦截，请在地址栏右侧允许弹出窗口');
+            }
           }
         }
 

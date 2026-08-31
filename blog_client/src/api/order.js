@@ -90,6 +90,24 @@ export function checkWechatPayStatus(orderId) {
 }
 
 /**
+ * 创建虎皮椒支付宝个人支付订单
+ * @param {number|string} orderId - 订单ID
+ * @returns {Promise}
+ */
+export function createXunhupay(orderId) {
+  return request.post(`/api/pay/xunhupay/create?orderId=${orderId}`);
+}
+
+/**
+ * 查询虎皮椒支付订单状态
+ * @param {number|string} orderId - 订单ID
+ * @returns {Promise}
+ */
+export function checkXunhupayStatus(orderId) {
+  return request.get(`/api/pay/xunhupay/query?orderId=${orderId}`);
+}
+
+/**
  * 管理员手动确认订单已收款
  * @param {number|string} orderId - 订单ID
  * @returns {Promise}
@@ -97,5 +115,6 @@ export function checkWechatPayStatus(orderId) {
 export function confirmOrderPay(orderId) {
   return request.post(`/api/orders/${orderId}/confirm-pay`);
 }
+
 
 

@@ -184,7 +184,7 @@
 </template>
 
 <script>
-import { createOrder, createAlipay, createWechatPay } from '@/api/order';
+import { createOrder, createAlipay, createWechatPay, createXunhupay } from '@/api/order';
 import { Message } from '@arco-design/web-vue';
 import { mapState, mapActions } from 'pinia'
 import { useUserStore } from '@/stores/user'
@@ -295,43 +295,52 @@ export default {
         const orderId = orderRes.data.data.id;
         this.currentOrderId = orderId;
 
+        if (this.usePoints && this.pointsToUse > 0) {
+          this.updatePoints(this.pointsToUse);
+        }
+
         if (this.payChannel === 'WECHAT') {
           // 微信支付
           const payRes = await createWechatPay(orderId);
           const payData = payRes.data.data;
 
-          if (this.usePoints && this.pointsToUse > 0) {
-            this.updatePoints(this.pointsToUse);
-          }
-
           if (payData.payType === 'H5' && payData.h5_url) {
-            // 移动端 H5 支付，直接跳转或唤起微信
             window.location.href = payData.h5_url;
           } else {
-            // PC 端微信扫码支付弹窗
             this.wechatCodeUrl = payData.code_url || '';
             this.wechatQrVisible = true;
           }
         } else {
-          // 支付宝支付
-          const payRes = await createAlipay(orderId);
-          const formHtml = payRes.data.data;
-          
-          const newWindow = window.open('', '_blank');
-          if (newWindow) {
-            newWindow.document.write(formHtml);
-            newWindow.document.close();
-          } else {
-            Message.warning('支付页面被浏览器拦截，请在地址栏右侧允许弹出窗口');
-            this.loading = false;
-            return;
+          // 支付宝支付 (优先调用虎皮椒秒级全自动通道)
+          try {
+            const xunhuRes = await createXunhupay(orderId);
+            const payData = xunhuRes.data.data;
+            if (payData && payData.payUrl) {
+              if (this.isMobile) {
+                window.location.href = payData.payUrl;
+              } else {
+                const newWin = window.open(payData.payUrl, '_blank');
+                if (!newWin) {
+                  window.location.href = payData.payUrl;
+                }
+                this.paymentConfirmVisible = true;
+              }
+            }
+          } catch (xunhuErr) {
+            // 回退普通支付宝表单
+            const payRes = await createAlipay(orderId);
+            const formHtml = payRes.data.data;
+            
+            const newWindow = window.open('', '_blank');
+            if (newWindow) {
+              newWindow.document.write(formHtml);
+              newWindow.document.close();
+              this.paymentConfirmVisible = true;
+            } else {
+              Message.warning('支付页面被浏览器拦截，请允许弹出窗口');
+            }
           }
-          
-          if (this.usePoints && this.pointsToUse > 0) {
-            this.updatePoints(this.pointsToUse);
-          }
-          
-          this.paymentConfirmVisible = true;
+          this.visible = false;
         }
       } catch (error) {
         Message.error(error.response?.data?.message || '支付发起失败，请稍后重试');
