@@ -71,8 +71,11 @@
         <a-input v-model="homeConfigForm.amapSecurityCode" placeholder="配合高德地图 Key 使用的安全密钥"></a-input>
       </a-form-item>
       
-      <a-form-item>
-        <a-button type="primary" :loading="savingConfig" @click="saveHomeConfig">保存配置</a-button>
+      <a-form-item class="save-btn-item">
+        <a-button type="primary" size="large" :loading="savingConfig" @click="saveHomeConfig" class="save-config-btn">
+          <template #icon><icon-save /></template>
+          保存配置
+        </a-button>
       </a-form-item>
     </a-form>
   </div>
@@ -203,6 +206,19 @@ export default {
 </script>
 
 <style scoped>
+.system-config {
+  padding-bottom: 90px;
+}
+.save-btn-item {
+  margin-top: 30px;
+  margin-bottom: 40px;
+}
+.save-config-btn {
+  border-radius: 24px;
+  padding: 0 32px;
+  font-weight: 600;
+  height: 44px;
+}
 .product-image-uploader {
   border: 1px dashed #E5E6EB;
   border-radius: 6px;
@@ -234,5 +250,16 @@ export default {
   height: 100px;
   display: block;
   object-fit: cover;
+}
+
+@media (max-width: 768px) {
+  .system-config {
+    padding-bottom: 120px;
+  }
+  .save-config-btn {
+    width: 100%;
+    height: 48px;
+    font-size: 16px;
+  }
 }
 </style>

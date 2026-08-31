@@ -207,9 +207,11 @@ export default {
 @media (max-width: 768px) {
   .admin-content {
     padding: 10px;
+    padding-bottom: 100px;
   }
   .content-wrapper {
     padding: 15px;
+    padding-bottom: 80px;
   }
 }
 </style>
