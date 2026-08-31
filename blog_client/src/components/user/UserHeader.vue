@@ -29,15 +29,46 @@
       </div>
     </div>
     
-    <!-- Admin VIP Banner -->
-    <div v-if="user && user.role === 'ADMIN'" class="admin-vip-banner" @click="$router.push('/admin')">
+    <!-- Admin / Creator VIP Banner -->
+    <div v-if="user && (user.role === 'ADMIN' || user.role === 'CREATOR')" class="admin-vip-banner" @click="$router.push('/admin')">
       <div class="banner-left">
         <div class="vip-icon-wrapper">
-          <icon-user class="vip-icon" />
+          <icon-star class="vip-icon" />
         </div>
         <div class="vip-text">
-          <span class="vip-title">👑 管理后台</span>
-          <span class="vip-subtitle">您拥有最高管理权限，点击进入</span>
+          <span class="vip-title">{{ user.role === 'ADMIN' ? '👑 超级管理后台' : '🌟 小柴包主理人工作台' }}</span>
+          <span class="vip-subtitle">{{ user.role === 'ADMIN' ? '您拥有最高管理权限，点击进入' : '点击进入独立工作台，管理商品与订单' }}</span>
+        </div>
+      </div>
+      <icon-right />
+    </div>
+
+    <!-- 普通用户入驻申请/审核中 Banner -->
+    <div 
+      v-else-if="user" 
+      class="creator-apply-banner" 
+      :class="{ 'is-pending': creatorStatus && creatorStatus.application && creatorStatus.application.status === 0 }"
+      @click="$emit('apply-creator')"
+    >
+      <div class="banner-left">
+        <div class="apply-icon-wrapper">
+          <span v-if="creatorStatus && creatorStatus.application && creatorStatus.application.status === 0">⏳</span>
+          <span v-else-if="creatorStatus && creatorStatus.application && creatorStatus.application.status === 2">⚠️</span>
+          <span v-else>🌟</span>
+        </div>
+        <div class="vip-text">
+          <template v-if="creatorStatus && creatorStatus.application && creatorStatus.application.status === 0">
+            <span class="vip-title">主理人入驻审核中</span>
+            <span class="vip-subtitle">您的申请已提交，管理员将尽快处理</span>
+          </template>
+          <template v-else-if="creatorStatus && creatorStatus.application && creatorStatus.application.status === 2">
+            <span class="vip-title">主理人申请未通过</span>
+            <span class="vip-subtitle">{{ creatorStatus.application.rejectReason || '资料不完整' }} (点击重新提交)</span>
+          </template>
+          <template v-else>
+            <span class="vip-title">申请成为小柴包主理人</span>
+            <span class="vip-subtitle">入驻开启专属创作空间，独立发布商品与快团</span>
+          </template>
         </div>
       </div>
       <icon-right />
@@ -52,7 +83,8 @@ import { Message } from '@arco-design/web-vue';
 export default {
   name: 'UserHeader',
   props: {
-    user: Object
+    user: Object,
+    creatorStatus: Object
   },
   data() {
     return {
@@ -264,5 +296,48 @@ export default {
 }
 .admin-vip-banner .arco-icon-right {
   color: #86909C;
+}
+
+/* Creator Apply Banner */
+.creator-apply-banner {
+  margin: 25px auto 0;
+  max-width: 600px;
+  background: var(--glass-bg, rgba(255, 255, 255, 0.9));
+  backdrop-filter: var(--glass-blur, blur(30px));
+  -webkit-backdrop-filter: var(--glass-blur, blur(30px));
+  border: 1px solid rgba(255, 126, 103, 0.4);
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 8px 32px rgba(255, 126, 103, 0.12);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+  overflow: hidden;
+  z-index: 2;
+}
+.creator-apply-banner:active {
+  transform: scale(0.98);
+}
+.creator-apply-banner.is-pending {
+  border-color: rgba(250, 173, 20, 0.4);
+  box-shadow: 0 8px 32px rgba(250, 173, 20, 0.1);
+}
+.apply-icon-wrapper {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #FFE4D6, #FFF0E8);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 20px;
+}
+.creator-apply-banner .vip-title {
+  background: linear-gradient(90deg, #FF7E67, #FF9A8B);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 </style>

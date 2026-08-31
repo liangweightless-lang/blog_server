@@ -41,6 +41,10 @@
           <template #icon><icon-tags /></template>
           社区快团
         </a-menu-item>
+        <a-menu-item key="creators">
+          <template #icon><icon-star /></template>
+          主理人审核
+        </a-menu-item>
         <a-menu-item key="system">
           <template #icon><icon-settings /></template>
           系统配置
@@ -71,6 +75,7 @@
           <ArticleManager v-if="activeTab === 'articles'" :isMobile="isMobile" />
           <ProductManager v-if="activeTab === 'products'" :isMobile="isMobile" />
           <UserManager v-if="activeTab === 'users'" :isMobile="isMobile" />
+          <CreatorManager v-if="activeTab === 'creators'" :isMobile="isMobile" />
           <OrderManager v-if="activeTab === 'orders'" :isMobile="isMobile" />
           <GroupbuyManager v-if="activeTab === 'groupbuys'" :isMobile="isMobile" />
           <CampaignManager v-if="activeTab === 'campaigns'" :isMobile="isMobile" />
@@ -85,6 +90,7 @@
 import ArticleManager from '@/components/admin/ArticleManager.vue';
 import ProductManager from '@/components/admin/ProductManager.vue';
 import UserManager from '@/components/admin/UserManager.vue';
+import CreatorManager from '@/components/admin/CreatorManager.vue';
 import OrderManager from '@/components/admin/OrderManager.vue';
 import GroupbuyManager from '@/components/admin/GroupbuyManager.vue';
 import CampaignManager from '@/components/admin/CampaignManager.vue';
@@ -96,6 +102,7 @@ export default {
     ArticleManager,
     ProductManager,
     UserManager,
+    CreatorManager,
     OrderManager,
     GroupbuyManager,
     CampaignManager,
@@ -111,6 +118,7 @@ export default {
         articles: '文章日记',
         products: '商品库',
         users: '用户管理',
+        creators: '主理人入驻审核',
         orders: '订单管理',
         groupbuys: '拼团管理(单品)',
         campaigns: '社区快团(多品)',

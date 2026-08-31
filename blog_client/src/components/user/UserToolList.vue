@@ -32,6 +32,16 @@
         <icon-right class="cell-right-icon" />
       </div>
 
+      <div v-if="user && user.role !== 'ADMIN' && user.role !== 'CREATOR'" class="tool-cell" @click="$emit('apply-creator')">
+        <div class="cell-left">
+          <div class="icon-wrapper" style="background: rgba(255, 126, 103, 0.1);">
+            <icon-star class="tool-icon" style="color: #FF7E67" />
+          </div>
+          <span>申请成为主理人</span>
+        </div>
+        <icon-right class="cell-right-icon" />
+      </div>
+
       <div class="tool-cell" @click="$emit('logout')">
         <div class="cell-left">
           <div class="icon-wrapper" style="background: rgba(144, 147, 153, 0.1);">

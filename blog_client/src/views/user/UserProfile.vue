@@ -1,6 +1,11 @@
 <template>
   <div class="user-center-container">
-    <UserHeader :user="user" @edit="showEditDialog" />
+    <UserHeader 
+      :user="user" 
+      :creator-status="creatorStatus" 
+      @edit="showEditDialog" 
+      @apply-creator="applyDialogVisible = true" 
+    />
     <UserStats :user="user" />
     
     <div class="user-tabs-section">
@@ -36,8 +41,12 @@
       @address="showAddressDialog" 
       @invite="showInviteDialog" 
       @groups="showGroupsDialog"
+      @apply-creator="applyDialogVisible = true"
       @logout="handleLogout" 
     />
+
+    <!-- 主理人入驻申请弹窗 -->
+    <CreatorApplyDialog v-model:show="applyDialogVisible" @success="handleApplySuccess" />
 
     <!-- 我的拼团弹窗 -->
     <MyGroupsDialog v-model:show="groupsDialogVisible" />
@@ -91,6 +100,7 @@ import { getMyFavorites } from '@/api/article';
 import { getMyOrders, createAlipay } from '@/api/order';
 import { getMyCampaignOrders } from '@/api/campaign';
 import { getProducts } from '@/api/product';
+import { getMyCreatorStatus } from '@/api/creator';
 import UserHeader from '@/components/user/UserHeader.vue';
 import UserStats from '@/components/user/UserStats.vue';
 import UserToolList from '@/components/user/UserToolList.vue';
@@ -100,6 +110,7 @@ import MyGroupsDialog from '@/components/user/MyGroupsDialog.vue';
 import OrderDetailDialog from '@/components/user/OrderDetailDialog.vue';
 import OrderList from '@/components/user/OrderList.vue';
 import CampaignOrderList from '@/components/user/CampaignOrderList.vue';
+import CreatorApplyDialog from '@/components/user/CreatorApplyDialog.vue';
 import { mapState, mapActions } from 'pinia'
 import { useUserStore } from '@/stores/user'
 
@@ -114,7 +125,8 @@ export default {
     MyGroupsDialog,
     OrderDetailDialog,
     OrderList,
-    CampaignOrderList
+    CampaignOrderList,
+    CreatorApplyDialog
   },
   data() {
     return {
@@ -124,6 +136,8 @@ export default {
       editDialogVisible: false,
       inviteDialogVisible: false,
       groupsDialogVisible: false,
+      applyDialogVisible: false,
+      creatorStatus: null,
       paymentConfirmVisible: false,
       orderDetailVisible: false,
       selectedOrder: null,
@@ -138,6 +152,7 @@ export default {
     this.fetchMyFavorites();
     this.fetchMyOrders();
     this.fetchMyCampaignOrders();
+    this.fetchCreatorStatus();
     window.addEventListener('resize', this.handleResize);
   },
   beforeUnmount() {
@@ -156,6 +171,20 @@ export default {
     ...mapActions(useUserStore, ['clearUser', 'fetchUser']),
     handleResize() {
       this.isMobile = window.innerWidth <= 768;
+    },
+    async fetchCreatorStatus() {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      try {
+        const res = await getMyCreatorStatus();
+        this.creatorStatus = res.data.data;
+      } catch (e) {
+        // ignore
+      }
+    },
+    handleApplySuccess() {
+      this.fetchCreatorStatus();
+      this.fetchUser();
     },
     handleTabClick(key) {
       if (key === 'favorites') {
