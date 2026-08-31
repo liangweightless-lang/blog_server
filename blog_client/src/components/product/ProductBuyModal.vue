@@ -78,6 +78,43 @@
         </div>
       </div>
 
+      <!-- 支付方式选择区 -->
+      <div class="payment-method-card">
+        <div class="card-header" style="margin-bottom: 10px;">
+          <span><icon-safe /> 支付方式</span>
+        </div>
+        <div class="pay-options">
+          <div 
+            class="pay-option-item" 
+            :class="{ active: payChannel === 'WECHAT' }"
+            @click="payChannel = 'WECHAT'"
+          >
+            <div class="pay-icon-name">
+              <svg class="pay-svg" viewBox="0 0 24 24" fill="#07C160">
+                <path d="M8.691 2.188C3.891 2.188 0 5.478 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .161.13.29.29.29.08 0 .15-.029.212-.068l1.96-1.141a.853.853 0 0 1 .639-.097c.92.251 1.897.39 2.913.39.309 0 .61-.019.91-.048-.718-2.038-.34-4.321 1.07-5.918 1.453-1.639 3.59-2.529 5.82-2.529.418 0 .833.03 1.238.087C16.892 4.398 13.064 2.188 8.691 2.188zm-2.42 4.145c.677 0 1.229.552 1.229 1.23 0 .676-.552 1.228-1.23 1.228-.676 0-1.228-.552-1.228-1.229 0-.677.552-1.229 1.229-1.229zm4.84 0c.677 0 1.229.552 1.229 1.23 0 .676-.552 1.228-1.23 1.228-.676 0-1.228-.552-1.228-1.229 0-.677.552-1.229 1.229-1.229zm8.567 4.144c-3.864 0-7.004 2.657-7.004 5.928 0 3.272 3.14 5.928 7.004 5.928.795 0 1.562-.116 2.278-.319a.69.69 0 0 1 .513.078l1.579.919c.05.029.106.048.173.048.13 0 .233-.106.233-.232a.38.38 0 0 0-.039-.175l-.32-1.19a.473.473 0 0 1 .174-.533c1.474-1.085 2.413-2.684 2.413-4.472 0-3.271-3.14-5.93-7.005-5.93zm-2.14 3.428c.552 0 1.007.456 1.007 1.008 0 .551-.455 1.007-1.008 1.007-.551 0-1.007-.456-1.007-1.007 0-.552.456-1.008 1.007-1.008zm4.28 0c.553 0 1.008.456 1.008 1.008 0 .551-.455 1.007-1.008 1.007-.552 0-1.007-.456-1.007-1.007 0-.552.455-1.008 1.007-1.008z"/>
+              </svg>
+              <span>微信支付</span>
+            </div>
+            <icon-check-circle-fill v-if="payChannel === 'WECHAT'" class="selected-check" style="color: #07C160;" />
+            <div v-else class="unselected-circle"></div>
+          </div>
+          <div 
+            class="pay-option-item" 
+            :class="{ active: payChannel === 'ALIPAY' }"
+            @click="payChannel = 'ALIPAY'"
+          >
+            <div class="pay-icon-name">
+              <svg class="pay-svg" viewBox="0 0 24 24" fill="#1677FF">
+                <path d="M21.42 13.91c-.69-.26-2.58-.94-4.59-1.57.84-1.63 1.5-3.47 1.94-5.46H22V5.11h-6.27V3.5h-2.16v1.61H7.8V6.88h8.54c-.38 1.54-.92 2.97-1.59 4.25-2.61-.93-5.28-1.55-7.46-1.55-3.8 0-6.19 1.87-6.19 4.67 0 2.65 2.19 4.41 5.48 4.41 3.51 0 6.64-1.92 8.94-4.88 2.06.74 3.86 1.48 4.7 1.83.67.28 1.02.77 1.02 1.41 0 1.25-1.42 2.37-3.9 2.93l.79 1.95c3.34-.84 5.3-2.52 5.3-4.83.01-1.39-.77-2.48-1.95-2.92zM7.29 16.59c-2.19 0-3.56-1.03-3.56-2.44 0-1.54 1.41-2.64 3.88-2.64 1.76 0 3.84.45 5.9 1.15-1.68 2.51-4.08 3.93-6.22 3.93z"/>
+              </svg>
+              <span>支付宝</span>
+            </div>
+            <icon-check-circle-fill v-if="payChannel === 'ALIPAY'" class="selected-check" style="color: #1677FF;" />
+            <div v-else class="unselected-circle"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- 结算区 -->
       <div class="summary-card">
         <div class="summary-item" v-if="specString">
@@ -97,8 +134,6 @@
           <span class="total-price">¥{{ finalPrice }}</span>
         </div>
       </div>
-
-      <p class="demo-tip">此功能为演示版本。在生产环境中，点击后将调起微信/支付宝支付。</p>
     </div>
 
     <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
@@ -118,7 +153,16 @@
     <!-- 高德地图选点弹窗 -->
     <MapLocationDialog v-model:show="mapDialogVisible" @select="confirmMapLocation" />
 
-    <!-- 支付状态确认弹窗 -->
+    <!-- 微信扫码支付弹窗 -->
+    <WechatPayQrModal
+      v-model:show="wechatQrVisible"
+      :order-id="currentOrderId"
+      :amount="finalPrice"
+      :code-url="wechatCodeUrl"
+      @success="handlePaymentSuccess"
+    />
+
+    <!-- 支付宝支付状态确认弹窗 -->
     <a-modal 
       v-model:visible="paymentConfirmVisible" 
       title="支付确认"
@@ -140,16 +184,18 @@
 </template>
 
 <script>
-import { createOrder, createAlipay } from '@/api/order';
+import { createOrder, createAlipay, createWechatPay } from '@/api/order';
 import { Message } from '@arco-design/web-vue';
 import { mapState, mapActions } from 'pinia'
 import { useUserStore } from '@/stores/user'
 import MapLocationDialog from '@/components/common/MapLocationDialog.vue';
+import WechatPayQrModal from '@/components/pay/WechatPayQrModal.vue';
 
 export default {
   name: 'ProductBuyModal',
   components: {
-    MapLocationDialog
+    MapLocationDialog,
+    WechatPayQrModal
   },
   props: {
     show: Boolean,
@@ -162,8 +208,12 @@ export default {
       pointsToUse: 0,
       selectedSpecs: {},
       shippingAddress: '',
+      payChannel: 'WECHAT', // 默认微信支付
       mapDialogVisible: false,
       paymentConfirmVisible: false,
+      wechatQrVisible: false,
+      wechatCodeUrl: '',
+      currentOrderId: '',
       isMobile: window.innerWidth <= 768
     }
   },
@@ -243,43 +293,62 @@ export default {
         });
 
         const orderId = orderRes.data.data.id;
+        this.currentOrderId = orderId;
 
-        const payRes = await createAlipay(orderId);
+        if (this.payChannel === 'WECHAT') {
+          // 微信支付
+          const payRes = await createWechatPay(orderId);
+          const payData = payRes.data.data;
 
-        const formHtml = payRes.data.data;
-        
-        // 业界标准做法：打开新窗口并将支付宝返回的 HTML 表单直接写入新窗口
-        const newWindow = window.open('', '_blank');
-        if (newWindow) {
-          newWindow.document.write(formHtml);
-          newWindow.document.close();
+          if (this.usePoints && this.pointsToUse > 0) {
+            this.updatePoints(this.pointsToUse);
+          }
+
+          if (payData.payType === 'H5' && payData.h5_url) {
+            // 移动端 H5 支付，直接跳转或唤起微信
+            window.location.href = payData.h5_url;
+          } else {
+            // PC 端微信扫码支付弹窗
+            this.wechatCodeUrl = payData.code_url || '';
+            this.wechatQrVisible = true;
+          }
         } else {
-          Message.warning('支付页面被浏览器拦截，请在地址栏右侧允许弹出窗口');
-          this.loading = false;
-          return;
+          // 支付宝支付
+          const payRes = await createAlipay(orderId);
+          const formHtml = payRes.data.data;
+          
+          const newWindow = window.open('', '_blank');
+          if (newWindow) {
+            newWindow.document.write(formHtml);
+            newWindow.document.close();
+          } else {
+            Message.warning('支付页面被浏览器拦截，请在地址栏右侧允许弹出窗口');
+            this.loading = false;
+            return;
+          }
+          
+          if (this.usePoints && this.pointsToUse > 0) {
+            this.updatePoints(this.pointsToUse);
+          }
+          
+          this.paymentConfirmVisible = true;
         }
-        
-        if (this.usePoints && this.pointsToUse > 0) {
-           this.updatePoints(this.pointsToUse);
-        }
-        
-        // 弹出支付确认框
-        this.paymentConfirmVisible = true;
       } catch (error) {
-        Message.error(error.response?.data?.message || '支付失败，请稍后重试');
+        Message.error(error.response?.data?.message || '支付发起失败，请稍后重试');
       } finally {
         this.loading = false;
       }
     },
     handlePaymentSuccess() {
       this.paymentConfirmVisible = false;
+      this.wechatQrVisible = false;
       this.visible = false;
-      Message.success('订单已提交，正在等待系统确认...');
-      // 真实项目中这里通常会轮询后端查询订单状态，或者直接跳转到我的订单页
-      this.$router.push('/user/profile');
+      Message.success('支付成功，正在前往个人中心');
+      this.$router.push('/profile');
     },
     handlePaymentFail() {
       this.paymentConfirmVisible = false;
+      this.wechatQrVisible = false;
       Message.info('您可以稍后在我的订单中继续支付');
     }
   }
@@ -345,13 +414,71 @@ export default {
   margin-top: 8px;
 }
 
-.points-deduction-card, .address-card {
+.points-deduction-card, .address-card, .payment-method-card {
   background: #FFFDF8;
   border-radius: 12px;
   padding: 15px;
   margin-bottom: 20px;
+  border: 1px solid #FFE4D6;
+}
+.points-deduction-card {
   border: 1px dashed #FF7E67;
 }
+
+.pay-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.pay-option-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #FFFFFF;
+  border: 1.5px solid #F0F1F2;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pay-option-item:hover {
+  border-color: #E5E6EB;
+}
+
+.pay-option-item.active {
+  background: #FAFAFA;
+  border-color: #FF7E67;
+  box-shadow: 0 2px 8px rgba(255, 126, 103, 0.12);
+}
+
+.pay-icon-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1D2129;
+}
+
+.pay-svg {
+  width: 22px;
+  height: 22px;
+}
+
+.selected-check {
+  font-size: 18px;
+}
+
+.unselected-circle {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid #C9CDD4;
+}
+
 .card-header {
   display: flex;
   justify-content: space-between;

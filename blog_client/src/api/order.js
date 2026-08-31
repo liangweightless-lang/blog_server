@@ -70,3 +70,22 @@ export function shipOrder(id) {
 export function createAlipay(orderId) {
   return request.post(`/api/pay/alipay/create?orderId=${orderId}`);
 }
+
+/**
+ * 创建微信支付订单（支持Native扫码/H5自适应）
+ * @param {number|string} orderId - 订单ID
+ * @returns {Promise}
+ */
+export function createWechatPay(orderId) {
+  return request.post(`/api/pay/wechat/create?orderId=${orderId}`);
+}
+
+/**
+ * 查询微信支付订单状态（扫码收银台轮询）
+ * @param {number|string} orderId - 订单ID
+ * @returns {Promise}
+ */
+export function checkWechatPayStatus(orderId) {
+  return request.get(`/api/pay/wechat/query?orderId=${orderId}`);
+}
+
