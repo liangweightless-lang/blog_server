@@ -15,7 +15,9 @@ app.config.globalProperties.$formatDate = formatDate
 app.use(pinia)
 app.use(router)
 
-import { Message } from '@arco-design/web-vue';
+import AppBottomSheet from './components/common/AppBottomSheet.vue'
+app.component('AppBottomSheet', AppBottomSheet)
 
+import { Message } from '@arco-design/web-vue';
 
 app.mount('#app')
