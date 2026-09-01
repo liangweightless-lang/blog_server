@@ -114,22 +114,48 @@
       </template>
     </a-table>
 
-    <!-- 驳回原因弹窗 -->
+    <!-- 驳回原因现代标准 Bottom Sheet 抽屉 -->
     <a-modal 
       v-model:visible="rejectModalVisible" 
-      title="驳回主理人申请" 
-      @ok="handleRejectConfirm"
-      :ok-loading="rejectSubmitting"
+      :footer="false" 
+      :header="false" 
+      :width="isMobile ? '100%' : '500px'"
+      :mask-closable="true"
+      unmount-on-close
     >
-      <a-form layout="vertical">
-        <a-form-item label="请输入驳回原因 (将通知申请人)">
-          <a-textarea 
-            v-model="rejectReason" 
-            placeholder="例如: 资质资料不完整 / 简介不够详细，请补充后重试" 
-            :auto-size="{ minRows: 3, maxRows: 5 }"
-          />
-        </a-form-item>
-      </a-form>
+      <div class="sheet-modern-container">
+        <div class="sheet-handle-bar" v-if="isMobile"></div>
+        
+        <button class="sheet-circle-close" @click="rejectModalVisible = false" aria-label="关闭">
+          <icon-close />
+        </button>
+
+        <div class="sheet-header">
+          <h3 class="sheet-title">驳回主理人申请</h3>
+          <p class="sheet-subtitle">填写驳回说明，系统将反馈给申请人修改后重新提交</p>
+        </div>
+
+        <div class="sheet-body">
+          <div class="custom-form-group">
+            <div class="custom-form-item">
+              <label class="form-label">驳回具体原因</label>
+              <a-textarea 
+                v-model="rejectReason" 
+                placeholder="例如: 主理人简介不够详细 / 缺乏手作烘焙相关背景说明，请补充后重试" 
+                :auto-size="{ minRows: 3, maxRows: 6 }"
+                class="luxury-form-textarea"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="sheet-footer-action">
+          <button class="sheet-main-btn" :disabled="rejectSubmitting" @click="handleRejectConfirm">
+            <icon-loading v-if="rejectSubmitting" :spin="true" />
+            <span>{{ rejectSubmitting ? '正在提交...' : '确认驳回申请' }}</span>
+          </button>
+        </div>
+      </div>
     </a-modal>
   </div>
 </template>
@@ -279,5 +305,74 @@ export default {
 .reject-tip {
   font-size: 12px;
   color: #F53F3F;
+}
+
+/* 标准抽屉样式 */
+.sheet-modern-container {
+  padding: 16px 18px 24px;
+  position: relative;
+}
+.sheet-header {
+  text-align: center;
+  margin-bottom: 16px;
+}
+.sheet-title {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #1A1D20;
+  letter-spacing: -0.3px;
+}
+.sheet-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: #86909C;
+}
+.custom-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.custom-form-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.form-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1D2129;
+}
+:deep(.luxury-form-textarea) {
+  border-radius: 12px !important;
+  background: #F7F8FA !important;
+  border: 1px solid transparent !important;
+}
+.sheet-footer-action {
+  margin-top: 24px;
+}
+.sheet-main-btn {
+  width: 100%;
+  height: 48px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #FF5E3A 0%, #FF2A54 100%);
+  color: #FFFFFF;
+  border: none;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(255, 42, 84, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.sheet-main-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+.sheet-main-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 </style>

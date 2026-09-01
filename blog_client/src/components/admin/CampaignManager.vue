@@ -193,28 +193,66 @@
       </a-tab-pane>
     </a-tabs>
 
-    <!-- 新增/编辑提货点弹窗 -->
-    <a-modal :title="locationForm.id ? '编辑提货点' : '新增提货点'" v-model:visible="locationDialogVisible" @ok="saveLocation" unmount-on-close>
-      <a-form :model="locationForm" layout="vertical">
-        <a-form-item label="提货点名称 (如: 广东工业大学喜之源便利店)">
-          <a-input v-model="locationForm.name" />
-        </a-form-item>
-        <a-form-item label="详细地址">
-          <a-input v-model="locationForm.address" />
-        </a-form-item>
-        <a-form-item label="联系人">
-          <a-input v-model="locationForm.contactName" />
-        </a-form-item>
-        <a-form-item label="联系电话">
-          <a-input v-model="locationForm.contactPhone" />
-        </a-form-item>
-        <a-form-item label="状态">
-          <a-switch v-model="locationForm.status" :checked-value="1" :unchecked-value="0">
-            <template #checked>启用</template>
-            <template #unchecked>禁用</template>
-          </a-switch>
-        </a-form-item>
-      </a-form>
+    <!-- 新增/编辑提货点现代标准 Bottom Sheet 抽屉 -->
+    <a-modal 
+      v-model:visible="locationDialogVisible" 
+      :footer="false" 
+      :header="false" 
+      :width="isMobile ? '100%' : '520px'"
+      :mask-closable="true"
+      unmount-on-close
+    >
+      <div class="sheet-modern-container">
+        <div class="sheet-handle-bar" v-if="isMobile"></div>
+        
+        <button class="sheet-circle-close" @click="locationDialogVisible = false" aria-label="关闭">
+          <icon-close />
+        </button>
+
+        <div class="sheet-header">
+          <h3 class="sheet-title">{{ locationForm.id ? '编辑自提点' : '新增自提点' }}</h3>
+          <p class="sheet-subtitle">配置社区快团线下自提地址与联系人</p>
+        </div>
+
+        <div class="sheet-body">
+          <div class="custom-form-group">
+            <div class="custom-form-item">
+              <label class="form-label">提货点名称</label>
+              <a-input v-model="locationForm.name" placeholder="如: 广东工业大学喜之源便利店" size="large" class="luxury-form-input" />
+            </div>
+
+            <div class="custom-form-item">
+              <label class="form-label">详细地址</label>
+              <a-textarea v-model="locationForm.address" placeholder="输入准确详细地址..." :auto-size="{ minRows: 2, maxRows: 3 }" class="luxury-form-textarea" />
+            </div>
+
+            <div class="form-row-two">
+              <div class="custom-form-item">
+                <label class="form-label">联系人</label>
+                <a-input v-model="locationForm.contactName" placeholder="如: 陈店长" size="large" class="luxury-form-input" />
+              </div>
+              <div class="custom-form-item">
+                <label class="form-label">联系电话</label>
+                <a-input v-model="locationForm.contactPhone" placeholder="手机号/座机" size="large" class="luxury-form-input" />
+              </div>
+            </div>
+
+            <div class="custom-form-item digital-switch-row">
+              <div class="switch-text">
+                <span class="switch-title">提货点启用状态</span>
+                <span class="switch-desc">启用后买家在快团下单时可选择该点自提</span>
+              </div>
+              <a-switch v-model="locationForm.status" :checked-value="1" :unchecked-value="0" />
+            </div>
+          </div>
+        </div>
+
+        <div class="sheet-footer-action">
+          <button class="sheet-main-btn" @click="saveLocation">
+            <span>保存自提点</span>
+          </button>
+        </div>
+      </div>
     </a-modal>
   </div>
 </template>
@@ -570,5 +608,101 @@ export default {
   font-size: 18px;
   font-weight: 800;
   color: #1D2129;
+}
+
+/* 标准抽屉样式 */
+.sheet-modern-container {
+  padding: 16px 18px 24px;
+  position: relative;
+}
+.sheet-header {
+  text-align: center;
+  margin-bottom: 16px;
+}
+.sheet-title {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #1A1D20;
+  letter-spacing: -0.3px;
+}
+.sheet-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: #86909C;
+}
+.custom-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.custom-form-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.form-row-two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.form-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1D2129;
+}
+:deep(.luxury-form-input .arco-input-wrapper) {
+  border-radius: 12px !important;
+  background: #F7F8FA !important;
+  border: 1px solid transparent !important;
+}
+:deep(.luxury-form-textarea) {
+  border-radius: 12px !important;
+  background: #F7F8FA !important;
+  border: 1px solid transparent !important;
+}
+.digital-switch-row {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  background: #F7F8FA;
+  padding: 12px 14px;
+  border-radius: 14px;
+}
+.switch-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.switch-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1D2129;
+}
+.switch-desc {
+  font-size: 11px;
+  color: #86909C;
+}
+.sheet-footer-action {
+  margin-top: 24px;
+}
+.sheet-main-btn {
+  width: 100%;
+  height: 48px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #FF5E3A 0%, #FF2A54 100%);
+  color: #FFFFFF;
+  border: none;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(255, 42, 84, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.sheet-main-btn:active {
+  transform: scale(0.96);
 }
 </style>
