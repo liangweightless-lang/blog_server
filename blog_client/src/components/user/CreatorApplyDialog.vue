@@ -2,13 +2,19 @@
   <a-modal 
     v-model:visible="visible" 
     :title="null"
+    :header="false"
     :footer="false"
-    :closable="true"
+    :closable="false"
     :mask-closable="!submitting"
     :modal-class="isMobile ? 'creator-modal-mobile' : 'creator-modal-pc'"
     @close="handleClose"
   >
     <div class="apply-container">
+      <div class="sheet-handle-bar" v-if="isMobile"></div>
+      <button class="sheet-circle-close" @click="handleClose" aria-label="关闭">
+        <icon-close />
+      </button>
+
       <div class="apply-header">
         <div class="badge-icon">🌟</div>
         <h3 class="apply-title">入驻成为小柴包主理人</h3>
@@ -166,11 +172,41 @@ export default {
 
 <style scoped>
 .apply-container {
-  padding: 10px 4px;
+  padding: 10px 14px;
+  position: relative;
+}
+.sheet-handle-bar {
+  width: 36px;
+  height: 4px;
+  background: #E5E6EB;
+  border-radius: 2px;
+  margin: 0 auto 14px auto;
+}
+.sheet-circle-close {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #F2F3F5;
+  color: #4E5969;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+.sheet-circle-close:active {
+  background: #E5E6EB;
+  transform: scale(0.92);
 }
 .apply-header {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 .badge-icon {
   font-size: 32px;

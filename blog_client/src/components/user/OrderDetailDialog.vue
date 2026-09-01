@@ -1,12 +1,18 @@
 <template>
   <a-modal 
-    title="订单详情" 
+    :title="null"
+    :header="false"
+    :closable="false"
     :visible="visible" 
-    :width="isMobile ? '90%' : '500px'" 
+    :width="isMobile ? '100%' : '500px'" 
     @cancel="handleCancel" 
     :footer="false"
   >
     <div v-if="order" class="order-detail-container">
+      <div class="sheet-handle-bar" v-if="isMobile"></div>
+      <button class="sheet-circle-close" @click="handleCancel" aria-label="关闭">
+        <icon-close />
+      </button>
       <!-- 状态区 -->
       <div class="status-header">
         <div class="status-icon-box" :style="{ background: getStatusBg(order.status) }">
@@ -165,6 +171,39 @@ export default {
 }
 .status-icon {
   font-size: 28px;
+}
+.order-detail-container {
+  padding: 10px 14px 20px;
+  position: relative;
+}
+.sheet-handle-bar {
+  width: 36px;
+  height: 4px;
+  background: #E5E6EB;
+  border-radius: 2px;
+  margin: 0 auto 14px auto;
+}
+.sheet-circle-close {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #F2F3F5;
+  color: #4E5969;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+.sheet-circle-close:active {
+  background: #E5E6EB;
+  transform: scale(0.92);
 }
 .status-text h3 {
   margin: 0 0 5px 0;

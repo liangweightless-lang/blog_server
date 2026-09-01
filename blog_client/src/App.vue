@@ -194,7 +194,27 @@ body {
     -webkit-backdrop-filter: blur(10px);
   }
   
-  /* 解决长弹窗“不知道能不能滑”的问题：强制显示自定义滚动条 */
+  /* 彻底屏蔽所有移动端 Arco 默认 PC 头部与左上角关闭按钮 (彻底解决怪异X按钮问题) */
+  .arco-modal-header,
+  .arco-modal-close-btn {
+    display: none !important;
+  }
+
+  /* 遮罩层高质感半透明暗光与高斯模糊 */
+  .arco-modal-mask {
+    background-color: rgba(0, 0, 0, 0.5) !important;
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+  }
+
+  .arco-modal-wrapper {
+    display: flex !important;
+    align-items: flex-end !important;
+    justify-content: center !important;
+    padding: 0 !important;
+  }
+
+  /* 解决长弹窗滚动条体验 */
   .arco-modal-body::-webkit-scrollbar,
   .arco-drawer-body::-webkit-scrollbar {
     width: 4px;
@@ -205,42 +225,18 @@ body {
     background-color: rgba(0, 0, 0, 0.15);
     border-radius: 10px;
   }
-  .arco-modal-body::-webkit-scrollbar-thumb:active,
-  .arco-drawer-body::-webkit-scrollbar-thumb:active {
-    background-color: rgba(0, 0, 0, 0.3);
-  }
 
-  /* 解决弹窗在移动端超出屏幕宽度的问题，并避免居中偏移 */
-  .arco-modal, .arco-modal-simple {
-    width: auto !important;
-    max-width: calc(100vw - 32px) !important;
-    max-height: 88vh !important;
-    margin: 0 16px !important;
-    box-sizing: border-box !important;
-    overflow: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
-  }
-  
-  .arco-modal-body {
-    max-height: calc(85vh - 100px) !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    word-break: break-all !important;
-  }
-  
-  .arco-modal-header {
-    word-break: break-all !important;
-  }
-
-  /* 统一将关键业务弹窗在移动端转为优雅底部抽屉式，并确保宽度100% */
+  /* 统一将所有业务弹窗在移动端转为标准小红书/美团/iOS原生级底部抽屉 (Bottom Sheet) */
+  .arco-modal,
+  .arco-modal-simple,
   .checkout-modal,
   .buy-modal,
   .buy-modal-sheet,
   .creator-modal-mobile,
   .group-dialog,
   .custom-share-modal,
-  .wechat-pay-modal {
+  .wechat-pay-modal,
+  .login-dialog-modal {
     width: 100% !important;
     max-width: 100% !important;
     position: fixed !important;
@@ -248,14 +244,29 @@ body {
     left: 0 !important;
     right: 0 !important;
     margin: 0 !important;
+    padding: 0 !important;
     border-radius: 24px 24px 0 0 !important;
-    padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
-    animation: slideUpModal 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+    border: none !important;
+    background: #FFFFFF !important;
+    box-shadow: 0 -12px 36px rgba(0, 0, 0, 0.18) !important;
+    max-height: 85vh !important;
+    animation: slideUpBottomSheet 0.3s cubic-bezier(0.25, 1, 0.5, 1) !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  .arco-modal-body {
+    padding: 0 !important;
+    max-height: 85vh !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    word-break: break-word !important;
   }
 }
 
-@keyframes slideUpModal {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+@keyframes slideUpBottomSheet {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
 }
 </style>

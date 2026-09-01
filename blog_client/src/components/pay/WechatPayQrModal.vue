@@ -1,5 +1,8 @@
 <template>
   <a-modal
+    :title="null"
+    :header="false"
+    :closable="false"
     :visible="visible"
     :footer="false"
     :width="360"
@@ -10,6 +13,9 @@
     <div class="wechat-pay-box">
       <!-- 移动端顶部下拉拉手 (Handle Bar) -->
       <div class="sheet-handle-bar"></div>
+      <button class="sheet-circle-close" @click="handleClose" aria-label="关闭">
+        <icon-close />
+      </button>
 
       <!-- 微信支付品牌头部 -->
       <div class="wechat-header">
@@ -246,11 +252,34 @@ export default {
 /* 仿 iOS 底部抽屉顶部拉手条 */
 .sheet-handle-bar {
   display: none;
-  width: 40px;
+  width: 36px;
   height: 4px;
   border-radius: 2px;
   background: #E5E6EB;
   margin: 0 auto 14px auto;
+}
+
+.sheet-circle-close {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #F2F3F5;
+  color: #4E5969;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+.sheet-circle-close:active {
+  background: #E5E6EB;
+  transform: scale(0.92);
 }
 
 @media (max-width: 768px) {

@@ -1,6 +1,8 @@
 <template>
   <a-modal
     :title="null"
+    :header="false"
+    :closable="false"
     :visible="visible"
     :width="isMobile ? '100%' : '440px'"
     @cancel="visible = false"
@@ -9,12 +11,14 @@
     unmount-on-close
   >
     <div class="buy-dialog-wrapper" v-if="product">
-      <!-- 移动端顶部拉手条与标题 -->
+      <!-- 移动端顶部拉手条与标题 (小红书/iOS规范) -->
       <div class="sheet-header">
         <div class="handle-bar" v-if="isMobile"></div>
         <div class="header-main">
           <h3 class="sheet-title">确认订单</h3>
-          <span class="close-btn" @click="visible = false"><icon-close /></span>
+          <button class="sheet-circle-close" @click="visible = false" aria-label="关闭">
+            <icon-close />
+          </button>
         </div>
       </div>
 
@@ -408,15 +412,27 @@ export default {
   font-weight: 800;
   color: #1D2129;
 }
-.close-btn {
+.sheet-circle-close {
   position: absolute;
   right: 0;
   top: 50%;
   transform: translateY(-50%);
-  color: #86909C;
-  font-size: 16px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #F2F3F5;
+  color: #4E5969;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
   cursor: pointer;
-  padding: 4px;
+  transition: all 0.2s ease;
+}
+.sheet-circle-close:active {
+  background: #E5E6EB;
+  transform: translateY(-50%) scale(0.92);
 }
 
 /* 可滚动内容区 */
