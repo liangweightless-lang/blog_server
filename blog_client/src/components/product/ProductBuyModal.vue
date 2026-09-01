@@ -313,16 +313,12 @@ export default {
         }
 
         if (this.payChannel === 'WECHAT') {
-          // 微信商家码扫码支付
+          // 微信商家码扫码支付 (统一展示二维码弹窗，支持长按识别/扫码/轮询支付结果)
           const payRes = await createWechatPay(orderId);
           const payData = payRes.data.data;
 
-          if (payData.payType === 'H5' && payData.h5_url) {
-            window.location.href = payData.h5_url;
-          } else {
-            this.wechatCodeUrl = payData.code_url || '';
-            this.wechatQrVisible = true;
-          }
+          this.wechatCodeUrl = payData.code_url || payData.h5_url || '';
+          this.wechatQrVisible = true;
         } else {
           // 支付宝支付 (优先使用虎皮椒免签约全自动通道)
           try {

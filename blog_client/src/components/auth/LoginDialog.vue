@@ -55,12 +55,13 @@
           <form class="auth-form" @submit.prevent="handleAction">
             <!-- 手机号/用户名输入 -->
             <div class="input-group">
-              <div class="input-prefix-label">+86</div>
+              <div class="input-prefix-label" v-if="activeTab === 'register' || isPhoneNumber(currentForm.username)">+86</div>
+              <div class="input-prefix-label" v-else><icon-user /></div>
               <input 
                 v-model.trim="currentForm.username"
-                type="tel"
-                maxlength="11"
-                placeholder="请输入手机号"
+                type="text"
+                :maxlength="activeTab === 'register' ? 11 : 32"
+                :placeholder="activeTab === 'login' ? '请输入账号或手机号' : '请输入11位手机号'"
                 class="custom-input with-prefix"
                 autocomplete="username"
               />
@@ -276,16 +277,20 @@ export default {
         console.error('获取验证码失败', error);
       }
     },
+    isPhoneNumber(val) {
+      if (!val) return false;
+      return /^1\d+$/.test(val);
+    },
     async handleAction() {
       const isLogin = this.activeTab === 'login';
       const form = isLogin ? this.loginForm : this.registerForm;
 
       if (!form.username || !form.password) {
-        return Message.warning('请输入手机号和密码');
+        return Message.warning(isLogin ? '请输入账号和密码' : '请输入手机号和密码');
       }
 
       const phoneRegex = /^1[3-9]\d{9}$/;
-      if (form.username !== 'admin' && !phoneRegex.test(form.username)) {
+      if (!isLogin && !phoneRegex.test(form.username)) {
         return Message.error('请输入正确的11位手机号');
       }
 

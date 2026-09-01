@@ -156,6 +156,7 @@ body {
 /* ===== 全局移动端体验优化 ===== */
 * {
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 @media (hover: none) and (pointer: coarse), (max-width: 768px) {

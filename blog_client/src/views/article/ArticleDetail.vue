@@ -35,7 +35,7 @@
           >
             <div class="swipe-slide" v-for="(url, index) in mediaUrls" :key="index">
               <div class="carousel-image-wrapper">
-                <a-image :src="url" class="carousel-image" width="100%" height="100%" fit="contain" />
+                <img :src="url" class="carousel-image-el" alt="media" loading="eager" />
               </div>
             </div>
           </div>
@@ -261,6 +261,14 @@ export default {
           } catch (e) {
             this.mediaUrls = []
           }
+        }
+        // 如果 mediaUrls 为空，但文章有 coverUrl，自动将 coverUrl 作为首图，保证轮播图立即展示
+        if (this.mediaUrls.length === 0 && this.article.coverUrl) {
+          let cover = this.article.coverUrl;
+          if (request.defaults.baseURL && typeof cover === 'string' && cover.startsWith('/uploads/')) {
+            cover = request.defaults.baseURL.replace(/\/$/, '') + cover;
+          }
+          this.mediaUrls = [cover];
         }
         if (this.article.productId) {
           this.fetchProduct(this.article.productId)
@@ -497,13 +505,15 @@ export default {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: #f5f5f5;
+  background: #f7f8fa;
 }
 
-.carousel-image {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: cover;
+.carousel-image-el {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  background: #f7f8fa;
 }
 
 .carousel-indicators {
