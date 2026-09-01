@@ -54,11 +54,13 @@ public class XunhupayController {
     private String returnUrl;
 
     /**
-     * 创建虎皮椒支付宝支付订单
+     * 创建虎皮椒支付订单 (支持支付宝与微信双通道全自动对账)
      */
     @PostMapping("/create")
-    @Operation(summary = "创建虎皮椒支付宝支付", description = "返回支付跳转URL与二维码URL")
-    public Result<Map<String, Object>> createPay(HttpServletRequest request, @RequestParam String orderId) {
+    @Operation(summary = "创建虎皮椒支付", description = "支持支付宝与微信双通道，返回支付跳转URL与二维码URL")
+    public Result<Map<String, Object>> createPay(HttpServletRequest request, 
+                                                @RequestParam String orderId,
+                                                @RequestParam(defaultValue = "alipay") String type) {
         // 1. 查询普通订单或团购订单
         ProductOrder productOrder = orderMapper.selectById(orderId);
         CampaignOrder campaignOrder = null;
@@ -102,6 +104,8 @@ public class XunhupayController {
             dynamicReturnUrl = scheme + "://" + host + "/profile";
         }
 
+        String payChannelType = "wechat".equalsIgnoreCase(type) ? "wechat" : "alipay";
+
         // 3. 组装虎皮椒统一下单参数
         Map<String, String> params = new HashMap<>();
         params.put("version", "1.1");
@@ -112,7 +116,7 @@ public class XunhupayController {
         params.put("time", String.valueOf(System.currentTimeMillis() / 1000));
         params.put("notify_url", dynamicNotifyUrl);
         params.put("return_url", dynamicReturnUrl);
-        params.put("type", "alipay");
+        params.put("type", payChannelType);
         params.put("nonce_str", IdUtil.fastSimpleUUID());
 
         try {
@@ -123,7 +127,7 @@ public class XunhupayController {
                 data.put("orderId", orderId);
                 data.put("payUrl", respNode.path("url").asText());
                 data.put("qrUrl", respNode.path("url_qrcode").asText());
-                data.put("channel", "XUNHUPAY_ALIPAY");
+                data.put("channel", "XUNHUPAY_" + payChannelType.toUpperCase());
                 return Result.success(data);
             } else {
                 String errmsg = respNode.path("errmsg").asText("虎皮椒统一下单失败");

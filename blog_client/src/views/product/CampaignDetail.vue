@@ -351,11 +351,16 @@ export default {
         this.currentOrderId = orderId;
 
         if (this.payChannel === 'WECHAT') {
-          // 调起微信支付 (统一展示二维码弹窗，支持长按识别/扫码/轮询支付结果)
-          const payRes = await createWechatPay(orderId);
-          const payData = payRes.data.data;
-
-          this.wechatCodeUrl = payData.code_url || payData.h5_url || '';
+          // 调起微信支付 (优先使用全自动免签对账通道)
+          try {
+            const xunhuRes = await createXunhupay(orderId, 'wechat');
+            const payData = xunhuRes.data.data;
+            this.wechatCodeUrl = payData.qrUrl || payData.payUrl || '';
+          } catch (e) {
+            const payRes = await createWechatPay(orderId);
+            const payData = payRes.data.data;
+            this.wechatCodeUrl = payData.code_url || payData.h5_url || '';
+          }
           this.wechatQrVisible = true;
         } else {
           // 调起支付宝支付 (优先使用虎皮椒免签约全自动通道)

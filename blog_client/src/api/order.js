@@ -90,12 +90,13 @@ export function checkWechatPayStatus(orderId) {
 }
 
 /**
- * 创建虎皮椒支付宝个人支付订单
+ * 创建虎皮椒个人免签全自动支付订单 (支持alipay与wechat)
  * @param {number|string} orderId - 订单ID
+ * @param {string} type - 'alipay' | 'wechat'
  * @returns {Promise}
  */
-export function createXunhupay(orderId) {
-  return request.post(`/api/pay/xunhupay/create?orderId=${orderId}`);
+export function createXunhupay(orderId, type = 'alipay') {
+  return request.post(`/api/pay/xunhupay/create?orderId=${orderId}&type=${type}`);
 }
 
 /**
