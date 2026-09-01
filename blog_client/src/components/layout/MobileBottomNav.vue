@@ -1,16 +1,31 @@
 <template>
   <div class="mobile-bottom-nav">
-    <div class="nav-item" :class="{ active: $route.path === '/' }" @click="$router.push('/')">
-      <icon-home />
-      <span>首页</span>
+    <div 
+      class="nav-item" 
+      :class="{ active: $route.path === '/' }" 
+      @click="navTo('/')"
+    >
+      <icon-home class="nav-icon" />
+      <span class="nav-label">首页</span>
     </div>
-    <div v-if="showStore" class="nav-item" :class="{ active: $route.path === '/store' }" @click="$router.push('/store')">
-      <icon-gift />
-      <span>橱窗</span>
+
+    <div 
+      v-if="showStore" 
+      class="nav-item" 
+      :class="{ active: $route.path === '/store' }" 
+      @click="navTo('/store')"
+    >
+      <icon-gift class="nav-icon" />
+      <span class="nav-label">橱窗</span>
     </div>
-    <div class="nav-item" :class="{ active: $route.path === '/profile' }" @click="handleProfileClick">
-      <icon-user />
-      <span>我的</span>
+
+    <div 
+      class="nav-item" 
+      :class="{ active: $route.path === '/profile' }" 
+      @click="handleProfileClick"
+    >
+      <icon-user class="nav-icon" />
+      <span class="nav-label">我的</span>
     </div>
   </div>
 </template>
@@ -24,10 +39,18 @@ export default {
     }
   },
   methods: {
+    navTo(path) {
+      if (this.$route.path === path) {
+        // 如果已经在当前页，平滑滚回顶部
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      this.$router.push(path);
+    },
     handleProfileClick() {
       const token = localStorage.getItem('token');
       if (token) {
-        this.$router.push('/profile');
+        this.navTo('/profile');
       } else {
         window.dispatchEvent(new CustomEvent('open-login'));
       }
@@ -42,59 +65,61 @@ export default {
   bottom: 0;
   left: 0;
   right: 0;
-  height: calc(60px + env(safe-area-inset-bottom));
+  height: calc(56px + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   display: flex;
   justify-content: space-around;
   align-items: center;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.04);
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
-  z-index: 99;
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.04);
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+  z-index: 999;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
+
 .nav-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   color: #86909C;
-  font-size: 11px;
   flex: 1;
   height: 100%;
-  border-radius: 24px;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  position: relative;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s ease, transform 0.1s ease;
 }
-.nav-item::before {
-  content: '';
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%) scale(0);
-  width: 50px;
-  height: 50px;
-  background: rgba(255, 75, 43, 0.08);
-  border-radius: 50%;
-  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  z-index: -1;
-}
+
 .nav-item:active {
-  transform: scale(0.9);
+  transform: scale(0.92);
+  color: #FF7E67;
 }
-.nav-item i {
-  font-size: 24px;
+
+.nav-icon {
+  font-size: 22px;
   margin-bottom: 2px;
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.15s ease;
 }
+
+.nav-label {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
 .nav-item.active {
-  color: var(--brand-primary);
+  color: #FF4B2B;
 }
-.nav-item.active i {
-  font-weight: 800;
-  transform: translateY(-2px);
+
+.nav-item.active .nav-icon {
+  transform: scale(1.1);
 }
-.nav-item.active::before {
-  transform: translate(-50%, -50%) scale(1);
+
+.nav-item.active .nav-label {
+  font-weight: 700;
 }
 </style>

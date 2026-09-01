@@ -12,10 +12,9 @@
     <meta name="apple-mobile-web-app-title" content="小柴包" />
     <link rel="apple-touch-icon" href="/favicon.png" />
     
-    <!-- 彻底限制 iOS 主屏幕及移动端双指与双击缩放手势 -->
+    <!-- 仅拦截双指缩放手势，绝不干扰任何单指正常点击与菜单切换 -->
     <script>
       (function () {
-        // 阻止 iOS 双指缩放手势
         document.addEventListener('gesturestart', function (e) {
           e.preventDefault();
         }, { passive: false });
@@ -25,16 +24,6 @@
         document.addEventListener('gestureend', function (e) {
           e.preventDefault();
         }, { passive: false });
-
-        // 阻止 iOS 快速双击放大屏幕
-        var lastTouchEnd = 0;
-        document.addEventListener('touchend', function (event) {
-          var now = (new Date()).getTime();
-          if (now - lastTouchEnd <= 300) {
-            event.preventDefault();
-          }
-          lastTouchEnd = now;
-        }, false);
       })();
     </script>
   </head>

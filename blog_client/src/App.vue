@@ -160,22 +160,20 @@ body {
 }
 
 @media (hover: none) and (pointer: coarse), (max-width: 768px) {
-  /* 移动端全局微压感反馈 (Active State) - 媲美原生 App 手感 */
+  /* 移动端极速轻量反馈 (硬件加速，零延迟) */
   button, 
   .arco-btn,
   .brand-btn,
   .clickable-card,
-  .action-btn,
-  .tab-item {
-    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.15s ease;
+  .action-btn {
+    transition: transform 0.08s ease;
   }
   
   button:active:not([disabled]),
   .arco-btn:active:not([disabled]):not(.arco-btn-disabled),
   .brand-btn:active:not([disabled]),
   .clickable-card:active {
-    transform: scale(0.96) !important;
-    opacity: 0.88;
+    transform: scale(0.96);
   }
 }
 
