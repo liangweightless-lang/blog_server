@@ -101,8 +101,9 @@
         </div>
         <div class="footer-actions">
           <div class="action-btn" @click="likeArticle">
-            <icon-heart />
-            <span>{{ article.likesCount || '赞' }}</span>
+            <icon-heart-fill v-if="isLiked" style="color: #FF3B30;" />
+            <icon-heart v-else />
+            <span :style="{ color: isLiked ? '#FF3B30' : '' }">{{ article.likesCount || '赞' }}</span>
           </div>
           <div class="action-btn" @click="toggleFavorite">
             <icon-star-fill v-if="isFavorited" style="color: #FF7E67;" />
@@ -193,7 +194,8 @@ export default {
         avatarUrl: '',
         authorName: ''
       },
-      loadedMap: {}
+      loadedMap: {},
+      isLiked: false
     }
   },
   computed: {
@@ -210,9 +212,19 @@ export default {
   created() {
     this.fetchArticle()
     this.checkFavoriteStatus()
+    this.checkLikeStatus()
     this.fetchHomeConfig()
   },
   methods: {
+    checkLikeStatus() {
+      try {
+        const likedIds = JSON.parse(localStorage.getItem('user_liked_articles') || '[]');
+        const id = Number(this.$route.params.id);
+        this.isLiked = likedIds.includes(id);
+      } catch (e) {
+        this.isLiked = false;
+      }
+    },
     async fetchHomeConfig() {
       try {
         const res = await getHomeConfig();
@@ -336,17 +348,40 @@ export default {
       }
     },
     async likeArticle() {
-      const id = this.$route.params.id;
-      try {
-        await likeArticle(id);
-        if (this.article.likesCount === undefined || this.article.likesCount === null) {
-          this.article.likesCount = 0;
-        }
-        this.article.likesCount++;
-        Message.success('点赞成功');
-      } catch (error) {
-        Message.error('点赞失败');
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.dispatchEvent(new CustomEvent('open-login'));
+        return Message.warning('实名互动：请先登录后再点赞');
       }
+
+      const id = Number(this.$route.params.id);
+      let likedIds = [];
+      try {
+        likedIds = JSON.parse(localStorage.getItem('user_liked_articles') || '[]');
+      } catch (e) {
+        likedIds = [];
+      }
+
+      if (this.isLiked) {
+        this.isLiked = false;
+        likedIds = likedIds.filter(i => i !== id);
+        if (this.article.likesCount > 0) this.article.likesCount--;
+        Message.info('已取消点赞');
+      } else {
+        try {
+          await likeArticle(id);
+          this.isLiked = true;
+          likedIds.push(id);
+          if (this.article.likesCount === undefined || this.article.likesCount === null) {
+            this.article.likesCount = 0;
+          }
+          this.article.likesCount++;
+          Message.success('已实名点赞 ❤️');
+        } catch (error) {
+          Message.error('点赞失败');
+        }
+      }
+      localStorage.setItem('user_liked_articles', JSON.stringify(likedIds));
     },
     shareArticle() {
       const url = window.location.href;
