@@ -73,20 +73,24 @@
 
       <!-- 底部操作区 -->
       <div class="action-footer" v-if="order.status === 0">
-        <a-button @click="handleCancel" shape="round">稍后支付</a-button>
-        <a-button type="primary" style="background-color: #FF7E67;" shape="round" @click="handlePay">立即支付</a-button>
+        <a-button status="danger" shape="round" @click="handleDeleteCurrentOrder">删除订单</a-button>
+        <a-button type="primary" style="background-color: #FF5E3A;" shape="round" @click="handlePay">立即支付</a-button>
       </div>
     </div>
   </a-modal>
 </template>
 
 <script>
+import { deleteUnpaidOrder } from '@/api/order';
+import { Message, Modal } from '@arco-design/web-vue';
+
 export default {
   name: 'OrderDetailDialog',
   props: {
     show: Boolean,
     order: Object
   },
+  emits: ['update:show', 'pay', 'refresh'],
   data() {
     return {
       isMobile: window.innerWidth <= 768
@@ -105,7 +109,7 @@ export default {
   created() {
     window.addEventListener('resize', this.handleResize);
   },
-  beforeDestroy() {
+  beforeUnmount() {
     window.removeEventListener('resize', this.handleResize);
   },
   methods: {
@@ -118,6 +122,25 @@ export default {
     handlePay() {
       this.$emit('pay', this.order);
       this.visible = false;
+    },
+    handleDeleteCurrentOrder() {
+      if (!this.order) return;
+      Modal.confirm({
+        title: '删除订单确认',
+        content: '确定要删除此未支付订单吗？删除后不可恢复。',
+        okText: '确认删除',
+        cancelText: '取消',
+        onOk: async () => {
+          try {
+            await deleteUnpaidOrder(this.order.id);
+            Message.success('未支付订单已成功删除');
+            this.visible = false;
+            this.$emit('refresh');
+          } catch (e) {
+            Message.error(e.response?.data?.message || '删除订单失败');
+          }
+        }
+      });
     },
     getStatusText(status) {
       const texts = ['等待付款', '买家已付款', '交易关闭', '卖家已发货'];

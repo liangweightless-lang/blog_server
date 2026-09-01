@@ -117,5 +117,11 @@ export function confirmOrderPay(orderId) {
   return request.post(`/api/orders/${orderId}/confirm-pay`);
 }
 
-
-
+/**
+ * 用户删除未支付订单
+ * @param {number|string} orderId - 订单ID
+ * @returns {Promise}
+ */
+export function deleteUnpaidOrder(orderId) {
+  return request.delete(`/api/orders/${orderId}`);
+}

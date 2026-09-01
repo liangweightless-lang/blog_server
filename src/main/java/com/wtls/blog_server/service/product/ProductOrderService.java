@@ -165,4 +165,23 @@ public class ProductOrderService {
     public void shipOrder(String orderId) {
         orderMapper.updateStatus(orderId, 2); // 2: Shipped
     }
+
+    @Transactional
+    public void cancelUnpaidOrder(Long userId, String orderId) {
+        ProductOrder order = orderMapper.selectById(orderId);
+        if (order == null) {
+            throw new BusinessException("订单不存在");
+        }
+        if (!order.getUserId().equals(userId)) {
+            throw new BusinessException("只能删除自己的订单");
+        }
+        if (order.getStatus() != 0) {
+            throw new BusinessException("只能删除未支付的订单");
+        }
+        // 如果使用了积分，安全归还积分
+        if (order.getPointsUsed() != null && order.getPointsUsed() > 0) {
+            userMapper.addPoints(userId, order.getPointsUsed());
+        }
+        orderMapper.deleteById(orderId);
+    }
 }

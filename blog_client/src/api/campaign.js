@@ -80,3 +80,8 @@ export function confirmCampaignOrderPay(orderId) {
   });
 }
 
+export function deleteUnpaidCampaignOrder(orderId) {
+  return request.delete(`/api/campaigns/orders/${orderId}`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+  });
+}

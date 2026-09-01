@@ -25,14 +25,14 @@
         <a-tab-pane key="orders">
           <template #title><icon-gift /> 我的订单</template>
           <div class="tab-content-wrapper">
-            <OrderList :orders="orders" @detail="showOrderDetail" @pay="handleContinuePay" />
+            <OrderList :orders="orders" @detail="showOrderDetail" @pay="handleContinuePay" @refresh="fetchOrders" />
           </div>
         </a-tab-pane>
         
         <a-tab-pane key="campaignOrders">
           <template #title><icon-fire /> 我的跟团</template>
           <div class="tab-content-wrapper">
-            <CampaignOrderList :orders="campaignOrders" @pay="handleContinuePay" />
+            <CampaignOrderList :orders="campaignOrders" @pay="handleContinuePay" @refresh="fetchOrders" />
           </div>
         </a-tab-pane>
       </a-tabs>
@@ -83,6 +83,7 @@
       v-model:show="orderDetailVisible" 
       :order="selectedOrder" 
       @pay="handleContinuePay" 
+      @refresh="fetchOrders"
     />
   </div>
 </template>

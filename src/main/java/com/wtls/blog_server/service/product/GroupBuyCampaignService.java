@@ -263,4 +263,24 @@ public class GroupBuyCampaignService {
         }
         return orders;
     }
+
+    @Transactional
+    public void cancelUnpaidOrder(Long userId, String orderId) {
+        CampaignOrder order = orderMapper.selectById(orderId);
+        if (order == null) {
+            throw new RuntimeException("跟团订单不存在");
+        }
+        if (!order.getUserId().equals(userId)) {
+            throw new RuntimeException("只能删除自己的跟团订单");
+        }
+        if (order.getStatus() != 0) {
+            throw new RuntimeException("只能删除未支付的跟团订单");
+        }
+        // 删除订单项
+        QueryWrapper<CampaignOrderItem> itemQuery = new QueryWrapper<>();
+        itemQuery.eq("order_id", orderId);
+        orderItemMapper.delete(itemQuery);
+        // 删除主订单
+        orderMapper.deleteById(orderId);
+    }
 }

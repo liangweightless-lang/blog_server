@@ -118,4 +118,12 @@ public class ProductOrderController {
         orderService.handlePaymentSuccess(orderId);
         return Result.success("订单已成功确认为已支付状态");
     }
+
+    @DeleteMapping("/{orderId}")
+    @Operation(summary = "删除未支付订单", description = "用户取消并删除自己未支付的订单")
+    public Result<String> deleteUnpaidOrder(@RequestHeader("Authorization") String authHeader, @PathVariable String orderId) {
+        Long userId = getUserIdFromToken(authHeader);
+        orderService.cancelUnpaidOrder(userId, orderId);
+        return Result.success("未支付订单已删除");
+    }
 }

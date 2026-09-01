@@ -33,9 +33,28 @@
             </div>
             <p class="order-time" style="margin-top: 8px;">{{ $formatTime(order.createTime) }}</p>
           </div>
-          <div class="order-price-info" style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+          <div class="order-price-info">
             <span class="price-val">¥{{ order.totalAmount }}</span>
-            <a-button v-if="order.status === 0" type="primary" size="small" shape="round" style="background-color: #FF7E67;" @click.stop="$emit('pay', order)">去支付</a-button>
+            <div class="unpaid-actions" v-if="order.status === 0">
+              <a-button 
+                type="text" 
+                status="danger" 
+                size="mini" 
+                class="del-order-btn"
+                @click.stop="handleDeleteOrder(order)"
+              >
+                删除
+              </a-button>
+              <a-button 
+                type="primary" 
+                size="small" 
+                shape="round" 
+                class="pay-now-btn" 
+                @click.stop="$emit('pay', order)"
+              >
+                去支付
+              </a-button>
+            </div>
           </div>
         </div>
       </a-list-item>
@@ -45,6 +64,9 @@
 </template>
 
 <script>
+import { deleteUnpaidCampaignOrder } from '@/api/campaign';
+import { Message, Modal } from '@arco-design/web-vue';
+
 export default {
   name: 'CampaignOrderList',
   props: {
@@ -53,75 +75,114 @@ export default {
       default: () => []
     }
   },
-  emits: ['pay'],
+  emits: ['pay', 'refresh'],
   methods: {
     getStatusColor(status) {
       const colors = { 0: 'orange', 1: 'blue', 2: 'green', 3: 'gray' };
       return colors[status] || 'gray';
     },
     getStatusText(status) {
-      const texts = { 0: '待付款', 1: '待提货', 2: '已提货', 3: '已退款' };
+      const texts = { 0: '待付款', 1: '已支付', 2: '已提货', 3: '已取消' };
       return texts[status] || '未知';
+    },
+    handleDeleteOrder(order) {
+      Modal.confirm({
+        title: '删除跟团订单确认',
+        content: '确定要删除此未支付跟团订单吗？删除后不可恢复。',
+        okText: '确认删除',
+        cancelText: '取消',
+        onOk: async () => {
+          try {
+            await deleteUnpaidCampaignOrder(order.id);
+            Message.success('未支付跟团订单已成功删除');
+            this.$emit('refresh');
+          } catch (e) {
+            Message.error(e.response?.data?.message || '删除跟团订单失败');
+          }
+        }
+      });
     }
   }
 }
 </script>
 
 <style scoped>
-.order-full-list {
-  padding: 0 10px;
-}
 .order-card-item {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
+  background: #F7F8FA;
   border-radius: 16px;
-  padding: 15px;
-  margin-bottom: 16px;
-  border: 1px solid rgba(255, 255, 255, 1);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.03);
-  transition: all 0.3s ease;
+  padding: 14px;
+  margin-bottom: 12px;
 }
+
 .order-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   padding-bottom: 8px;
-  border-bottom: 1px dashed #eee;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
 }
+
+.order-id {
+  font-size: 13px;
+  color: #1D2129;
+}
+
 .order-card-body {
   display: flex;
-  align-items: center;
-  gap: 15px;
+  justify-content: space-between;
 }
-.order-main-info {
-  flex: 1;
-}
+
 .order-pname {
-  font-weight: bold;
+  margin: 0 0 4px 0;
   font-size: 14px;
-  color: #333;
-  margin-bottom: 4px;
+  font-weight: 700;
+  color: #1D2129;
 }
-.order-spec {
-  font-size: 11px;
-  color: #FF7E67;
-  display: inline-block;
-  margin-bottom: 4px;
-}
+
 .order-time {
+  margin: 0;
   font-size: 11px;
-  color: #bbb;
+  color: #C9CDD4;
 }
+
+.order-price-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
 .price-val {
-  font-weight: bold;
   font-size: 16px;
-  color: #F56C6C;
+  font-weight: 800;
+  color: #1D2129;
 }
+
+.unpaid-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.del-order-btn {
+  font-size: 11px;
+  padding: 0 4px;
+}
+
+.pay-now-btn {
+  background: linear-gradient(135deg, #FF5E3A 0%, #FF2A54 100%) !important;
+  border: none;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .list-end-tip {
   text-align: center;
-  font-size: 12px;
-  color: #ccc;
-  margin-top: 15px;
+  font-size: 11px;
+  color: #C9CDD4;
+  margin-top: 14px;
 }
 </style>

@@ -24,9 +24,28 @@
             <p class="order-spec" v-if="order.selectedSpec">规格: {{ order.selectedSpec }}</p>
             <p class="order-time">{{ $formatTime(order.createTime) }}</p>
           </div>
-          <div class="order-price-info" style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+          <div class="order-price-info">
             <span class="price-val">¥{{ order.amount }}</span>
-            <a-button v-if="order.status === 0" type="primary" size="small" shape="round" style="background-color: #FF7E67;" @click.stop="$emit('pay', order)">去支付</a-button>
+            <div class="unpaid-actions" v-if="order.status === 0">
+              <a-button 
+                type="text" 
+                status="danger" 
+                size="mini" 
+                class="del-order-btn"
+                @click.stop="handleDeleteOrder(order)"
+              >
+                删除
+              </a-button>
+              <a-button 
+                type="primary" 
+                size="small" 
+                shape="round" 
+                class="pay-now-btn"
+                @click.stop="$emit('pay', order)"
+              >
+                去支付
+              </a-button>
+            </div>
           </div>
         </div>
       </a-list-item>
@@ -36,6 +55,9 @@
 </template>
 
 <script>
+import { deleteUnpaidOrder } from '@/api/order';
+import { Message, Modal } from '@arco-design/web-vue';
+
 export default {
   name: 'OrderList',
   props: {
@@ -44,95 +66,139 @@ export default {
       default: () => []
     }
   },
-  emits: ['detail', 'pay'],
+  emits: ['detail', 'pay', 'refresh'],
   methods: {
     getOrderStatusColor(status) {
-      const types = ['gray', 'green', 'red', 'blue'];
+      const types = ['orange', 'green', 'gray', 'blue'];
       return types[status] || 'gray';
     },
     getOrderStatusText(status) {
       const texts = ['待支付', '已支付', '已取消', '已发货'];
       return texts[status] || '未知';
+    },
+    handleDeleteOrder(order) {
+      Modal.confirm({
+        title: '删除订单确认',
+        content: '确定要删除此未支付订单吗？删除后不可恢复。',
+        okText: '确认删除',
+        cancelText: '取消',
+        onOk: async () => {
+          try {
+            await deleteUnpaidOrder(order.id);
+            Message.success('未支付订单已成功删除');
+            this.$emit('refresh');
+          } catch (e) {
+            Message.error(e.response?.data?.message || '删除订单失败');
+          }
+        }
+      });
     }
   }
 }
 </script>
 
 <style scoped>
-.order-full-list {
-  padding: 0 10px;
-}
 .order-card-item {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
+  background: #F7F8FA;
   border-radius: 16px;
-  padding: 15px;
-  margin-bottom: 16px;
-  border: 1px solid rgba(255, 255, 255, 1);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.03);
-  transition: all 0.3s ease;
+  padding: 14px;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
 }
-.order-card-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(0,0,0,0.06);
-  border-color: rgba(255, 126, 103, 0.15);
+.order-card-item:active {
+  transform: scale(0.99);
 }
+
 .order-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   padding-bottom: 8px;
-  border-bottom: 1px dashed #eee;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
 }
+
 .order-id {
-  font-size: 11px;
-  color: #999;
+  font-size: 12px;
+  color: #86909C;
 }
+
 .order-card-body {
   display: flex;
+  gap: 12px;
   align-items: center;
-  gap: 15px;
 }
+
 .full-order-img {
   width: 60px;
   height: 60px;
-  border-radius: 8px;
-  flex-shrink: 0;
-  background-color: #f5f7fa;
+  border-radius: 10px;
   object-fit: cover;
+  flex-shrink: 0;
 }
+
 .order-main-info {
   flex: 1;
+  min-width: 0;
 }
+
 .order-pname {
-  font-weight: bold;
+  margin: 0 0 4px 0;
   font-size: 14px;
-  color: #333;
-  margin-bottom: 4px;
+  font-weight: 700;
+  color: #1D2129;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
 .order-spec {
+  margin: 0 0 4px 0;
   font-size: 11px;
-  color: #FF7E67;
-  background: #FFF0ED;
-  padding: 2px 6px;
-  border-radius: 4px;
-  display: inline-block;
-  margin-bottom: 4px;
+  color: #86909C;
 }
+
 .order-time {
+  margin: 0;
   font-size: 11px;
-  color: #bbb;
+  color: #C9CDD4;
 }
+
+.order-price-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
 .price-val {
-  font-weight: bold;
   font-size: 16px;
-  color: #F56C6C;
+  font-weight: 800;
+  color: #1D2129;
 }
+
+.unpaid-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.del-order-btn {
+  font-size: 11px;
+  padding: 0 4px;
+}
+
+.pay-now-btn {
+  background: linear-gradient(135deg, #FF5E3A 0%, #FF2A54 100%) !important;
+  border: none;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .list-end-tip {
   text-align: center;
-  font-size: 12px;
-  color: #ccc;
-  margin-top: 15px;
+  font-size: 11px;
+  color: #C9CDD4;
+  margin-top: 14px;
 }
 </style>

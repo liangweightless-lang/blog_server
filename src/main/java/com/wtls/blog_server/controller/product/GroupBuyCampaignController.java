@@ -121,6 +121,14 @@ public class GroupBuyCampaignController {
         return Result.success("Order status updated");
     }
 
+    @DeleteMapping("/orders/{orderId}")
+    @Operation(summary = "删除未支付跟团订单")
+    public Result<String> deleteUnpaidOrder(@RequestHeader("Authorization") String authHeader, @PathVariable String orderId) {
+        Long userId = getUserIdFromToken(authHeader);
+        service.cancelUnpaidOrder(userId, orderId);
+        return Result.success("未支付跟团订单已删除");
+    }
+
     @PostMapping("/orders/{orderId}/confirm-pay")
     @Operation(summary = "管理员手动确认团购订单收款", description = "核对微信商家收款码到账后，将跟团订单手动流转为已支付")
     public Result<String> confirmPay(@RequestHeader("Authorization") String authHeader, @PathVariable String orderId) {

@@ -5,29 +5,43 @@
     :closable="false"
     :visible="visible"
     :footer="false"
-    :width="360"
+    :width="380"
     :mask-closable="false"
     @cancel="handleClose"
-    modal-class="wechat-pay-modal"
+    modal-class="universal-cashier-modal"
   >
-    <div class="wechat-pay-box">
+    <div class="cashier-pay-box">
       <!-- 移动端顶部下拉拉手 (Handle Bar) -->
       <div class="sheet-handle-bar"></div>
       <button class="sheet-circle-close" @click="handleClose" aria-label="关闭">
         <icon-close />
       </button>
 
-      <!-- 微信支付品牌头部 -->
-      <div class="wechat-header">
-        <div class="wechat-logo-wrap">
-          <svg class="wechat-icon" viewBox="0 0 24 24" fill="#07C160">
+      <!-- 支付方式切换微胶囊 Segment Tabs (微信支付 / 支付宝) -->
+      <div class="pay-method-tabs">
+        <button 
+          class="pay-method-tab" 
+          :class="{ active: payChannel === 'wechat' }" 
+          @click="switchChannel('wechat')"
+        >
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="#07C160">
             <path d="M8.691 2.188C3.891 2.188 0 5.478 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .161.13.29.29.29.08 0 .15-.029.212-.068l1.96-1.141a.853.853 0 0 1 .639-.097c.92.251 1.897.39 2.913.39.309 0 .61-.019.91-.048-.718-2.038-.34-4.321 1.07-5.918 1.453-1.639 3.59-2.529 5.82-2.529.418 0 .833.03 1.238.087C16.892 4.398 13.064 2.188 8.691 2.188zm-2.42 4.145c.677 0 1.229.552 1.229 1.23 0 .676-.552 1.228-1.23 1.228-.676 0-1.228-.552-1.228-1.229 0-.677.552-1.229 1.229-1.229zm4.84 0c.677 0 1.229.552 1.229 1.23 0 .676-.552 1.228-1.23 1.228-.676 0-1.228-.552-1.228-1.229 0-.677.552-1.229 1.229-1.229zm8.567 4.144c-3.864 0-7.004 2.657-7.004 5.928 0 3.272 3.14 5.928 7.004 5.928.795 0 1.562-.116 2.278-.319a.69.69 0 0 1 .513.078l1.579.919c.05.029.106.048.173.048.13 0 .233-.106.233-.232a.38.38 0 0 0-.039-.175l-.32-1.19a.473.473 0 0 1 .174-.533c1.474-1.085 2.413-2.684 2.413-4.472 0-3.271-3.14-5.93-7.005-5.93zm-2.14 3.428c.552 0 1.007.456 1.007 1.008 0 .551-.455 1.007-1.008 1.007-.551 0-1.007-.456-1.007-1.007 0-.552.456-1.008 1.007-1.008zm4.28 0c.553 0 1.008.456 1.008 1.008 0 .551-.455 1.007-1.008 1.007-.552 0-1.007-.456-1.007-1.007 0-.552.455-1.008 1.007-1.008z"/>
           </svg>
-        </div>
-        <h3 class="pay-title">微信安全支付</h3>
+          <span>微信支付</span>
+        </button>
+        <button 
+          class="pay-method-tab" 
+          :class="{ active: payChannel === 'alipay' }" 
+          @click="switchChannel('alipay')"
+        >
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="#1677FF">
+            <path d="M21.42 16.29c-.77-.33-2.82-1.2-4.14-1.74-.83 1.54-1.87 3.01-3.11 4.35 3.32-.4 5.92-1.78 7.25-2.61zm-1.89-6.31h-4.99V8.65h6.14V7.08h-6.14V3.86h-1.8v3.22H7.49v1.57h5.25v1.33H5.97v1.57h9.87c-.52 1.48-1.28 2.89-2.26 4.17-1.57-.89-3.08-1.88-4.43-2.95l-1.12 1.25c1.47 1.17 3.12 2.25 4.86 3.22-1.87 1.76-4.04 3.05-6.42 3.82l.86 1.46c2.72-.92 5.21-2.43 7.34-4.43 2.19 1.01 4.54 1.94 6.79 2.5l.65-1.57c-1.86-.48-3.79-1.28-5.63-2.17 1.18-1.46 2.11-3.09 2.74-4.82h3.33v-1.57z"/>
+          </svg>
+          <span>支付宝支付</span>
+        </button>
       </div>
 
-      <!-- 金额区 -->
+      <!-- 金额展示区 -->
       <div class="pay-amount-box">
         <span class="currency">¥</span>
         <span class="amount-num">{{ amount }}</span>
@@ -35,37 +49,40 @@
 
       <div class="auto-verify-badge">
         <icon-check-circle-fill class="badge-icon" />
-        <span>系统已开启全自动对账 · 支付后无需任何操作</span>
+        <span>全自动对账 · 支持扫码与跳转App极速核销</span>
       </div>
 
-      <!-- 二维码/收款码展示区 -->
+      <!-- 二维码 / 收款码展示区 -->
       <div class="qrcode-wrapper">
         <div v-if="paidSuccess" class="paid-success-overlay">
           <icon-check-circle-fill class="success-icon" />
           <p class="success-text">支付成功！</p>
         </div>
-        <!-- 1. 优先展示动态生成的二维码 -->
-        <img 
-          v-else-if="qrDataUrl" 
-          :src="qrDataUrl" 
-          alt="微信支付二维码"
-          class="custom-qrcode-img"
-        />
-        <!-- 2. 否则展示管理员配置的静态商家收款码图片 -->
-        <img 
-          v-else-if="merchantQrUrl" 
-          :src="merchantQrUrl" 
-          alt="微信收款码"
-          class="merchant-qrcode-img"
-        />
-        <div v-else class="qrcode-loading">
-          <a-spin dot />
-          <p style="margin-top: 10px; font-size: 13px; color: #86909C;">正在加载付款码...</p>
-        </div>
+
+        <template v-else>
+          <!-- 1. 动态生成二维码 -->
+          <img 
+            v-if="qrDataUrl" 
+            :src="qrDataUrl" 
+            :alt="payChannel === 'wechat' ? '微信支付码' : '支付宝付款码'"
+            class="custom-qrcode-img"
+          />
+          <!-- 2. 静态商家收款码 -->
+          <img 
+            v-else-if="currentMerchantQr" 
+            :src="currentMerchantQr" 
+            :alt="payChannel === 'wechat' ? '微信收款码' : '支付宝收款码'"
+            class="merchant-qrcode-img"
+          />
+          <div v-else class="qrcode-loading">
+            <a-spin dot />
+            <p style="margin-top: 10px; font-size: 13px; color: #86909C;">正在加载付款码...</p>
+          </div>
+        </template>
       </div>
 
       <div class="mobile-long-press-tip">
-        <icon-scan /> 手机端可<strong>长按识别二维码</strong>或微信扫码支付
+        <icon-scan /> 手机端可<strong>长按识别二维码</strong>或使用对应App扫码支付
       </div>
 
       <!-- 底部行动按钮 -->
@@ -80,7 +97,7 @@
 </template>
 
 <script>
-import { checkWechatPayStatus, checkXunhupayStatus } from '@/api/order';
+import { checkWechatPayStatus, checkXunhupayStatus, createXunhupay } from '@/api/order';
 import { getHomeConfig } from '@/api/common';
 import { Message } from '@arco-design/web-vue';
 import QRCode from 'qrcode';
@@ -105,14 +122,22 @@ export default {
       default: ''
     }
   },
+  emits: ['update:show', 'success'],
   data() {
     return {
       visible: false,
+      payChannel: 'wechat', // 'wechat' | 'alipay'
       timer: null,
       checking: false,
       paidSuccess: false,
       qrDataUrl: '',
-      merchantQrUrl: ''
+      wechatMerchantQrUrl: '',
+      alipayMerchantQrUrl: ''
+    }
+  },
+  computed: {
+    currentMerchantQr() {
+      return this.payChannel === 'wechat' ? this.wechatMerchantQrUrl : (this.alipayMerchantQrUrl || this.wechatMerchantQrUrl);
     }
   },
   created() {
@@ -144,10 +169,32 @@ export default {
       try {
         const res = await getHomeConfig();
         if (res.data && res.data.data) {
-          this.merchantQrUrl = res.data.data.wechatMerchantQrUrl || res.data.data.wechatQrUrl || '';
+          this.wechatMerchantQrUrl = res.data.data.wechatMerchantQrUrl || res.data.data.wechatQrUrl || '';
+          this.alipayMerchantQrUrl = res.data.data.alipayMerchantQrUrl || res.data.data.alipayQrUrl || '';
         }
       } catch (e) {
         // 静默
+      }
+    },
+    async switchChannel(channel) {
+      if (this.payChannel === channel) return;
+      this.payChannel = channel;
+      this.qrDataUrl = '';
+      
+      // 若切换到支付宝且有订单号，尝试获取支付宝专属动态码
+      if (channel === 'alipay' && this.orderId) {
+        try {
+          const res = await createXunhupay(this.orderId, 'alipay');
+          const alipayUrl = res.data?.data?.url_qrcode || res.data?.data?.url;
+          if (alipayUrl) {
+            this.qrDataUrl = await QRCode.toDataURL(alipayUrl, { width: 200, margin: 1 });
+            return;
+          }
+        } catch (e) {
+          // 降级使用静态收款码
+        }
+      } else if (channel === 'wechat') {
+        this.generateQrCode();
       }
     },
     async generateQrCode() {
@@ -174,7 +221,6 @@ export default {
 
       this.timer = setInterval(async () => {
         try {
-          // 双重轮询：微信官方与虎皮椒接口
           const [wechatRes, xunhuRes] = await Promise.all([
             checkWechatPayStatus(this.orderId).catch(() => ({ data: { data: {} } })),
             checkXunhupayStatus(this.orderId).catch(() => ({ data: { data: {} } }))
@@ -187,7 +233,7 @@ export default {
             this.handleSuccess();
           }
         } catch (e) {
-          // 轮询异常静默
+          // 轮询静默
         }
       }, 1500);
     },
@@ -212,59 +258,54 @@ export default {
         if (isPaid) {
           this.handleSuccess();
         } else {
-          Message.info('正在等待微信到账通知，到账后将自动完成...');
+          Message.info('正在等待到账通知，若已扣款请稍等1-2秒即可自动更新');
         }
       } catch (e) {
-        Message.error('核验支付状态失败');
+        Message.error('查询异常，请稍后重试');
       } finally {
         this.checking = false;
       }
     },
     handleSuccess() {
-      this.stopPolling();
       this.paidSuccess = true;
-      Message.success('支付成功！正在为您跳转订单中心');
+      this.stopPolling();
+      Message.success('🎉 支付成功！');
       setTimeout(() => {
-        this.handleClose();
+        this.visible = false;
+        this.$emit('update:show', false);
         this.$emit('success');
-      }, 1000);
+      }, 1200);
     },
     handleClose() {
       this.stopPolling();
       this.visible = false;
       this.$emit('update:show', false);
-      this.$emit('close');
     }
   }
 }
 </script>
 
 <style scoped>
-.wechat-pay-box {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 6px 0 10px;
-  text-align: center;
+.cashier-pay-box {
+  padding: 16px 18px 24px;
   position: relative;
+  text-align: center;
 }
 
-/* 仿 iOS 底部抽屉顶部拉手条 */
 .sheet-handle-bar {
-  display: none;
   width: 36px;
   height: 4px;
   border-radius: 2px;
   background: #E5E6EB;
-  margin: 0 auto 14px auto;
+  margin: 0 auto 12px;
 }
 
 .sheet-circle-close {
   position: absolute;
-  right: 14px;
   top: 14px;
-  width: 28px;
-  height: 28px;
+  right: 14px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   background: #F2F3F5;
   color: #4E5969;
@@ -272,66 +313,68 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
-  transition: all 0.2s ease;
   z-index: 10;
+  transition: all 0.2s ease;
 }
 .sheet-circle-close:active {
   background: #E5E6EB;
   transform: scale(0.92);
 }
 
-@media (max-width: 768px) {
-  .sheet-handle-bar {
-    display: block;
-  }
-}
-
-.wechat-header {
+/* 支付渠道微胶囊 Tabs */
+.pay-method-tabs {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
+  background: #F2F3F5;
+  border-radius: 14px;
+  padding: 3px;
+  margin: 4px 0 16px;
 }
 
-.wechat-logo-wrap {
-  width: 28px;
-  height: 28px;
+.pay-method-tab {
+  flex: 1;
+  height: 36px;
+  border: none;
+  background: transparent;
+  border-radius: 11px;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.wechat-icon {
-  width: 26px;
-  height: 26px;
-}
-
-.pay-title {
-  margin: 0;
-  font-size: 17px;
+  gap: 6px;
+  font-size: 13px;
   font-weight: 700;
+  color: #86909C;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pay-method-tab.active {
+  background: #FFFFFF;
   color: #1D2129;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.tab-icon {
+  width: 18px;
+  height: 18px;
 }
 
 .pay-amount-box {
   display: flex;
   align-items: baseline;
   justify-content: center;
-  color: #07C160;
+  color: #1D2129;
   margin-bottom: 8px;
 }
-
 .currency {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 800;
   margin-right: 2px;
 }
-
 .amount-num {
-  font-size: 34px;
-  font-weight: 800;
+  font-size: 36px;
+  font-weight: 900;
   letter-spacing: -0.5px;
 }
 
@@ -339,17 +382,15 @@ export default {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background: #E8FFEA;
-  color: #00B42A;
+  background: rgba(7, 193, 96, 0.08);
+  color: #07C160;
   font-size: 11px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 12px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 20px;
   margin-bottom: 16px;
-  border: 1px solid rgba(0, 180, 42, 0.2);
 }
-
-.auto-verify-badge .badge-icon {
+.badge-icon {
   font-size: 13px;
 }
 
@@ -357,20 +398,18 @@ export default {
   position: relative;
   width: 210px;
   height: 210px;
+  margin: 0 auto;
+  padding: 10px;
   background: #FFFFFF;
   border-radius: 16px;
-  border: 1px solid #E5E6EB;
-  padding: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  border: 1px solid #F2F3F5;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 20px rgba(7, 193, 96, 0.1);
-  margin-bottom: 14px;
-  overflow: hidden;
 }
 
-.merchant-qrcode-img,
-.custom-qrcode-img {
+.custom-qrcode-img, .merchant-qrcode-img {
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -381,79 +420,57 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  animation: fadeInScale 0.3s ease;
+  gap: 8px;
+  color: #07C160;
 }
-
 .success-icon {
   font-size: 56px;
-  color: #07C160;
-  margin-bottom: 10px;
 }
-
 .success-text {
-  font-size: 17px;
-  font-weight: 800;
-  color: #07C160;
   margin: 0;
+  font-size: 16px;
+  font-weight: 800;
 }
 
 .mobile-long-press-tip {
-  display: none;
-  align-items: center;
-  gap: 4px;
+  margin-top: 12px;
   font-size: 12px;
   color: #86909C;
-  margin-bottom: 16px;
-}
-
-@media (max-width: 768px) {
-  .mobile-long-press-tip {
-    display: flex;
-  }
-}
-
-/* 底部按钮 */
-.modal-footer-actions {
-  width: 100%;
   display: flex;
-  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.mobile-long-press-tip strong {
+  color: #1D2129;
+}
+
+.modal-footer-actions {
+  margin-top: 20px;
 }
 
 .paid-done-btn {
   width: 100%;
   height: 46px;
   border-radius: 23px;
-  border: none;
-  background: linear-gradient(135deg, #07C160 0%, #059649 100%);
+  background: linear-gradient(135deg, #1A1D20 0%, #2D3139 100%);
   color: #FFFFFF;
-  font-size: 15px;
+  border: none;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(7, 193, 96, 0.28);
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
+  transition: all 0.2s ease;
 }
-.paid-done-btn:hover {
-  opacity: 0.95;
-  transform: translateY(-1px);
-}
-.paid-done-btn:active {
+.paid-done-btn:active:not(:disabled) {
   transform: scale(0.97);
 }
-
-@keyframes fadeInScale {
-  from {
-    opacity: 0;
-    transform: scale(0.85);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+.paid-done-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 </style>
