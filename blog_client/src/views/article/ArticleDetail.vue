@@ -35,7 +35,17 @@
           >
             <div class="swipe-slide" v-for="(url, index) in mediaUrls" :key="index">
               <div class="carousel-image-wrapper">
-                <img :src="url" class="carousel-image-el" alt="media" loading="eager" />
+                <div v-if="!loadedMap[index]" class="image-skeleton-shimmer">
+                  <div class="skeleton-shimmer-wave"></div>
+                </div>
+                <img 
+                  :src="url" 
+                  class="carousel-image-el" 
+                  :class="{ 'is-loaded': loadedMap[index] }"
+                  alt="media" 
+                  loading="eager"
+                  @load="onImageLoad(index)"
+                />
               </div>
             </div>
           </div>
@@ -182,7 +192,8 @@ export default {
       homeConfig: {
         avatarUrl: '',
         authorName: ''
-      }
+      },
+      loadedMap: {}
     }
   },
   computed: {
@@ -270,6 +281,10 @@ export default {
           }
           this.mediaUrls = [cover];
         }
+
+        // 异步预加载后续所有图片，配合浏览器强缓存实现极速秒开
+        this.preloadImages(this.mediaUrls);
+
         if (this.article.productId) {
           this.fetchProduct(this.article.productId)
         }
@@ -278,6 +293,18 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+    onImageLoad(index) {
+      this.loadedMap = { ...this.loadedMap, [index]: true };
+    },
+    preloadImages(urls) {
+      if (!urls || !urls.length) return;
+      urls.forEach(url => {
+        if (typeof url === 'string') {
+          const img = new Image();
+          img.src = url;
+        }
+      });
     },
     async fetchProduct(productId) {
       try {
@@ -506,6 +533,30 @@ export default {
   justify-content: center;
   overflow: hidden;
   background: #f7f8fa;
+  position: relative;
+}
+
+.image-skeleton-shimmer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #E5E6EB;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.skeleton-shimmer-wave {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: shimmerWave 1.4s infinite;
+}
+
+@keyframes shimmerWave {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
 .carousel-image-el {
@@ -514,6 +565,14 @@ export default {
   object-fit: contain;
   display: block;
   background: #f7f8fa;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.carousel-image-el.is-loaded {
+  opacity: 1;
 }
 
 .carousel-indicators {
