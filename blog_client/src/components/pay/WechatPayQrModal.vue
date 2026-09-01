@@ -52,7 +52,7 @@
         <span>{{ payChannel === 'alipay' ? '虎皮椒支付宝全自动对账 · 支付后无需等待' : '微信官方对账 · 支付后自动核销' }}</span>
       </div>
 
-      <!-- 二维码 / 收款码展示区 (完全解除长按限制，支持微信长按识别) -->
+      <!-- 二维码 / 收款码展示区 (完全解除长按限制，支持微信/Safari长按存储) -->
       <div class="qrcode-touch-container">
         <div class="qrcode-wrapper">
           <div v-if="paidSuccess" class="paid-success-overlay">
@@ -69,7 +69,6 @@
                 alt="微信商家收款码"
                 class="real-touch-qrcode-img"
                 draggable="true"
-                @click="previewQr(wechatMerchantQrUrl)"
               />
               <img 
                 v-else-if="qrDataUrl" 
@@ -77,7 +76,6 @@
                 alt="微信支付码"
                 class="real-touch-qrcode-img"
                 draggable="true"
-                @click="previewQr(qrDataUrl)"
               />
               <div v-else class="qrcode-loading">
                 <a-spin dot />
@@ -93,7 +91,6 @@
                 alt="支付宝付款码"
                 class="real-touch-qrcode-img"
                 draggable="true"
-                @click="previewQr(qrDataUrl)"
               />
               <img 
                 v-else-if="alipayMerchantQrUrl" 
@@ -101,7 +98,6 @@
                 alt="支付宝收款码"
                 class="real-touch-qrcode-img"
                 draggable="true"
-                @click="previewQr(alipayMerchantQrUrl)"
               />
               <div v-else class="qrcode-loading">
                 <a-spin dot />
@@ -127,21 +123,21 @@
           <span>一键唤起支付宝 App 支付</span>
         </a>
 
-        <!-- 微信模式：一键保存付款码到相册并直接唤起微信 App -->
+        <!-- 微信模式：直接一键打开微信 App (干净无干扰) -->
         <button 
           v-else-if="payChannel === 'wechat'"
           class="quick-jump-btn btn-wechat"
-          @click="handleSaveAndOpenWechat"
+          @click="handleOpenWechat"
         >
           <svg class="jump-mini-icon" viewBox="0 0 24 24" fill="#FFFFFF">
             <path d="M8.691 2.188C3.891 2.188 0 5.478 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .161.13.29.29.29.08 0 .15-.029.212-.068l1.96-1.141a.853.853 0 0 1 .639-.097c.92.251 1.897.39 2.913.39.309 0 .61-.019.91-.048-.718-2.038-.34-4.321 1.07-5.918 1.453-1.639 3.59-2.529 5.82-2.529.418 0 .833.03 1.238.087C16.892 4.398 13.064 2.188 8.691 2.188zm-2.42 4.145c.677 0 1.229.552 1.229 1.23 0 .676-.552 1.228-1.23 1.228-.676 0-1.228-.552-1.228-1.229 0-.677.552-1.229 1.229-1.229zm4.84 0c.677 0 1.229.552 1.229 1.23 0 .676-.552 1.228-1.23 1.228-.676 0-1.228-.552-1.228-1.229 0-.677.552-1.229 1.229-1.229zm8.567 4.144c-3.864 0-7.004 2.657-7.004 5.928 0 3.272 3.14 5.928 7.004 5.928.795 0 1.562-.116 2.278-.319a.69.69 0 0 1 .513.078l1.579.919c.05.029.106.048.173.048.13 0 .233-.106.233-.232a.38.38 0 0 0-.039-.175l-.32-1.19a.473.473 0 0 1 .174-.533c1.474-1.085 2.413-2.684 2.413-4.472 0-3.271-3.14-5.93-7.005-5.93zm-2.14 3.428c.552 0 1.007.456 1.007 1.008 0 .551-.455 1.007-1.008 1.007-.551 0-1.007-.456-1.007-1.007 0-.552.456-1.008 1.007-1.008zm4.28 0c.553 0 1.008.456 1.008 1.008 0 .551-.455 1.007-1.008 1.007-.552 0-1.007-.456-1.007-1.007 0-.552.455-1.008 1.007-1.008z"/>
           </svg>
-          <span>保存二维码并打开微信</span>
+          <span>一键打开微信 App 扫码</span>
         </button>
       </div>
 
       <div class="mobile-long-press-tip">
-        <icon-scan /> {{ payChannel === 'wechat' ? '微信内长按可直接识别，外部可点击上方按钮唤起' : '手机端可点击上方按钮唤起支付宝，或扫码支付' }}
+        <icon-scan /> {{ payChannel === 'wechat' ? '长按上方二维码可存储/识别，点击按钮打开微信' : '手机端可点击上方按钮唤起支付宝，或扫码支付' }}
       </div>
 
       <!-- 底部行动按钮 -->
@@ -271,32 +267,12 @@ export default {
         }
       }
     },
-    previewQr(imgUrl) {
-      if (!imgUrl) return;
-      // 点击图片可全屏打开方便长按
-      window.open(imgUrl, '_blank');
-    },
-    handleSaveAndOpenWechat() {
-      const qrImg = this.wechatMerchantQrUrl || this.qrDataUrl;
-      if (qrImg) {
-        // 自动触发下载收款码图片
-        const link = document.createElement('a');
-        link.href = qrImg;
-        link.download = `小柴包微信付款码_${this.amount}元.jpg`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        Message.info({
-          content: '📸 付款码已保存至相册，正在为您打开微信...',
-          duration: 2500
-        });
-      }
-
-      // 1 秒后自动拉起微信 App
-      setTimeout(() => {
-        window.location.href = 'weixin://';
-      }, 500);
+    handleOpenWechat() {
+      Message.info({
+        content: '正在为您打开微信...',
+        duration: 1500
+      });
+      window.location.href = 'weixin://';
     },
     startPolling() {
       this.stopPolling();
