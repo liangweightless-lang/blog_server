@@ -1,81 +1,107 @@
 <template>
   <div class="editorial-grid-wrapper">
-    <a-spin :loading="loading" style="width: 100%; display: block;">
-      <div class="masonry-waterfall" v-if="mixedItems.length > 0">
-        <div class="masonry-brick" v-for="(item, index) in mixedItems" :key="item.type + '-' + item.data.id">
-          
-          <!-- 灵感手作日记卡片 (小红书/即刻高级风) -->
-          <div 
-            v-if="item.type === 'article'" 
-            class="clean-article-card" 
-            @click="viewArticle(item.data)"
-          >
-            <div class="card-cover-box">
-              <img 
-                v-if="isValidUrl(item.data.coverUrl)" 
-                :src="item.data.coverUrl" 
-                class="card-img"
-                alt="cover" 
-                loading="lazy" 
-              />
-              <div v-else class="card-img-placeholder" :style="{ background: getGradient(item.data.id), height: getRandomHeight(item.data.id) + 'px' }">
-                <span class="placeholder-sparkle">✦</span>
-              </div>
-              <div v-if="item.data.tags && item.data.tags.length" class="floating-tag-pill">
-                #{{ item.data.tags[0] }}
-              </div>
-            </div>
-            
-            <div class="card-meta-box">
-              <h3 class="card-story-title">{{ item.data.title }}</h3>
-              
-              <div class="card-footer-row">
-                <div class="author-micro-info">
-                  <img :src="homeConfig.avatarUrl || '/img/avatar.png'" class="author-micro-avatar" />
-                  <span class="author-micro-name">{{ homeConfig.authorName || '小柴包' }}</span>
-                </div>
-                <div class="like-interaction" @click.stop="handleLike(item.data)">
-                  <icon-heart-fill v-if="isLiked(item.data.id)" class="heart-svg-icon is-liked" />
-                  <icon-heart v-else class="heart-svg-icon" />
-                  <span class="like-counter">{{ (item.data.likesCount || 0) + (isLiked(item.data.id) ? 1 : 0) }}</span>
-                </div>
-              </div>
-            </div>
+    <!-- 1. 加载中高定流光瀑布流骨架屏 (Skeleton Pulse) -->
+    <div class="masonry-waterfall" v-if="loading">
+      <div class="masonry-brick" v-for="i in 4" :key="'skel-' + i">
+        <div class="clean-article-card skeleton-card">
+          <div class="skeleton-cover" :style="{ height: getSkeletonHeight(i) + 'px' }">
+            <div class="skeleton-shimmer-bar"></div>
           </div>
-
-          <!-- 社区快团高质感推荐卡片 -->
-          <div 
-            v-else-if="item.type === 'campaign'" 
-            class="clean-article-card campaign-spotlight-card" 
-            @click="$router.push(`/campaign/${item.data.id}`)"
-          >
-            <div class="card-cover-box">
-              <div class="campaign-fire-badge">
-                <span class="fire-flame">🔥</span>
-                <span>正在热团</span>
-              </div>
-              <img v-if="item.data.products && item.data.products[0]" :src="item.data.products[0].product?.image" class="card-img" loading="lazy" />
-              <div v-else class="card-img-placeholder campaign-placeholder">🎁 快团特惠</div>
-            </div>
-            <div class="card-meta-box campaign-meta">
-              <h3 class="card-story-title campaign-title">
-                <span class="inline-campaign-badge">快团</span>
-                {{ item.data.title }}
-              </h3>
-              <div class="card-footer-row">
-                <div class="campaign-price-block">
-                  <span class="campaign-price-val">¥{{ getMinPrice(item.data) }}</span>
-                  <span class="campaign-price-from">起</span>
-                </div>
-                <button class="campaign-join-btn">去拼团</button>
-              </div>
-            </div>
+          <div class="card-meta-box">
+            <div class="skeleton-line-title"></div>
+            <div class="skeleton-line-sub"></div>
+            <div class="skeleton-line-footer"></div>
           </div>
-
         </div>
       </div>
-      <a-empty v-else-if="!loading" description="暂无内容，快来书写第一篇日记吧" style="margin-top: 40px;"></a-empty>
-    </a-spin>
+    </div>
+
+    <!-- 2. 真实瀑布流内容卡片 -->
+    <div class="masonry-waterfall" v-else-if="mixedItems.length > 0">
+      <div class="masonry-brick" v-for="(item, index) in mixedItems" :key="item.type + '-' + item.data.id">
+        
+        <!-- 灵感手作日记卡片 (小红书/即刻高级风) -->
+        <div 
+          v-if="item.type === 'article'" 
+          class="clean-article-card" 
+          @click="viewArticle(item.data)"
+        >
+          <div class="card-cover-box">
+            <img 
+              v-if="isValidUrl(item.data.coverUrl)" 
+              :src="item.data.coverUrl" 
+              class="card-img"
+              alt="cover" 
+              loading="lazy" 
+            />
+            <div v-else class="card-img-placeholder" :style="{ background: getGradient(item.data.id), height: getRandomHeight(item.data.id) + 'px' }">
+              <span class="placeholder-sparkle">✦</span>
+            </div>
+
+            <!-- 照片底部细腻暗光遮罩 (提升标签辨识度) -->
+            <div class="cover-bottom-scrim"></div>
+
+            <div v-if="item.data.tags && item.data.tags.length" class="floating-tag-pill">
+              #{{ item.data.tags[0] }}
+            </div>
+          </div>
+          
+          <div class="card-meta-box">
+            <h3 class="card-story-title">{{ item.data.title }}</h3>
+            
+            <div class="card-footer-row">
+              <div class="author-micro-info">
+                <img :src="homeConfig.avatarUrl || '/img/avatar.png'" class="author-micro-avatar" />
+                <span class="author-micro-name">{{ homeConfig.authorName || '小柴包' }}</span>
+              </div>
+              <div class="like-interaction" @click.stop="handleLike(item.data)">
+                <icon-heart-fill v-if="isLiked(item.data.id)" class="heart-svg-icon is-liked" />
+                <icon-heart v-else class="heart-svg-icon" />
+                <span class="like-counter" :class="{ 'is-liked-text': isLiked(item.data.id) }">
+                  {{ (item.data.likesCount || 0) + (isLiked(item.data.id) ? 1 : 0) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 社区快团高质感推荐卡片 -->
+        <div 
+          v-else-if="item.type === 'campaign'" 
+          class="clean-article-card campaign-spotlight-card" 
+          @click="$router.push(`/campaign/${item.data.id}`)"
+        >
+          <div class="card-cover-box">
+            <div class="campaign-fire-badge">
+              <span class="fire-flame">🔥</span>
+              <span>正在热团</span>
+            </div>
+            <img v-if="item.data.products && item.data.products[0]" :src="item.data.products[0].product?.image" class="card-img" loading="lazy" />
+            <div v-else class="card-img-placeholder campaign-placeholder">🎁 快团特惠</div>
+            <div class="cover-bottom-scrim"></div>
+          </div>
+          <div class="card-meta-box campaign-meta">
+            <h3 class="card-story-title campaign-title">
+              <span class="inline-campaign-badge">快团</span>
+              {{ item.data.title }}
+            </h3>
+            <div class="card-footer-row">
+              <div class="campaign-price-block">
+                <span class="campaign-price-val">¥{{ getMinPrice(item.data) }}</span>
+                <span class="campaign-price-from">起</span>
+              </div>
+              <button class="campaign-join-btn">去拼团</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 3. 空状态 -->
+    <a-empty v-else description="暂无内容，快来书写第一篇灵感手记吧" style="margin-top: 50px;">
+      <template #image><icon-heart style="font-size: 44px; color: #D3C1BA; opacity: 0.5;" /></template>
+    </a-empty>
   </div>
 </template>
 
@@ -151,11 +177,18 @@ export default {
       return this.likedIds.includes(id);
     },
     handleLike(article) {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.dispatchEvent(new CustomEvent('open-login'));
+        return Message.warning('实名互动：请先登录后再点赞');
+      }
+
       if (this.isLiked(article.id)) {
         this.likedIds = this.likedIds.filter(i => i !== article.id);
+        Message.info('已取消点赞');
       } else {
         this.likedIds.push(article.id);
-        Message.success({ content: '已点赞 ❤️', duration: 1500 });
+        Message.success({ content: '已实名点赞 ❤️', duration: 1500 });
       }
       localStorage.setItem('user_liked_articles', JSON.stringify(this.likedIds));
     },
@@ -175,6 +208,10 @@ export default {
     getRandomHeight(id) {
       const heights = [190, 230, 210, 250];
       return heights[(id || 0) % heights.length];
+    },
+    getSkeletonHeight(index) {
+      const heights = [210, 260, 240, 200];
+      return heights[index % heights.length];
     },
     viewArticle(article) {
       this.$router.push(`/article/${article.id}`);
@@ -210,7 +247,7 @@ export default {
   border-radius: 18px;
   overflow: hidden;
   background: #FFFFFF;
-  box-shadow: 0 4px 20px rgba(17, 24, 39, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 4px 20px rgba(17, 24, 39, 0.04), 0 1px 3px rgba(0, 0, 0, 0.01);
   cursor: pointer;
   transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
   user-select: none;
@@ -245,11 +282,22 @@ export default {
   transform: scale(1.03);
 }
 
+/* 暗光蒙层 */
+.cover-bottom-scrim {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.35) 100%);
+  pointer-events: none;
+}
+
 .floating-tag-pill {
   position: absolute;
   bottom: 8px;
   left: 8px;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   color: #FFFFFF;
@@ -258,6 +306,7 @@ export default {
   padding: 2px 8px;
   border-radius: 10px;
   letter-spacing: 0.2px;
+  z-index: 2;
 }
 
 .card-img-placeholder {
@@ -345,8 +394,11 @@ export default {
   font-size: 12px;
   font-weight: 600;
 }
+.like-counter.is-liked-text {
+  color: #FF3B30;
+}
 
-/* 快团专属高质感设计 */
+/* 快团专属设计 */
 .campaign-spotlight-card {
   background: linear-gradient(180deg, #FFFDFB 0%, #FFFFFF 100%);
   border: 1px solid rgba(255, 126, 103, 0.15);
@@ -366,6 +418,7 @@ export default {
   align-items: center;
   gap: 3px;
   box-shadow: 0 4px 10px rgba(255, 65, 108, 0.35);
+  z-index: 2;
 }
 
 .inline-campaign-badge {
@@ -400,6 +453,48 @@ export default {
   border-radius: 14px;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(255, 42, 84, 0.3);
+}
+
+/* 骨架屏流光样式 */
+.skeleton-card {
+  pointer-events: none;
+}
+.skeleton-cover {
+  width: 100%;
+  background: #E5E6EB;
+  position: relative;
+  overflow: hidden;
+}
+.skeleton-shimmer-bar {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  animation: skelShimmer 1.4s infinite;
+}
+.skeleton-line-title {
+  height: 16px;
+  width: 85%;
+  background: #E5E6EB;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+.skeleton-line-sub {
+  height: 12px;
+  width: 60%;
+  background: #F2F3F5;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+.skeleton-line-footer {
+  height: 14px;
+  width: 40%;
+  background: #F2F3F5;
+  border-radius: 4px;
+}
+
+@keyframes skelShimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
 @media (max-width: 768px) {
