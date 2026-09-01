@@ -33,6 +33,7 @@
               class="card-img"
               alt="cover" 
               loading="lazy" 
+              @error="handleImgError(item.data)"
             />
             <div v-else class="card-img-placeholder" :style="{ background: getGradient(item.data.id), height: getRandomHeight(item.data.id) + 'px' }">
               <span class="placeholder-sparkle">✦</span>
@@ -171,6 +172,11 @@ export default {
         }
       } catch (e) {
         // ignore
+      }
+    },
+    handleImgError(article) {
+      if (article) {
+        article.coverUrl = '';
       }
     },
     isLiked(id) {
