@@ -26,9 +26,110 @@
         }, { passive: false });
       })();
     </script>
+
+    <!-- 原生启动屏即时渲染内联样式 (0ms 首帧渲染，彻底告别主屏幕启动白屏) -->
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #FAFAFA;
+        overflow-x: hidden;
+      }
+      #app-splash-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background: radial-gradient(circle at 50% 30%, #FFFFFF 0%, #F5F7FA 100%);
+        z-index: 99999;
+        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+      }
+      .splash-logo-wrap {
+        width: 80px;
+        height: 80px;
+        border-radius: 22px;
+        background: #FFFFFF;
+        box-shadow: 0 12px 36px rgba(255, 126, 103, 0.22), 0 2px 10px rgba(0, 0, 0, 0.04);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 20px;
+        animation: splashLogoFloat 2s ease-in-out infinite;
+        overflow: hidden;
+      }
+      .splash-logo-img {
+        width: 68px;
+        height: 68px;
+        border-radius: 18px;
+        object-fit: cover;
+      }
+      .splash-title {
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        background: linear-gradient(135deg, #FF7E67 0%, #FF416C 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0 0 8px 0;
+      }
+      .splash-subtitle {
+        font-size: 13px;
+        color: #86909C;
+        margin: 0 0 32px 0;
+        letter-spacing: 0.5px;
+      }
+      .splash-loader {
+        width: 48px;
+        height: 4px;
+        background: rgba(255, 126, 103, 0.15);
+        border-radius: 2px;
+        overflow: hidden;
+        position: relative;
+      }
+      .splash-loader-bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 50%;
+        background: linear-gradient(90deg, #FF9A8B 0%, #FF6A88 100%);
+        border-radius: 2px;
+        animation: splashLoaderAnim 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+      }
+      @keyframes splashLogoFloat {
+        0%, 100% { transform: translateY(0) scale(1); }
+        50% { transform: translateY(-6px) scale(1.03); }
+      }
+      @keyframes splashLoaderAnim {
+        0% { left: -50%; width: 30%; }
+        50% { width: 70%; }
+        100% { left: 100%; width: 30%; }
+      }
+    </style>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <!-- 原生启动过渡骨架 (Vue挂载后自动无缝替换) -->
+      <div id="app-splash-screen">
+        <div class="splash-logo-wrap">
+          <img src="/favicon.png" class="splash-logo-img" alt="logo" />
+        </div>
+        <h1 class="splash-title">小柴包</h1>
+        <p class="splash-subtitle">独立品牌与生活美学</p>
+        <div class="splash-loader">
+          <div class="splash-loader-bar"></div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
