@@ -1,51 +1,59 @@
 <template>
-  <div class="hero-section">
-    <div class="profile-card">
-      <div class="avatar-wrap">
-        <img :src="homeConfig.avatarUrl || '/img/avatar.png'" class="avatar" alt="Avatar" />
-        <span class="v-badge" title="官方认证主理人">
-          <icon-star />
-        </span>
-      </div>
-
-      <div class="profile-info">
-        <div class="name-row">
-          <h1 class="author-name">{{ homeConfig.authorName || '小柴包' }}</h1>
-          <span class="cert-tag">认证主理人</span>
+  <div class="hero-editorial-section">
+    <div class="hero-ambient-glow"></div>
+    <div class="hero-card-inner">
+      <!-- 主理人头像与认证 -->
+      <div class="avatar-container">
+        <div class="avatar-ring">
+          <img :src="homeConfig.avatarUrl || '/img/avatar.png'" class="author-avatar" alt="Avatar" />
         </div>
-
-        <p class="author-bio">{{ homeConfig.authorBio || '记录灵感，探索生活美学。在这里分享品牌的成长脉络。' }}</p>
-
-        <!-- 创作者数据栏 (小红书/即刻风格) -->
-        <div class="stats-row">
-          <div class="stat-item">
-            <span class="stat-num">{{ stats.articleCount }}</span>
-            <span class="stat-label">灵感</span>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <span class="stat-num">{{ stats.likesCount }}</span>
-            <span class="stat-label">获赞</span>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <span class="stat-num">{{ stats.campaignCount }}</span>
-            <span class="stat-label">好物快团</span>
-          </div>
+        <div class="verified-badge-mini" title="认证独立主理人">
+          <span>✦</span>
         </div>
       </div>
 
-      <div class="actions" v-if="homeConfig.wechatQrUrl">
+      <!-- 主理人品牌文案 -->
+      <div class="author-meta-block">
+        <div class="author-header-line">
+          <h2 class="author-brand-title">{{ homeConfig.authorName || '小柴包' }}</h2>
+          <span class="editorial-tag">生活美学主理人</span>
+        </div>
+
+        <p class="author-manifesto">
+          {{ homeConfig.authorBio || '记录灵感，探索生活美学。在这里分享品牌的成长脉络。' }}
+        </p>
+
+        <!-- 创作者杂志级数据指标 -->
+        <div class="editorial-stats-bar">
+          <div class="stat-cell">
+            <span class="stat-value">{{ stats.articleCount }}</span>
+            <span class="stat-caption">灵感日记</span>
+          </div>
+          <span class="stat-dot">·</span>
+          <div class="stat-cell">
+            <span class="stat-value">{{ stats.likesCount }}</span>
+            <span class="stat-caption">获赞共鸣</span>
+          </div>
+          <span class="stat-dot">·</span>
+          <div class="stat-cell">
+            <span class="stat-value">{{ stats.campaignCount }}</span>
+            <span class="stat-caption">精选快团</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧微信互动微胶囊 -->
+      <div class="hero-action-slot" v-if="homeConfig.wechatQrUrl">
         <a-popover position="bottom" trigger="hover">
-          <button class="contact-btn">
-            <icon-wechat />
-            <span>主理人微信</span>
+          <button class="concierge-btn">
+            <icon-wechat class="btn-icon" />
+            <span class="btn-text">主理人</span>
           </button>
           <template #content>
-            <div style="text-align: center; width: 150px; padding: 6px;">
-              <div style="font-size: 13px; color: #1D2129; margin-bottom: 8px; font-weight: 700;">扫码添加主理人</div>
-              <img :src="homeConfig.wechatQrUrl" style="width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-              <div style="font-size: 11px; color: #86909C; margin-top: 6px;">一对一灵感交流与好物咨询</div>
+            <div class="wechat-pop-card">
+              <div class="pop-title">扫码连接主理人</div>
+              <img :src="homeConfig.wechatQrUrl" class="pop-qr-img" />
+              <div class="pop-desc">一对一灵感交流与好物咨询</div>
             </div>
           </template>
         </a-popover>
@@ -106,7 +114,7 @@ export default {
         this.stats.likesCount = totalLikes > 999 ? (totalLikes / 1000).toFixed(1) + 'k' : (totalLikes || '1.8k');
         this.stats.campaignCount = campaigns.length || 3;
       } catch (e) {
-        // fallback
+        // ignore
       }
     }
   }
@@ -114,150 +122,163 @@ export default {
 </script>
 
 <style scoped>
-.hero-section {
-  padding: calc(10px + var(--safe-top, 0px)) 15px 10px;
-  background: radial-gradient(circle at 10% 20%, rgba(255, 126, 103, 0.08) 0%, transparent 60%),
-              radial-gradient(circle at 90% 80%, rgba(255, 106, 136, 0.06) 0%, transparent 60%);
-}
-
-.profile-card {
-  display: flex;
-  align-items: center;
-  padding: 18px 20px;
-  border-radius: 24px;
-  background: var(--glass-bg, rgba(255, 255, 255, 0.85));
-  backdrop-filter: var(--glass-blur, blur(25px));
-  -webkit-backdrop-filter: var(--glass-blur, blur(25px));
-  border: 1px solid rgba(255, 255, 255, 0.95);
-  box-shadow: 0 10px 30px rgba(255, 126, 103, 0.06), 0 2px 8px rgba(0, 0, 0, 0.02);
-  animation: heroFadeIn 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+.hero-editorial-section {
   position: relative;
+  padding: calc(14px + var(--safe-top, 0px)) 16px 6px;
   overflow: hidden;
 }
 
-@keyframes heroFadeIn {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+/* 柔和极光微光环境光 (呼吸感) */
+.hero-ambient-glow {
+  position: absolute;
+  top: -40px;
+  left: 20px;
+  width: 200px;
+  height: 140px;
+  background: radial-gradient(circle, rgba(255, 126, 103, 0.18) 0%, rgba(255, 106, 136, 0.05) 50%, transparent 80%);
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: 0;
 }
 
-.avatar-wrap {
+.hero-card-inner {
   position: relative;
-  margin-right: 16px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  padding: 16px 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 32px rgba(17, 24, 39, 0.04), 0 2px 6px rgba(0, 0, 0, 0.01);
+}
+
+.avatar-container {
+  position: relative;
+  margin-right: 14px;
   flex-shrink: 0;
 }
 
-.avatar {
-  width: 64px;
-  height: 64px;
+.avatar-ring {
+  padding: 2.5px;
   border-radius: 50%;
-  object-fit: cover;
-  border: 2.5px solid #FFFFFF;
-  box-shadow: 0 4px 16px rgba(255, 126, 103, 0.25);
-  display: block;
+  background: linear-gradient(135deg, #FF9A8B 0%, #FF6A88 100%);
+  box-shadow: 0 4px 16px rgba(255, 106, 136, 0.25);
 }
 
-.v-badge {
+.author-avatar {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  border: 2px solid #FFFFFF;
+}
+
+.verified-badge-mini {
   position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 20px;
-  height: 20px;
+  bottom: -2px;
+  right: -2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
   background: linear-gradient(135deg, #FFB800 0%, #FF8A00 100%);
   color: #FFFFFF;
-  border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 11px;
+  font-size: 10px;
+  font-weight: 800;
   border: 2px solid #FFFFFF;
   box-shadow: 0 2px 6px rgba(255, 138, 0, 0.4);
 }
 
-.profile-info {
+.author-meta-block {
   flex: 1;
   min-width: 0;
 }
 
-.name-row {
+.author-header-line {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 4px;
 }
 
-.author-name {
-  font-size: 18px;
-  font-weight: 800;
-  color: #1D2129;
+.author-brand-title {
   margin: 0;
-  letter-spacing: -0.2px;
+  font-size: 17px;
+  font-weight: 800;
+  color: #1A1D20;
+  letter-spacing: -0.3px;
 }
 
-.cert-tag {
+.editorial-tag {
   font-size: 10px;
-  font-weight: 700;
-  color: #FF7E67;
-  background: rgba(255, 126, 103, 0.1);
-  padding: 2px 7px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 126, 103, 0.2);
+  font-weight: 600;
+  color: #FF5E3A;
+  background: rgba(255, 94, 58, 0.08);
+  padding: 1.5px 6px;
+  border-radius: 8px;
+  letter-spacing: 0.2px;
 }
 
-.author-bio {
+.author-manifesto {
+  margin: 0 0 8px 0;
   font-size: 12px;
   color: #86909C;
-  margin: 0 0 10px 0;
+  line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.4;
 }
 
-.stats-row {
+.editorial-stats-bar {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  font-size: 11px;
 }
 
-.stat-item {
+.stat-cell {
   display: flex;
   align-items: baseline;
-  gap: 4px;
+  gap: 3px;
 }
 
-.stat-num {
-  font-size: 14px;
+.stat-value {
   font-weight: 800;
   color: #1D2129;
+  font-size: 13px;
 }
 
-.stat-label {
-  font-size: 11px;
+.stat-caption {
   color: #86909C;
+  font-size: 11px;
 }
 
-.stat-divider {
-  width: 1px;
-  height: 10px;
-  background: #E5E6EB;
+.stat-dot {
+  color: #C9CDD4;
+  font-weight: bold;
 }
 
-.actions {
-  margin-left: 12px;
+.hero-action-slot {
+  margin-left: 10px;
   flex-shrink: 0;
 }
 
-.contact-btn {
+.concierge-btn {
   display: flex;
   align-items: center;
-  gap: 5px;
-  background: linear-gradient(135deg, #07C160 0%, #00AE52 100%);
+  gap: 4px;
+  background: #07C160;
   color: #FFFFFF;
   border: none;
   padding: 6px 12px;
-  border-radius: 20px;
+  border-radius: 18px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -265,27 +286,57 @@ export default {
   transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.contact-btn:active {
-  transform: scale(0.95);
-  box-shadow: 0 2px 6px rgba(7, 193, 96, 0.2);
+.concierge-btn:active {
+  transform: scale(0.94);
+}
+
+.btn-icon {
+  font-size: 14px;
+}
+
+.wechat-pop-card {
+  text-align: center;
+  width: 150px;
+  padding: 6px;
+}
+
+.pop-title {
+  font-size: 13px;
+  color: #1D2129;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.pop-qr-img {
+  width: 100%;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.pop-desc {
+  font-size: 11px;
+  color: #86909C;
+  margin-top: 6px;
 }
 
 @media (max-width: 768px) {
-  .profile-card {
-    padding: 14px 16px;
-    border-radius: 20px;
+  .hero-editorial-section {
+    padding: calc(10px + var(--safe-top, 0px)) 12px 4px;
   }
-  .avatar {
-    width: 54px;
-    height: 54px;
+  .hero-card-inner {
+    padding: 14px 14px;
   }
-  .author-name {
+  .author-avatar {
+    width: 50px;
+    height: 50px;
+  }
+  .author-brand-title {
     font-size: 16px;
   }
-  .contact-btn span {
+  .btn-text {
     display: none;
   }
-  .contact-btn {
+  .concierge-btn {
     padding: 8px;
     border-radius: 50%;
   }
