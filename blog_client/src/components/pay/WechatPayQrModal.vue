@@ -69,6 +69,7 @@
                 alt="微信商家收款码"
                 class="real-touch-qrcode-img"
                 draggable="true"
+                @click="previewQr(wechatMerchantQrUrl)"
               />
               <img 
                 v-else-if="qrDataUrl" 
@@ -76,6 +77,7 @@
                 alt="微信支付码"
                 class="real-touch-qrcode-img"
                 draggable="true"
+                @click="previewQr(qrDataUrl)"
               />
               <div v-else class="qrcode-loading">
                 <a-spin dot />
@@ -91,6 +93,7 @@
                 alt="支付宝付款码"
                 class="real-touch-qrcode-img"
                 draggable="true"
+                @click="previewQr(qrDataUrl)"
               />
               <img 
                 v-else-if="alipayMerchantQrUrl" 
@@ -98,6 +101,7 @@
                 alt="支付宝收款码"
                 class="real-touch-qrcode-img"
                 draggable="true"
+                @click="previewQr(alipayMerchantQrUrl)"
               />
               <div v-else class="qrcode-loading">
                 <a-spin dot />
@@ -108,9 +112,11 @@
         </div>
       </div>
 
-      <!-- 仅在支付宝模式展示一键唤起支付宝 App 按钮 -->
-      <div class="quick-app-jump-wrap" v-if="payChannel === 'alipay' && alipayJumpUrl">
+      <!-- 快捷行动大胶囊按钮 (微信与支付宝专属双通道) -->
+      <div class="quick-app-jump-wrap">
+        <!-- 支付宝模式：一键唤起支付宝 App 极速扣款 -->
         <a 
+          v-if="payChannel === 'alipay' && alipayJumpUrl"
           :href="alipayJumpUrl" 
           class="quick-jump-btn btn-alipay"
           target="_blank"
@@ -118,12 +124,24 @@
           <svg class="jump-mini-icon" viewBox="0 0 24 24" fill="#FFFFFF">
             <path d="M21.42 16.29c-.77-.33-2.82-1.2-4.14-1.74-.83 1.54-1.87 3.01-3.11 4.35 3.32-.4 5.92-1.78 7.25-2.61zm-1.89-6.31h-4.99V8.65h6.14V7.08h-6.14V3.86h-1.8v3.22H7.49v1.57h5.25v1.33H5.97v1.57h9.87c-.52 1.48-1.28 2.89-2.26 4.17-1.57-.89-3.08-1.88-4.43-2.95l-1.12 1.25c1.47 1.17 3.12 2.25 4.86 3.22-1.87 1.76-4.04 3.05-6.42 3.82l.86 1.46c2.72-.92 5.21-2.43 7.34-4.43 2.19 1.01 4.54 1.94 6.79 2.5l.65-1.57c-1.86-.48-3.79-1.28-5.63-2.17 1.18-1.46 2.11-3.09 2.74-4.82h3.33v-1.57z"/>
           </svg>
-          <span>唤起支付宝 App 支付</span>
+          <span>一键唤起支付宝 App 支付</span>
         </a>
+
+        <!-- 微信模式：一键保存付款码到相册并直接唤起微信 App -->
+        <button 
+          v-else-if="payChannel === 'wechat'"
+          class="quick-jump-btn btn-wechat"
+          @click="handleSaveAndOpenWechat"
+        >
+          <svg class="jump-mini-icon" viewBox="0 0 24 24" fill="#FFFFFF">
+            <path d="M8.691 2.188C3.891 2.188 0 5.478 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .161.13.29.29.29.08 0 .15-.029.212-.068l1.96-1.141a.853.853 0 0 1 .639-.097c.92.251 1.897.39 2.913.39.309 0 .61-.019.91-.048-.718-2.038-.34-4.321 1.07-5.918 1.453-1.639 3.59-2.529 5.82-2.529.418 0 .833.03 1.238.087C16.892 4.398 13.064 2.188 8.691 2.188zm-2.42 4.145c.677 0 1.229.552 1.229 1.23 0 .676-.552 1.228-1.23 1.228-.676 0-1.228-.552-1.228-1.229 0-.677.552-1.229 1.229-1.229zm4.84 0c.677 0 1.229.552 1.229 1.23 0 .676-.552 1.228-1.23 1.228-.676 0-1.228-.552-1.228-1.229 0-.677.552-1.229 1.229-1.229zm8.567 4.144c-3.864 0-7.004 2.657-7.004 5.928 0 3.272 3.14 5.928 7.004 5.928.795 0 1.562-.116 2.278-.319a.69.69 0 0 1 .513.078l1.579.919c.05.029.106.048.173.048.13 0 .233-.106.233-.232a.38.38 0 0 0-.039-.175l-.32-1.19a.473.473 0 0 1 .174-.533c1.474-1.085 2.413-2.684 2.413-4.472 0-3.271-3.14-5.93-7.005-5.93zm-2.14 3.428c.552 0 1.007.456 1.007 1.008 0 .551-.455 1.007-1.008 1.007-.551 0-1.007-.456-1.007-1.007 0-.552.456-1.008 1.007-1.008zm4.28 0c.553 0 1.008.456 1.008 1.008 0 .551-.455 1.007-1.008 1.007-.552 0-1.007-.456-1.007-1.007 0-.552.455-1.008 1.007-1.008z"/>
+          </svg>
+          <span>保存二维码并打开微信</span>
+        </button>
       </div>
 
       <div class="mobile-long-press-tip">
-        <icon-scan /> {{ payChannel === 'wechat' ? '微信内长按可识别二维码，或使用微信扫码支付' : '手机端可点击上方按钮唤起支付宝，或扫码支付' }}
+        <icon-scan /> {{ payChannel === 'wechat' ? '微信内长按可直接识别，外部可点击上方按钮唤起' : '手机端可点击上方按钮唤起支付宝，或扫码支付' }}
       </div>
 
       <!-- 底部行动按钮 -->
@@ -252,6 +270,33 @@ export default {
           }
         }
       }
+    },
+    previewQr(imgUrl) {
+      if (!imgUrl) return;
+      // 点击图片可全屏打开方便长按
+      window.open(imgUrl, '_blank');
+    },
+    handleSaveAndOpenWechat() {
+      const qrImg = this.wechatMerchantQrUrl || this.qrDataUrl;
+      if (qrImg) {
+        // 自动触发下载收款码图片
+        const link = document.createElement('a');
+        link.href = qrImg;
+        link.download = `小柴包微信付款码_${this.amount}元.jpg`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        Message.info({
+          content: '📸 付款码已保存至相册，正在为您打开微信...',
+          duration: 2500
+        });
+      }
+
+      // 1 秒后自动拉起微信 App
+      setTimeout(() => {
+        window.location.href = 'weixin://';
+      }, 500);
     },
     startPolling() {
       this.stopPolling();
@@ -501,14 +546,20 @@ export default {
   height: 42px;
   border-radius: 21px;
   color: #FFFFFF;
+  border: none;
   text-decoration: none;
   font-size: 14px;
   font-weight: 700;
+  cursor: pointer;
   transition: all 0.2s ease;
 }
 .quick-jump-btn.btn-alipay {
   background: linear-gradient(135deg, #1677FF 0%, #0958D9 100%);
   box-shadow: 0 4px 14px rgba(22, 119, 255, 0.35);
+}
+.quick-jump-btn.btn-wechat {
+  background: linear-gradient(135deg, #07C160 0%, #059649 100%);
+  box-shadow: 0 4px 14px rgba(7, 193, 96, 0.35);
 }
 .quick-jump-btn:active {
   transform: scale(0.96);
