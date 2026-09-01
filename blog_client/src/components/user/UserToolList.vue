@@ -1,58 +1,60 @@
 <template>
-  <a-card class="section-card tools-section" :bordered="false" :body-style="{ padding: '15px' }">
-    <div class="section-header">
-      <span class="section-title">常用工具</span>
+  <div class="luxury-tools-card">
+    <div class="tools-card-header">
+      <span class="tools-title">常用服务</span>
     </div>
     <div class="tools-list">
       <div class="tool-cell" @click="$emit('address')">
         <div class="cell-left">
-          <div class="icon-wrapper" style="background: rgba(64, 158, 255, 0.1);">
-            <icon-location class="tool-icon" style="color: #409EFF" />
+          <div class="icon-wrapper bg-blue">
+            <icon-location class="tool-icon" />
           </div>
-          <span>收货地址</span>
+          <span class="tool-name">收货地址管理</span>
         </div>
         <icon-right class="cell-right-icon" />
       </div>
+
       <div class="tool-cell" @click="$emit('invite')">
         <div class="cell-left">
-          <div class="icon-wrapper" style="background: rgba(245, 108, 108, 0.1);">
-            <icon-gift class="tool-icon" style="color: #F56C6C" />
+          <div class="icon-wrapper bg-red">
+            <icon-gift class="tool-icon" />
           </div>
-          <span>邀请有礼</span>
+          <span class="tool-name">邀请有礼 · 赚积分</span>
         </div>
         <icon-right class="cell-right-icon" />
       </div>
+
       <div class="tool-cell" @click="$emit('groups')">
         <div class="cell-left">
-          <div class="icon-wrapper" style="background: rgba(103, 194, 58, 0.1);">
-            <icon-user-group class="tool-icon" style="color: #67C23A" />
+          <div class="icon-wrapper bg-green">
+            <icon-user-group class="tool-icon" />
           </div>
-          <span>我的拼团</span>
+          <span class="tool-name">我的拼团记录</span>
         </div>
         <icon-right class="cell-right-icon" />
       </div>
 
       <div v-if="user && user.role !== 'ADMIN' && user.role !== 'CREATOR'" class="tool-cell" @click="$emit('apply-creator')">
         <div class="cell-left">
-          <div class="icon-wrapper" style="background: rgba(255, 126, 103, 0.1);">
-            <icon-star class="tool-icon" style="color: #FF7E67" />
+          <div class="icon-wrapper bg-orange">
+            <icon-star class="tool-icon" />
           </div>
-          <span>申请成为主理人</span>
+          <span class="tool-name">申请成为小柴包主理人</span>
         </div>
         <icon-right class="cell-right-icon" />
       </div>
 
       <div class="tool-cell" @click="$emit('logout')">
         <div class="cell-left">
-          <div class="icon-wrapper" style="background: rgba(144, 147, 153, 0.1);">
-            <icon-poweroff class="tool-icon" style="color: #909399" />
+          <div class="icon-wrapper bg-gray">
+            <icon-poweroff class="tool-icon" />
           </div>
-          <span>退出登录</span>
+          <span class="tool-name">安全退出登录</span>
         </div>
         <icon-right class="cell-right-icon" />
       </div>
     </div>
-  </a-card>
+  </div>
 </template>
 
 <script>
@@ -65,65 +67,88 @@ export default {
 </script>
 
 <style scoped>
-.section-card {
-  background: transparent !important;
-  margin: 15px auto;
-  border-radius: 12px;
-  max-width: 600px;
+.luxury-tools-card {
+  background: #FFFFFF;
+  border-radius: 20px;
+  padding: 16px 18px 8px;
+  margin-top: 14px;
+  box-shadow: 0 4px 24px rgba(17, 24, 39, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.02);
 }
-:deep(.arco-card-body) {
-  padding: 15px;
-  background: white;
-  border-radius: 12px;
+
+.tools-card-header {
+  margin-bottom: 12px;
 }
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
+
+.tools-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1A1D20;
+  letter-spacing: -0.2px;
 }
-.section-title {
-  font-weight: bold;
-  font-size: 15px;
-  color: #303133;
-}
+
 .tools-list {
   display: flex;
   flex-direction: column;
 }
+
 .tool-cell {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 0;
-  border-bottom: 1px solid #F2F6FC;
+  padding: 12px 0;
   cursor: pointer;
+  border-bottom: 1px solid #F7F8FA;
+  transition: all 0.2s ease;
 }
 .tool-cell:last-child {
   border-bottom: none;
 }
+.tool-cell:active {
+  transform: scale(0.98);
+  opacity: 0.85;
+}
+
 .cell-left {
   display: flex;
   align-items: center;
   gap: 12px;
 }
-.tool-icon {
-  font-size: 18px;
-}
+
 .icon-wrapper {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 16px;
 }
-.cell-left span {
+
+.bg-blue { background: #E8F3FF; color: #165DFF; }
+.bg-red { background: #FFECE8; color: #F53F3F; }
+.bg-green { background: #E8FFEA; color: #00B42A; }
+.bg-orange { background: #FFF7E8; color: #FF7D00; }
+.bg-gray { background: #F2F3F5; color: #4E5969; }
+
+.tool-name {
   font-size: 14px;
+  font-weight: 600;
   color: #1D2129;
-  font-weight: 500;
 }
+
 .cell-right-icon {
   color: #C9CDD4;
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .luxury-tools-card {
+    border-radius: 16px;
+    padding: 14px 14px 6px;
+  }
+  .tool-name {
+    font-size: 13px;
+  }
 }
 </style>

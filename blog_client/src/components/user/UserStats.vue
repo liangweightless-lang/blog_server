@@ -11,7 +11,7 @@
       </div>
       <div class="stats-item">
         <span class="stats-val">¥0.00</span>
-        <span class="stats-label">余额</span>
+        <span class="stats-label">账户余额</span>
       </div>
     </div>
   </div>
@@ -28,20 +28,17 @@ export default {
 
 <style scoped>
 .stats-bar-wrapper {
-  margin: -30px 15px 0;
+  margin: 12px 0 0;
   z-index: 10;
   position: relative;
 }
 .stats-bar-card {
-  background: var(--glass-bg, rgba(255, 255, 255, 0.85));
-  backdrop-filter: var(--glass-blur, blur(16px));
-  -webkit-backdrop-filter: var(--glass-blur, blur(16px));
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  border-radius: 16px;
+  background: #FFFFFF;
+  border-radius: 18px;
   display: flex;
-  padding: 18px 0;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0,0,0,0.02);
-  max-width: 600px;
+  padding: 16px 0;
+  box-shadow: 0 4px 20px rgba(17, 24, 39, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.02);
   margin: 0 auto;
 }
 .stats-item {
@@ -49,38 +46,32 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: transform 0.2s ease;
   position: relative;
+}
+.stats-item:active {
+  transform: scale(0.95);
 }
 .stats-item:not(:last-child)::after {
   content: '';
   position: absolute;
   right: 0;
-  top: 10%;
-  height: 80%;
+  top: 20%;
+  height: 60%;
   width: 1px;
-  background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.05), transparent);
-}
-.stats-item:hover {
-  transform: translateY(-2px);
-}
-.stats-item:hover .stats-val {
-  background-position: 100% center;
+  background: #F2F3F5;
 }
 .stats-val {
-  font-weight: 800;
   font-size: 18px;
-  background: linear-gradient(135deg, #FF7E67, #FFAE9B);
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  transition: background-position 0.3s ease;
+  font-weight: 800;
+  color: #1A1D20;
+  letter-spacing: -0.5px;
 }
 .stats-label {
-  font-size: 12px;
-  color: #606266;
+  font-size: 11px;
+  color: #86909C;
   font-weight: 500;
 }
 </style>

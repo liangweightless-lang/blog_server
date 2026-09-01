@@ -1,5 +1,6 @@
 <template>
   <div class="user-center-container">
+    <!-- 主理人/个人轻奢头部卡片 -->
     <UserHeader 
       :user="user" 
       :creator-status="creatorStatus" 
@@ -8,20 +9,21 @@
     />
     <UserStats :user="user" />
     
+    <!-- 极简高定微胶囊 Tabs -->
     <div class="user-tabs-section">
       <a-tabs v-model:active-key="activeTab" @change="handleTabClick" type="line" justify>
         <a-tab-pane key="favorites">
-          <template #title><icon-star /> 我的收藏</template>
+          <template #title><icon-heart /> 我的收藏</template>
           <div class="tab-content-wrapper">
             <ArticleGrid :articles="favoriteArticles" :loading="loadingFavorites" />
-            <a-empty v-if="!loadingFavorites && favoriteArticles.length === 0" description="还没有收藏任何灵感，快去首页逛逛吧" style="margin: 40px 0;">
-              <template #image><icon-heart style="font-size: 48px; color: #D3C1BA; opacity: 0.5;" /></template>
+            <a-empty v-if="!loadingFavorites && favoriteArticles.length === 0" description="还没有收藏任何灵感手记，去首页发现美好吧" style="margin: 40px 0;">
+              <template #image><icon-heart style="font-size: 44px; color: #D3C1BA; opacity: 0.4;" /></template>
             </a-empty>
           </div>
         </a-tab-pane>
         
         <a-tab-pane key="orders">
-          <template #title><icon-storage /> 我的订单</template>
+          <template #title><icon-gift /> 我的订单</template>
           <div class="tab-content-wrapper">
             <OrderList :orders="orders" @detail="showOrderDetail" @pay="handleContinuePay" />
           </div>
@@ -45,6 +47,16 @@
       @logout="handleLogout" 
     />
 
+    <!-- 全自动对账收银台 (彻底解决浏览器拦截弹窗问题) -->
+    <WechatPayQrModal 
+      :show="wechatQrVisible"
+      :order-id="payOrderId"
+      :amount="payAmount"
+      :code-url="wechatCodeUrl"
+      @update:show="val => wechatQrVisible = val"
+      @success="handlePaySuccess"
+    />
+
     <!-- 主理人入驻申请弹窗 -->
     <CreatorApplyDialog v-model:show="applyDialogVisible" @success="handleApplySuccess" />
 
@@ -66,25 +78,6 @@
       </div>
     </a-modal>
 
-    <!-- 支付状态确认弹窗 -->
-    <a-modal 
-      v-model:visible="paymentConfirmVisible" 
-      title="支付确认"
-      :footer="false"
-      :mask-closable="false"
-      :closable="false"
-    >
-      <div style="text-align: center; padding: 20px 0;">
-        <icon-check-circle style="font-size: 48px; color: #00B42A; margin-bottom: 20px;" />
-        <h3 style="margin-bottom: 30px;">请在新打开的页面中完成支付</h3>
-        <p style="color: #86909C; margin-bottom: 30px; font-size: 13px;">支付完成前请不要关闭此窗口。完成支付后，请根据您的情况点击下面按钮。</p>
-        <div style="display: flex; justify-content: center; gap: 15px;">
-          <a-button @click="handlePaymentFail">遇到问题，重新支付</a-button>
-          <a-button type="primary" @click="handlePaymentSuccess" style="background-color: #FF7E67;">我已完成支付</a-button>
-        </div>
-      </div>
-    </a-modal>
-
     <!-- 订单详情弹窗 -->
     <OrderDetailDialog 
       v-model:show="orderDetailVisible" 
@@ -97,7 +90,7 @@
 <script>
 import { Message } from '@arco-design/web-vue';
 import { getMyFavorites } from '@/api/article';
-import { getMyOrders, createAlipay } from '@/api/order';
+import { getMyOrders, createXunhupay, createWechatPay } from '@/api/order';
 import { getMyCampaignOrders } from '@/api/campaign';
 import { getProducts } from '@/api/product';
 import { getMyCreatorStatus } from '@/api/creator';
@@ -111,6 +104,7 @@ import OrderDetailDialog from '@/components/user/OrderDetailDialog.vue';
 import OrderList from '@/components/user/OrderList.vue';
 import CampaignOrderList from '@/components/user/CampaignOrderList.vue';
 import CreatorApplyDialog from '@/components/user/CreatorApplyDialog.vue';
+import WechatPayQrModal from '@/components/pay/WechatPayQrModal.vue';
 import { mapState, mapActions } from 'pinia'
 import { useUserStore } from '@/stores/user'
 
@@ -126,7 +120,8 @@ export default {
     OrderDetailDialog,
     OrderList,
     CampaignOrderList,
-    CreatorApplyDialog
+    CreatorApplyDialog,
+    WechatPayQrModal
   },
   data() {
     return {
@@ -138,13 +133,16 @@ export default {
       groupsDialogVisible: false,
       applyDialogVisible: false,
       creatorStatus: null,
-      paymentConfirmVisible: false,
       orderDetailVisible: false,
       selectedOrder: null,
       activeTab: 'favorites',
       favoriteArticles: [],
       loadingFavorites: false,
-      isMobile: window.innerWidth <= 768
+      isMobile: window.innerWidth <= 768,
+      wechatQrVisible: false,
+      payOrderId: '',
+      payAmount: '0.00',
+      wechatCodeUrl: ''
     }
   },
   created() {
@@ -166,7 +164,7 @@ export default {
     user() {
       return this.userInfo;
     },
-    unpaidCount() {
+    pendingOrdersCount() {
       return this.orders.filter(o => o.status === 0).length;
     }
   },
@@ -228,7 +226,6 @@ export default {
       Message.success('已安全退出');
     },
     async loadUserAndForm() {
-      // If we don't have userInfo yet, fetch it.
       if (!this.user) {
         await this.fetchUser();
       }
@@ -236,14 +233,6 @@ export default {
         this.$router.push('/');
         return;
       }
-      this.profileForm = {
-        nickname: this.user.nickname,
-        avatarUrl: this.user.avatarUrl,
-        wechatId: this.user.wechatId || '',
-        age: this.user.age || 18,
-        gender: this.user.gender || 'OTHER',
-        address: this.user.address || ''
-      };
     },
     async fetchMyOrders() {
       if (!this.user) return;
@@ -285,47 +274,60 @@ export default {
     },
     async handleContinuePay(order) {
       if (!this.user) return Message.warning('请先登录');
+      this.payOrderId = String(order.id);
+      this.payAmount = String(order.amount || order.totalAmount || '0.00');
+
       try {
-        const payRes = await createAlipay(order.id);
-        const formHtml = payRes.data.data;
-        
-        // 业界标准做法：打开新窗口并将支付宝返回的 HTML 表单直接写入新窗口
-        // 这样不仅避免了污染当前 SPA 也就是 Vue 的 DOM (document.body)，
-        // 而且可以原生地执行支付宝 HTML 中自带的自动提交 script 标签。
-        const newWindow = window.open('', '_blank');
-        if (newWindow) {
-          newWindow.document.write(formHtml);
-          newWindow.document.close();
-          this.paymentConfirmVisible = true;
-        } else {
-          Message.warning('支付页面被浏览器拦截，请在地址栏右侧允许弹出窗口');
+        const xunhuRes = await createXunhupay(order.id, 'wechat');
+        const payData = xunhuRes.data.data;
+        this.wechatCodeUrl = payData.qrUrl || payData.payUrl || '';
+      } catch (e) {
+        try {
+          const payRes = await createWechatPay(order.id);
+          const payData = payRes.data.data;
+          this.wechatCodeUrl = payData.code_url || payData.h5_url || '';
+        } catch (err) {
+          // ignore
         }
-      } catch (error) {
-        Message.error(error.response?.data?.message || '获取支付链接失败');
       }
+      // 弹出全自动收银台，绝无任何浏览器跳转拦截！
+      this.wechatQrVisible = true;
     },
-    handlePaymentSuccess() {
-      this.paymentConfirmVisible = false;
+    handlePaySuccess() {
       this.fetchMyOrders();
       this.fetchMyCampaignOrders();
-      Message.success('订单已刷新，请查看最新状态');
-    },
-    handlePaymentFail() {
-      this.paymentConfirmVisible = false;
-      Message.info('您可以稍后再次尝试支付');
+      Message.success('支付完成，订单状态已自动更新！');
     },
     copyInviteLink() {
       const baseUrl = window.location.origin;
       const link = `${baseUrl}/?invite=${this.user.inviteCode}`;
       
-      const input = document.createElement('input');
-      input.value = link;
-      document.body.appendChild(input);
-      input.select();
-      document.execCommand('copy');
-      document.body.removeChild(input);
-      
-      Message.success('邀请链接已复制到剪贴板，快去发给好友吧！');
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(link).then(() => {
+          Message.success('邀请链接已复制到剪贴板');
+        }).catch(() => {
+          this.fallbackCopy(link);
+        });
+      } else {
+        this.fallbackCopy(link);
+      }
+      this.inviteDialogVisible = false;
+    },
+    fallbackCopy(text) {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-9999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        Message.success('邀请链接已复制');
+      } catch (err) {
+        Message.warning('复制失败，请长按手动复制');
+      }
+      document.body.removeChild(textArea);
     }
   }
 }
@@ -333,64 +335,63 @@ export default {
 
 <style scoped>
 .user-center-container {
-  min-height: 100vh;
-  padding-bottom: 80px;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 10px 16px 100px;
 }
 
 .user-tabs-section {
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(255,255,255,0.8);
-  border-bottom: 1px solid rgba(0,0,0,0.03);
-  margin: 20px 0;
-  padding: 10px 15px;
-}
-
-:deep(.arco-tabs-nav::before) {
-  background-color: transparent !important;
-}
-
-:deep(.arco-tabs-tab-active) {
-  color: var(--brand-primary, #FF4B2B) !important;
-  font-weight: 800 !important;
-}
-
-:deep(.arco-tabs-nav-ink) {
-  background-color: var(--brand-primary, #FF4B2B) !important;
-  height: 3px !important;
-  border-radius: 2px;
+  background: #FFFFFF;
+  border-radius: 20px;
+  padding: 8px 14px;
+  margin-top: 14px;
+  margin-bottom: 14px;
+  box-shadow: 0 4px 24px rgba(17, 24, 39, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.02);
 }
 
 .tab-content-wrapper {
-  padding: 15px 0;
+  padding-top: 12px;
   min-height: 200px;
 }
 
-/* Invite Dialog Styles */
 .invite-dialog-content {
   text-align: center;
+  padding: 10px 0;
 }
 .invite-box {
-  background: #FDF0E6;
-  padding: 20px;
+  background: #F2F3F5;
   border-radius: 12px;
+  padding: 16px;
   margin-bottom: 20px;
 }
 .invite-label {
-  font-size: 12px;
-  color: #8C6A5D;
-  margin-bottom: 8px;
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  color: #86909C;
 }
 .invite-code-text {
-  font-size: 32px;
-  color: #FF7E67;
-  letter-spacing: 2px;
   margin: 0;
+  font-size: 26px;
+  color: #FF5E3A;
+  letter-spacing: 2px;
+  font-family: monospace;
 }
 .invite-tip {
+  margin: 12px 0 0 0;
   font-size: 12px;
-  color: #909399;
-  margin-top: 15px;
+  color: #86909C;
+}
+
+@media (max-width: 768px) {
+  .user-center-container {
+    padding: 6px 12px 100px;
+  }
+  .user-tabs-section {
+    padding: 6px 10px;
+    border-radius: 16px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
 }
 </style>
