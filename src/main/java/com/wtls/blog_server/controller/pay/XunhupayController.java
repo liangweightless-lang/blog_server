@@ -101,7 +101,7 @@ public class XunhupayController {
         String dynamicReturnUrl = returnUrl.trim();
         if (host != null && !host.contains("localhost") && !host.contains("127.0.0.1")) {
             dynamicNotifyUrl = scheme + "://" + host + "/api/pay/xunhupay/notify";
-            dynamicReturnUrl = scheme + "://" + host + "/profile";
+            dynamicReturnUrl = scheme + "://" + host + "/profile?tab=orders";
         }
 
         String payChannelType = "wechat".equalsIgnoreCase(type) ? "wechat" : "alipay";

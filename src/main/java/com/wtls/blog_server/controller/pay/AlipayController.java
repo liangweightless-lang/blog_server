@@ -85,13 +85,21 @@ public class AlipayController {
             return Result.error(400, "订单状态不正确（已支付或已关闭）");
         }
 
+        // 动态计算回跳域名 (支持 test.caibread.com 与 caibread.com 动态匹配)
+        String host = request.getHeader("Host");
+        String scheme = request.getHeader("X-Forwarded-Proto");
+        if (scheme == null || scheme.isEmpty()) {
+            scheme = request.getScheme();
+        }
+        String returnUrl = (host != null && !host.contains("localhost") && !host.contains("127.0.0.1")) 
+                ? scheme + "://" + host + "/profile?tab=orders" 
+                : "https://caibread.com/profile?tab=orders";
+
         // 3. 决定调用 Wap 支付还是 Page 网页支付
         if (isMobile) {
             AlipayTradeWapPayRequest wapRequest = new AlipayTradeWapPayRequest();
             wapRequest.setNotifyUrl(notifyUrl);
-            
-            // 支付成功回跳个人中心页面
-            wapRequest.setReturnUrl("http://localhost:8080/user/profile");
+            wapRequest.setReturnUrl(returnUrl);
 
             String bizContent = "{\"out_trade_no\":\"" + outTradeNo + "\","
                     + "\"total_amount\":\"" + totalAmount + "\","
@@ -109,9 +117,7 @@ public class AlipayController {
         } else {
             AlipayTradePagePayRequest pageRequest = new AlipayTradePagePayRequest();
             pageRequest.setNotifyUrl(notifyUrl);
-            
-            // 支付成功回跳个人中心页面
-            pageRequest.setReturnUrl("http://localhost:8080/user/profile");
+            pageRequest.setReturnUrl(returnUrl);
 
             String bizContent = "{\"out_trade_no\":\"" + outTradeNo + "\","
                     + "\"total_amount\":\"" + totalAmount + "\","
