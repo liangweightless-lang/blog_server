@@ -16,6 +16,12 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Result<?> handleNoResourceFound(org.springframework.web.servlet.resource.NoResourceFoundException e) {
+        return Result.clientFailed("请求的静态资源或文件不存在");
+    }
+
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Result<?> handleException(Exception e) {

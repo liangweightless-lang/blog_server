@@ -44,6 +44,7 @@ services:
       - "443:443"
     volumes:
       - ./certs:/etc/nginx/certs:ro
+      - ./uploads:/usr/share/nginx/html/uploads:ro
     depends_on:
       - backend
 
