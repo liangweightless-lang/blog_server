@@ -66,17 +66,25 @@
     <!-- 编辑资料弹窗 -->
     <ProfileEditDialog v-model:show="editDialogVisible" @updated="fetchUser" />
 
-    <!-- 邀请码弹窗 -->
-    <a-modal title="我的邀请码" :visible="inviteDialogVisible" :width="isMobile ? '85%' : '400px'" @cancel="inviteDialogVisible = false" :footer="false">
+    <!-- 专属邀请码高定抽屉 (标准 AppBottomSheet) -->
+    <AppBottomSheet
+      v-model:visible="inviteDialogVisible"
+      title="我的专属邀请码"
+      subtitle="每邀请一位好友注册，双方均可获得 50 积分奖励"
+      width="420px"
+    >
       <div class="invite-dialog-content" v-if="user">
         <div class="invite-box">
-          <p class="invite-label">专属邀请码</p>
+          <span class="invite-label">专属邀请码</span>
           <h2 class="invite-code-text">{{ user.inviteCode }}</h2>
         </div>
-        <a-button type="primary" shape="round" style="width: 100%" @click="copyInviteLink">复制邀请链接</a-button>
-        <p class="invite-tip">每邀请一位好友注册，双方均可获得50积分奖励</p>
       </div>
-    </a-modal>
+      <template #footer>
+        <button class="sheet-main-btn" @click="copyInviteLink">
+          <icon-copy /> <span>一键复制邀请链接</span>
+        </button>
+      </template>
+    </AppBottomSheet>
 
     <!-- 订单详情弹窗 -->
     <OrderDetailDialog 

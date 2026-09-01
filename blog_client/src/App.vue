@@ -214,6 +214,15 @@ body {
     padding: 0 !important;
   }
 
+  /* 全局防灵动岛遮挡规则：若出现 Modal.confirm 等轻量确认框，强制下移安全居中 */
+  .arco-modal-simple {
+    margin-bottom: max(40px, env(safe-area-inset-bottom, 40px)) !important;
+    border-radius: 22px !important;
+    max-width: 88% !important;
+    padding: 20px 16px !important;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2) !important;
+  }
+
   /* 解决长弹窗滚动条体验 */
   .arco-modal-body::-webkit-scrollbar,
   .arco-drawer-body::-webkit-scrollbar {

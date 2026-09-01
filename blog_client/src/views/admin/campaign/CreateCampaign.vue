@@ -86,25 +86,35 @@
       <a-button type="primary" status="success" size="large" long shape="round" :loading="saving" @click="publishCampaign">{{ isEdit ? '保存修改' : '发布团购' }}</a-button>
     </div>
 
-    <!-- 商品选择弹窗 -->
-    <a-modal title="选择商品" v-model:visible="productSelectorVisible" width="90%" :footer="false">
-      <a-input-search v-model="searchKeyword" placeholder="搜索商品名称" style="margin-bottom: 15px;" @search="searchProducts" />
-      <div style="max-height: 60vh; overflow-y: auto;">
-        <a-list>
+    <!-- 商品选择高定抽屉 (标准 AppBottomSheet) -->
+    <AppBottomSheet
+      v-model:visible="productSelectorVisible"
+      title="选择快团商品"
+      subtitle="从现有商品库中选择并加入当前团购活动"
+      width="540px"
+    >
+      <a-input-search 
+        v-model="searchKeyword" 
+        placeholder="搜索商品名称..." 
+        size="large"
+        style="margin-bottom: 14px;" 
+        @search="searchProducts" 
+      />
+      <div style="max-height: 55vh; overflow-y: auto;">
+        <a-list :bordered="false" :split="false">
           <a-list-item v-for="p in searchResults" :key="p.id" class="search-product-item" @click="addProduct(p)">
             <a-list-item-meta :title="p.name" :description="`原价: ¥${p.price}`">
               <template #avatar>
-                <a-avatar shape="square"><img alt="avatar" :src="p.image" /></a-avatar>
+                <a-avatar shape="square" :size="48" style="border-radius: 8px;"><img alt="avatar" :src="p.image || '/img/avatar.png'" /></a-avatar>
               </template>
             </a-list-item-meta>
             <template #actions>
-              <a-button type="text" size="small">添加</a-button>
+              <a-button type="primary" size="small" shape="round" style="background: linear-gradient(135deg, #FF5E3A 0%, #FF2A54 100%); border: none;">加入活动</a-button>
             </template>
           </a-list-item>
         </a-list>
       </div>
-    </a-modal>
-
+    </AppBottomSheet>
   </div>
 </template>
 
