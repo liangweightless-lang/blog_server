@@ -49,7 +49,7 @@
 
       <div class="auto-verify-badge">
         <icon-check-circle-fill class="badge-icon" />
-        <span>系统全自动对账 · 支付后无需任何人工操作</span>
+        <span>{{ payChannel === 'alipay' ? '虎皮椒支付宝全自动对账 · 支付后无需等待' : '微信官方对账 · 支付后自动核销' }}</span>
       </div>
 
       <!-- 二维码 / 收款码展示区 (完全解除长按限制，支持微信长按识别) -->
@@ -61,26 +61,49 @@
           </div>
 
           <template v-else>
-            <!-- 1. 动态生成二维码 (优先展示) -->
-            <img 
-              v-if="qrDataUrl" 
-              :src="qrDataUrl" 
-              :alt="payChannel === 'wechat' ? '微信支付码' : '支付宝付款码'"
-              class="real-touch-qrcode-img"
-              draggable="true"
-            />
-            <!-- 2. 静态商家收款码 (兜底) -->
-            <img 
-              v-else-if="currentMerchantQr" 
-              :src="currentMerchantQr" 
-              :alt="payChannel === 'wechat' ? '微信收款码' : '支付宝收款码'"
-              class="real-touch-qrcode-img"
-              draggable="true"
-            />
-            <div v-else class="qrcode-loading">
-              <a-spin dot />
-              <p style="margin-top: 10px; font-size: 13px; color: #86909C;">正在生成{{ payChannel === 'alipay' ? '支付宝' : '微信' }}付款码...</p>
-            </div>
+            <!-- 1. 微信支付：优先展示后台设置的微信商家收款码 / 官方动态码 -->
+            <template v-if="payChannel === 'wechat'">
+              <img 
+                v-if="wechatMerchantQrUrl" 
+                :src="wechatMerchantQrUrl" 
+                alt="微信商家收款码"
+                class="real-touch-qrcode-img"
+                draggable="true"
+              />
+              <img 
+                v-else-if="qrDataUrl" 
+                :src="qrDataUrl" 
+                alt="微信支付码"
+                class="real-touch-qrcode-img"
+                draggable="true"
+              />
+              <div v-else class="qrcode-loading">
+                <a-spin dot />
+                <p style="margin-top: 10px; font-size: 13px; color: #86909C;">正在加载微信付款码...</p>
+              </div>
+            </template>
+
+            <!-- 2. 支付宝支付：展示虎皮椒动态码 / 支付宝收款码 -->
+            <template v-else>
+              <img 
+                v-if="qrDataUrl" 
+                :src="qrDataUrl" 
+                alt="支付宝付款码"
+                class="real-touch-qrcode-img"
+                draggable="true"
+              />
+              <img 
+                v-else-if="alipayMerchantQrUrl" 
+                :src="alipayMerchantQrUrl" 
+                alt="支付宝收款码"
+                class="real-touch-qrcode-img"
+                draggable="true"
+              />
+              <div v-else class="qrcode-loading">
+                <a-spin dot />
+                <p style="margin-top: 10px; font-size: 13px; color: #86909C;">正在生成支付宝付款码...</p>
+              </div>
+            </template>
           </template>
         </div>
       </div>
@@ -150,17 +173,8 @@ export default {
       paidSuccess: false,
       qrDataUrl: '',
       alipayJumpUrl: '',
-      wechatJumpUrl: '',
       wechatMerchantQrUrl: '',
       alipayMerchantQrUrl: ''
-    }
-  },
-  computed: {
-    currentMerchantQr() {
-      return this.payChannel === 'wechat' ? this.wechatMerchantQrUrl : (this.alipayMerchantQrUrl || this.wechatMerchantQrUrl);
-    },
-    currentJumpUrl() {
-      return this.payChannel === 'alipay' ? this.alipayJumpUrl : this.wechatJumpUrl;
     }
   },
   created() {
@@ -192,8 +206,9 @@ export default {
       try {
         const res = await getHomeConfig();
         if (res.data && res.data.data) {
-          this.wechatMerchantQrUrl = res.data.data.wechatMerchantQrUrl || res.data.data.wechatQrUrl || '';
-          this.alipayMerchantQrUrl = res.data.data.alipayMerchantQrUrl || res.data.data.alipayQrUrl || '';
+          const cfg = res.data.data;
+          this.wechatMerchantQrUrl = cfg.wechatMerchantQrUrl || cfg.wechatQrUrl || '';
+          this.alipayMerchantQrUrl = cfg.alipayMerchantQrUrl || cfg.alipayQrUrl || '';
         }
       } catch (e) {
         // 静默
@@ -204,7 +219,6 @@ export default {
       this.payChannel = channel;
       this.qrDataUrl = '';
       this.alipayJumpUrl = '';
-      this.wechatJumpUrl = '';
       await this.initCurrentPay();
     },
     async initCurrentPay() {
@@ -225,7 +239,7 @@ export default {
           console.error('获取支付宝付款码失败', e);
         }
       } else {
-        // 微信模式：若传入了codeUrl优先使用，同时尝试调起虎皮椒微信H5链接
+        // 微信模式：如果传入了官方 codeUrl 动态码，则渲染；否则展示后台设置的微信商家收款码 wechatMerchantQrUrl
         if (this.codeUrl) {
           try {
             this.qrDataUrl = await QRCode.toDataURL(this.codeUrl, {
@@ -236,23 +250,6 @@ export default {
           } catch (e) {
             console.error('生成微信二维码失败', e);
           }
-        }
-        
-        // 获取微信端跳转链接
-        try {
-          const res = await createXunhupay(this.orderId, 'wechat');
-          const data = res.data?.data;
-          if (data) {
-            this.wechatJumpUrl = data.payUrl || data.url || '';
-            if (!this.qrDataUrl) {
-              const targetQr = data.qrUrl || data.url_qrcode || data.payUrl || data.url;
-              if (targetQr) {
-                this.qrDataUrl = await QRCode.toDataURL(targetQr, { width: 220, margin: 1 });
-              }
-            }
-          }
-        } catch (e) {
-          // 静默
         }
       }
     },
@@ -512,10 +509,6 @@ export default {
 .quick-jump-btn.btn-alipay {
   background: linear-gradient(135deg, #1677FF 0%, #0958D9 100%);
   box-shadow: 0 4px 14px rgba(22, 119, 255, 0.35);
-}
-.quick-jump-btn.btn-wechat {
-  background: linear-gradient(135deg, #07C160 0%, #059649 100%);
-  box-shadow: 0 4px 14px rgba(7, 193, 96, 0.35);
 }
 .quick-jump-btn:active {
   transform: scale(0.96);
