@@ -1,43 +1,43 @@
 <template>
-  <div class="editorial-nav-container">
-    <div class="nav-tile" @click="$router.push('/store')">
-      <div class="tile-icon-box box-bread">
-        <span class="tile-emoji">🥖</span>
+  <div class="vector-nav-grid">
+    <div class="nav-card" @click="$router.push('/store')">
+      <div class="icon-bubble bubble-store">
+        <icon-gift class="vector-icon" />
       </div>
-      <div class="tile-text-wrap">
-        <span class="tile-main-text">灵感手作</span>
-        <span class="tile-sub-text">现烤甄选</span>
-      </div>
-    </div>
-
-    <div class="nav-tile" @click="handleCampaignClick">
-      <div class="tile-icon-box box-fire">
-        <span class="tile-emoji">🔥</span>
-        <span class="tile-corner-pill">HOT</span>
-      </div>
-      <div class="tile-text-wrap">
-        <span class="tile-main-text">社区快团</span>
-        <span class="tile-sub-text">超值拼购</span>
+      <div class="text-group">
+        <span class="main-label">灵感手作</span>
+        <span class="sub-label">甄选橱窗</span>
       </div>
     </div>
 
-    <div class="nav-tile" @click="handleCreatorClick">
-      <div class="tile-icon-box box-star">
-        <span class="tile-emoji">🌟</span>
+    <div class="nav-card" @click="handleCampaignClick">
+      <div class="icon-bubble bubble-campaign">
+        <icon-fire class="vector-icon" />
+        <span class="hot-badge-pill">HOT</span>
       </div>
-      <div class="tile-text-wrap">
-        <span class="tile-main-text">主理空间</span>
-        <span class="tile-sub-text">入驻开店</span>
+      <div class="text-group">
+        <span class="main-label">社区快团</span>
+        <span class="sub-label">超值成团</span>
       </div>
     </div>
 
-    <div class="nav-tile" @click="$router.push('/profile')">
-      <div class="tile-icon-box box-gift">
-        <span class="tile-emoji">🎁</span>
+    <div class="nav-card" @click="handleCreatorClick">
+      <div class="icon-bubble bubble-creator">
+        <icon-star class="vector-icon" />
       </div>
-      <div class="tile-text-wrap">
-        <span class="tile-main-text">每日签到</span>
-        <span class="tile-sub-text">领50积分</span>
+      <div class="text-group">
+        <span class="main-label">主理入驻</span>
+        <span class="sub-label">创作空间</span>
+      </div>
+    </div>
+
+    <div class="nav-card" @click="$router.push('/profile')">
+      <div class="icon-bubble bubble-rewards">
+        <icon-trophy class="vector-icon" />
+      </div>
+      <div class="text-group">
+        <span class="main-label">每日签到</span>
+        <span class="sub-label">领50积分</span>
       </div>
     </div>
   </div>
@@ -48,7 +48,7 @@ export default {
   name: 'HomeNavGrid',
   methods: {
     handleCampaignClick() {
-      const campaignEl = document.querySelector('.campaign-ad-card');
+      const campaignEl = document.querySelector('.campaign-spotlight-card');
       if (campaignEl) {
         campaignEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       } else {
@@ -68,40 +68,39 @@ export default {
 </script>
 
 <style scoped>
-.editorial-nav-container {
+.vector-nav-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
   padding: 4px 16px 0;
 }
 
-.nav-tile {
+.nav-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 12px 4px 10px;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  padding: 14px 4px 12px;
+  background: #FFFFFF;
   border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.95);
-  box-shadow: 0 4px 20px rgba(17, 24, 39, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  box-shadow: 0 4px 20px rgba(17, 24, 39, 0.03), 0 1px 3px rgba(0, 0, 0, 0.01);
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   user-select: none;
 }
 
-.nav-tile:hover {
+.nav-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(255, 126, 103, 0.12);
+  box-shadow: 0 10px 24px rgba(255, 126, 103, 0.12);
   border-color: rgba(255, 126, 103, 0.2);
 }
 
-.nav-tile:active {
-  transform: scale(0.94);
+.nav-card:active {
+  transform: scale(0.95);
 }
 
-.tile-icon-box {
+/* 高级双色气泡容器 */
+.icon-bubble {
   width: 44px;
   height: 44px;
   border-radius: 14px;
@@ -110,35 +109,42 @@ export default {
   align-items: center;
   margin-bottom: 8px;
   position: relative;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.tile-emoji {
+.nav-card:hover .icon-bubble {
+  transform: scale(1.08);
+}
+
+.vector-icon {
   font-size: 22px;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
-.box-bread {
-  background: linear-gradient(135deg, #FFF6EC 0%, #FFEAD4 100%);
-  border: 1px solid rgba(255, 200, 150, 0.3);
+/* 灵感手作 - 琥珀落日橙 */
+.bubble-store {
+  background: linear-gradient(135deg, #FFF4EB 0%, #FFE6D4 100%);
+  color: #FF7A45;
 }
 
-.box-fire {
-  background: linear-gradient(135deg, #FFF0F0 0%, #FFDEDE 100%);
-  border: 1px solid rgba(255, 150, 150, 0.3);
+/* 社区快团 - 活力珊瑚红 */
+.bubble-campaign {
+  background: linear-gradient(135deg, #FFF0F0 0%, #FFD6D6 100%);
+  color: #FF4D4F;
 }
 
-.box-star {
-  background: linear-gradient(135deg, #FFFDF0 0%, #FFF4C2 100%);
-  border: 1px solid rgba(255, 220, 100, 0.3);
+/* 主理入驻 - 香槟金 */
+.bubble-creator {
+  background: linear-gradient(135deg, #FFFDF0 0%, #FFF3C4 100%);
+  color: #FAAD14;
 }
 
-.box-gift {
-  background: linear-gradient(135deg, #F0F6FF 0%, #DEEDFF 100%);
-  border: 1px solid rgba(150, 200, 255, 0.3);
+/* 每日签到 - 极光青蓝 */
+.bubble-rewards {
+  background: linear-gradient(135deg, #F0F7FF 0%, #D8ECFF 100%);
+  color: #1890FF;
 }
 
-.tile-corner-pill {
+.hot-badge-pill {
   position: absolute;
   top: -5px;
   right: -7px;
@@ -146,54 +152,54 @@ export default {
   color: #FFFFFF;
   font-size: 9px;
   font-weight: 800;
-  padding: 1px 4px;
+  padding: 1px 5px;
   border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(255, 65, 108, 0.4);
+  box-shadow: 0 2px 6px rgba(255, 65, 108, 0.35);
   letter-spacing: 0.2px;
 }
 
-.tile-text-wrap {
+.text-group {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.tile-main-text {
+.main-label {
   font-size: 13px;
   font-weight: 700;
-  color: #1A1D20;
+  color: #1D2129;
   line-height: 1.2;
   letter-spacing: -0.2px;
 }
 
-.tile-sub-text {
+.sub-label {
   font-size: 10px;
   color: #86909C;
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 @media (max-width: 768px) {
-  .editorial-nav-container {
+  .vector-nav-grid {
     padding: 2px 12px 0;
     gap: 8px;
   }
-  .nav-tile {
-    padding: 10px 2px 8px;
+  .nav-card {
+    padding: 11px 2px 9px;
     border-radius: 16px;
   }
-  .tile-icon-box {
+  .icon-bubble {
     width: 38px;
     height: 38px;
     border-radius: 12px;
     margin-bottom: 6px;
   }
-  .tile-emoji {
+  .vector-icon {
     font-size: 19px;
   }
-  .tile-main-text {
+  .main-label {
     font-size: 12px;
   }
-  .tile-sub-text {
+  .sub-label {
     font-size: 9px;
   }
 }

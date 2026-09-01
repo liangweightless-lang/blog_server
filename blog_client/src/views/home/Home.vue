@@ -3,7 +3,7 @@
     <!-- 主理人轻氧杂志风卡片 -->
     <ProfileHero />
     
-    <!-- 金刚区轻奢导航 -->
+    <!-- 金刚区高定矢量导航 (彻底告别Emoji) -->
     <HomeNavGrid />
 
     <!-- 浮空微胶囊搜索区 -->
@@ -11,7 +11,7 @@
       <SearchBar @search="handleSearch" />
     </div>
 
-    <!-- 极简吸顶分类导航栏 (Airy Sticky Navigation) -->
+    <!-- 极简吸顶分类导航栏 (纯矢量微胶囊) -->
     <div class="category-sticky-bar">
       <div class="category-scroll-track">
         <button 
@@ -21,7 +21,7 @@
           :class="{ active: activeCategory === cat.key }"
           @click="selectCategory(cat.key)"
         >
-          <span v-if="cat.icon" class="cat-pill-icon">{{ cat.icon }}</span>
+          <component :is="cat.icon" class="cat-vector-icon" />
           <span class="cat-pill-text">{{ cat.title }}</span>
         </button>
       </div>
@@ -64,10 +64,10 @@ export default {
       searchQuery: '',
       activeCategory: 'all',
       categories: [
-        { key: 'all', title: '探索推荐', icon: '✨' },
-        { key: 'lifestyle', title: '生活美学', icon: '🌿' },
-        { key: 'brand', title: '独立品牌', icon: '☕' },
-        { key: 'baking', title: '手作烘焙', icon: '🥖' }
+        { key: 'all', title: '探索发现', icon: 'icon-compass' },
+        { key: 'lifestyle', title: '生活美学', icon: 'icon-heart' },
+        { key: 'brand', title: '独立品牌', icon: 'icon-tag' },
+        { key: 'baking', title: '手作烘焙', icon: 'icon-bulb' }
       ]
     }
   },
@@ -153,7 +153,7 @@ export default {
   top: 0;
   z-index: 80;
   padding: 8px 16px;
-  background: rgba(250, 250, 250, 0.88);
+  background: rgba(250, 250, 250, 0.9);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.03);
@@ -174,7 +174,7 @@ export default {
 .cat-pill-btn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   padding: 7px 16px;
   border-radius: 20px;
   border: 1px solid transparent;
@@ -189,19 +189,25 @@ export default {
   letter-spacing: -0.2px;
 }
 
+.cat-vector-icon {
+  font-size: 14px;
+  transition: transform 0.2s ease;
+}
+
 .cat-pill-btn.active {
-  background: #1A1D20;
+  background: #1D2129;
   color: #FFFFFF;
-  box-shadow: 0 4px 14px rgba(26, 29, 32, 0.2);
+  box-shadow: 0 4px 14px rgba(29, 33, 41, 0.18);
   transform: scale(1.02);
+}
+
+.cat-pill-btn.active .cat-vector-icon {
+  color: #FF5E3A;
+  transform: scale(1.1);
 }
 
 .cat-pill-btn:active {
   transform: scale(0.96);
-}
-
-.cat-pill-icon {
-  font-size: 13px;
 }
 
 /* 浮动发帖按钮 */
