@@ -210,8 +210,8 @@ body {
     -webkit-backdrop-filter: blur(10px);
   }
   
-  /* 彻底屏蔽所有移动端 Arco 默认 PC 头部 (使用统一的卡片内容与标题) */
-  .arco-modal-header {
+  /* 屏蔽除确认框以外的移动端 Arco 默认 PC 头部 (自建卡片弹窗已有内部标题) */
+  .arco-modal:not(.arco-modal-simple) .arco-modal-header {
     display: none !important;
   }
 
@@ -237,14 +237,6 @@ body {
     display: none !important;
   }
 
-  /* 全局防灵动岛遮挡规则：若出现 Modal.confirm 等轻量确认框，强制下移安全居中 */
-  .arco-modal-simple {
-    border-radius: 24px !important;
-    max-width: 88% !important;
-    padding: 20px 16px !important;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22) !important;
-  }
-
   /* 解决长弹窗滚动条体验 */
   .arco-modal-body::-webkit-scrollbar,
   .arco-drawer-body::-webkit-scrollbar {
@@ -257,8 +249,8 @@ body {
     border-radius: 10px;
   }
 
-  /* 【市面手机主流规范】全站移动端弹窗一律统一为：左右有间距、四周24px全圆角、悬浮卡片 */
-  .arco-modal,
+  /* 【市面手机主流规范】全站移动端卡片弹窗一律统一为：左右有间距、四周24px全圆角、悬浮卡片 */
+  .arco-modal:not(.arco-modal-simple),
   .checkout-modal,
   .creator-modal-mobile,
   .group-dialog,
@@ -293,7 +285,7 @@ body {
     box-shadow: none !important;
   }
 
-  .arco-modal .arco-modal-body {
+  .arco-modal:not(.arco-modal-simple) .arco-modal-body {
     width: 100% !important;
     border-radius: 24px !important;
     overflow-y: auto !important;
@@ -301,8 +293,81 @@ body {
     padding: 0 !important;
   }
 
-  /* 【核心交互】移动端 Arco 默认关闭按钮统一转换为：居中悬浮在白色卡片正下方外部的圆形关闭按钮 */
-  .arco-modal:not(.floating-card-modal) .arco-modal-close-btn,
+  /* 【系统确认弹窗专项优化】Modal.confirm / Modal.warning 弹窗排版，彻底解决文字贴边与溢出问题 */
+  .arco-modal-simple {
+    width: calc(100% - 48px) !important;
+    max-width: 360px !important;
+    border-radius: 24px !important;
+    background: #FFFFFF !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.26) !important;
+    padding: 24px 22px 20px 22px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    margin: auto !important;
+    border: none !important;
+    animation: floatingScaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  .arco-modal-simple .arco-modal-header {
+    display: flex !important;
+    align-items: center !important;
+    height: auto !important;
+    padding: 0 0 12px 0 !important;
+    border: none !important;
+    margin: 0 !important;
+  }
+
+  .arco-modal-simple .arco-modal-title {
+    font-size: 17px !important;
+    font-weight: 800 !important;
+    color: #1D2129 !important;
+    line-height: 1.4 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  .arco-modal-simple .arco-modal-body {
+    width: 100% !important;
+    padding: 0 0 20px 0 !important;
+    font-size: 14px !important;
+    line-height: 1.65 !important;
+    color: #4E5969 !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    white-space: normal !important;
+    box-sizing: border-box !important;
+  }
+
+  .arco-modal-simple .arco-modal-footer {
+    display: flex !important;
+    justify-content: flex-end !important;
+    gap: 10px !important;
+    padding: 0 !important;
+    border: none !important;
+    margin: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .arco-modal-simple .arco-modal-footer .arco-btn {
+    flex: 1 !important;
+    height: 40px !important;
+    border-radius: 20px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* 确认提示框仅靠操作按钮关闭，隐藏下方悬浮的独立小关闭按钮 */
+  .arco-modal-simple .arco-modal-close-btn {
+    display: none !important;
+  }
+
+  /* 【核心交互】移动端 Arco 默认业务弹窗关闭按钮统一转换为：居中悬浮在白色卡片正下方外部的圆形关闭按钮 */
+  .arco-modal:not(.floating-card-modal):not(.arco-modal-simple) .arco-modal-close-btn,
   .sheet-circle-close {
     display: flex !important;
     position: absolute !important;
@@ -327,7 +392,7 @@ body {
     z-index: 9999 !important;
     transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
   }
-  .arco-modal:not(.floating-card-modal) .arco-modal-close-btn:active,
+  .arco-modal:not(.floating-card-modal):not(.arco-modal-simple) .arco-modal-close-btn:active,
   .sheet-circle-close:active {
     transform: translateX(-50%) scale(0.9) !important;
     background: rgba(0, 0, 0, 0.75) !important;

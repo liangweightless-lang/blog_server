@@ -530,9 +530,12 @@ export default {
     handleDeleteProduct(prod) {
       Modal.confirm({
         title: '彻底删除商品',
-        content: `确定要从商品库彻底删除商品 "${prod.name}" 吗？删除后将无法恢复。如需暂时不售卖，建议使用“下架”功能。`,
+        content: `确定要彻底删除商品 "${prod.name}" 吗？删除后将无法恢复。如需暂时不售卖，建议使用“下架”功能。`,
         okText: '彻底删除',
-        okButtonProps: { status: 'danger' },
+        cancelText: '取消',
+        okButtonProps: { status: 'danger', shape: 'round' },
+        cancelButtonProps: { shape: 'round' },
+        width: 360,
         onOk: async () => {
           try {
             await deleteProduct(prod.id);
