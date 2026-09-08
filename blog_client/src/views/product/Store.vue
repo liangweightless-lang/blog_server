@@ -43,7 +43,7 @@
             
             <div class="campaign-products-preview" v-if="campaign.products && campaign.products.length > 0">
               <div class="preview-imgs">
-                <img v-for="cp in campaign.products.slice(0, 4)" :key="cp.id" :src="cp.product?.image" class="preview-img" />
+                <img v-for="cp in campaign.products.slice(0, 4)" :key="cp.id" :src="$formatImageUrl(cp.product?.image)" class="preview-img" />
                 <div v-if="campaign.products.length > 4" class="preview-more">+{{ campaign.products.length - 4 }}</div>
               </div>
               <div class="preview-text">
@@ -63,22 +63,45 @@
       <h2 class="section-title" style="color: #1D2129; margin-bottom: 16px;"><icon-apps /> 发现好物 <span style="font-size: 13px; color: #86909C; font-weight: normal; margin-left: 8px;">单品自由选购</span></h2>
       <a-grid :cols="{ xs: 2, sm: 2, md: 3 }" :colGap="12" :rowGap="24">
       <a-grid-item v-for="product in products" :key="product.id" class="product-col">
-        <a-card class="product-card" hoverable :bordered="false" :body-style="{ padding: '0px' }">
+        <a-card class="product-card" hoverable :bordered="false" :body-style="{ padding: '0px' }" :class="{ 'is-out-of-stock': product.stock === 0 }">
           <div class="product-image-wrapper" @click="$router.push(`/product/${product.id}`)">
-            <img :src="product.image" class="product-image" :alt="product.name" />
-            <div class="product-badge" v-if="product.isDigital">品牌甄选</div>
+            <img :src="$formatImageUrl(product.image)" class="product-image" :class="{ 'out-of-stock-img': product.stock === 0 }" :alt="product.name" />
+            <div class="product-badge out-of-stock-badge" v-if="product.stock === 0">已售罄</div>
+            <div class="product-badge" v-else-if="product.isDigital">品牌甄选</div>
           </div>
           <div class="product-info">
             <div class="product-clickable" @click="$router.push(`/product/${product.id}`)">
               <h3 class="product-name">{{ product.name }}</h3>
               <p class="product-desc">{{ product.description }}</p>
             </div>
+            <div class="product-shipping-tag" style="margin-bottom: 6px;">
+              <span v-if="product.deliveryFee && product.deliveryFee > 0" style="font-size: 11px; color: #86909C;">运费 ¥{{ product.deliveryFee }}</span>
+              <span v-else style="font-size: 11px; color: #00B42A;">免配送费</span>
+            </div>
             <div class="product-bottom">
               <span class="product-price">¥{{ product.price }}</span>
               <div class="button-group">
-                <a-button type="text" style="color: #E6A23C; font-size: 12px; padding: 0 4px;" @click="handleRedeem(product)">1000积分兑换</a-button>
-                <a-button type="primary" size="small" shape="round" class="buy-btn" @click="handleBuy(product)">立即购买</a-button>
-                <a-button v-if="isMonday" type="primary" status="warning" size="small" shape="round" class="group-btn" @click="handleStartGroup(product)">发起拼团</a-button>
+                <a-button v-if="product.stock !== 0" type="text" style="color: #E6A23C; font-size: 12px; padding: 0 4px;" @click="handleRedeem(product)">1000积分兑换</a-button>
+                <a-button 
+                  v-if="product.stock === 0" 
+                  disabled 
+                  size="small" 
+                  shape="round" 
+                  class="buy-btn btn-out-of-stock"
+                >
+                  暂无库存
+                </a-button>
+                <a-button 
+                  v-else 
+                  type="primary" 
+                  size="small" 
+                  shape="round" 
+                  class="buy-btn" 
+                  @click="handleBuy(product)"
+                >
+                  立即购买
+                </a-button>
+                <a-button v-if="isMonday && product.stock !== 0" type="primary" status="warning" size="small" shape="round" class="group-btn" @click="handleStartGroup(product)">发起拼团</a-button>
               </div>
             </div>
           </div>
@@ -222,8 +245,15 @@ export default {
     },
     async fetchProducts() {
       try {
-        const res = await getProducts();
-        this.products = res.data.data || [];
+        const res = await getProducts({ status: 1 });
+        let list = res.data.data || [];
+        // 前端防御性排序：有库存的优先置顶 (stock !== 0 排在 stock === 0 前面)
+        list.sort((a, b) => {
+          const aOut = (a.stock === 0) ? 1 : 0;
+          const bOut = (b.stock === 0) ? 1 : 0;
+          return aOut - bOut;
+        });
+        this.products = list;
       } catch (error) {
         Message.error('获取商品列表失败');
       }
@@ -355,6 +385,24 @@ export default {
   border: none;
   font-weight: bold;
   box-shadow: 0 4px 12px rgba(255, 75, 43, 0.2);
+}
+
+.buy-btn.btn-out-of-stock {
+  background: #C9CDD4 !important;
+  color: #86909C !important;
+  box-shadow: none !important;
+  cursor: not-allowed;
+}
+
+.out-of-stock-img {
+  filter: grayscale(80%) opacity(0.75);
+}
+
+.out-of-stock-badge {
+  background: rgba(0, 0, 0, 0.65) !important;
+  color: #FFFFFF !important;
+  backdrop-filter: blur(4px);
+  font-weight: bold;
 }
 
 .group-btn {

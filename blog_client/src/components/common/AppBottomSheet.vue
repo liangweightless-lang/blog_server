@@ -3,17 +3,14 @@
     :visible="visible"
     :footer="false"
     :header="false"
-    :width="isMobile ? '100%' : (width || '520px')"
+    :width="isMobile ? 'calc(100% - 32px)' : (width || '520px')"
     :mask-closable="maskClosable"
     @cancel="handleClose"
     unmount-on-close
     modal-class="universal-bottom-sheet-modal"
   >
     <div class="sheet-modern-container">
-      <!-- 1. 移动端顶部居中拉手横杠 (HandleBar) -->
-      <div class="sheet-handle-bar" v-if="isMobile"></div>
-      
-      <!-- 2. 右上角磨砂圆圈关闭按钮 -->
+      <!-- 磨砂圆圈关闭按钮 -->
       <button class="sheet-circle-close" @click="handleClose" aria-label="关闭">
         <icon-close />
       </button>
@@ -213,7 +210,30 @@ export default {
 
 @media (max-width: 768px) {
   .sheet-modern-container {
-    padding: 14px 16px 24px;
+    padding: 20px 18px 16px;
+    max-height: calc(82vh - 70px);
+  }
+  .sheet-circle-close {
+    top: auto !important;
+    right: auto !important;
+    bottom: -58px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+    background: rgba(30, 30, 30, 0.45) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
+    color: #FFFFFF !important;
+    font-size: 18px !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+    z-index: 9999 !important;
+  }
+  .sheet-circle-close:active {
+    transform: translateX(-50%) scale(0.9) !important;
+    background: rgba(0, 0, 0, 0.75) !important;
   }
 }
 </style>

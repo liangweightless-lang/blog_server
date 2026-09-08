@@ -124,6 +124,9 @@
       <!-- 自定义高级分享弹窗 -->
       <a-modal v-model:visible="shareModalVisible" :footer="false" :header="false" modal-class="custom-share-modal" unmount-on-close>
         <div class="share-modal-content">
+          <button class="sheet-circle-close" @click="shareModalVisible = false" aria-label="关闭">
+            <icon-close />
+          </button>
           <div class="share-modal-header">
             <div class="success-icon-wrapper">
               <icon-check-circle-fill class="success-icon" />

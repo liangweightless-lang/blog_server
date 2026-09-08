@@ -13,11 +13,13 @@ public class Product {
     private BigDecimal groupPrice;
     private String image;
     private Boolean isDigital;
+    private Integer status; // 1: 上架销售中, 0: 已下架仓库中
     private Integer stock;
     private String specs; // JSON format
     private Long categoryId;
     @com.baomidou.mybatisplus.annotation.TableField(exist = false)
     private String categoryName;
+    private BigDecimal deliveryFee; // 配送费
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 }

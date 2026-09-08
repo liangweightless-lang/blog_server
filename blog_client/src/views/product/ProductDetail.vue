@@ -12,8 +12,9 @@
 
       <!-- 商品大图 -->
       <div class="product-hero">
-        <a-image :src="product.image" class="hero-image" width="100%" fit="cover" :preview="true" />
-        <div class="product-badge" v-if="product.isDigital">品牌甄选</div>
+        <a-image :src="$formatImageUrl(product.image)" class="hero-image" width="100%" fit="cover" :preview="true" />
+        <div class="product-badge" v-if="product.stock === 0" style="background: rgba(0,0,0,0.7); color: #fff;">已售罄</div>
+        <div class="product-badge" v-else-if="product.isDigital">品牌甄选</div>
       </div>
 
       <!-- 价格区 -->
@@ -27,8 +28,11 @@
         </div>
         <div class="stock-row">
           <a-tag v-if="product.stock <= 5 && product.stock > 0" color="red" size="small">仅剩 {{ product.stock }} 件</a-tag>
-          <a-tag v-else-if="product.stock <= 0" color="gray" size="small">已售罄</a-tag>
-          <span v-else class="stock-text">库存充足 · {{ product.stock }} 件</span>
+          <a-tag v-else-if="product.stock === 0" color="gray" size="small">已售罄</a-tag>
+          <span v-else class="stock-text">库存: {{ product.stock === -1 ? '不限量' : product.stock + ' 件' }}</span>
+          <span style="margin-left: 12px; font-size: 12px; color: #86909C;">
+            {{ (product.deliveryFee && product.deliveryFee > 0) ? '配送费: ¥' + product.deliveryFee : '免配送费' }}
+          </span>
         </div>
       </div>
 
@@ -55,6 +59,7 @@
       <!-- 底部操作栏 -->
       <div class="detail-footer">
         <a-button
+          v-if="product.stock !== 0"
           type="text"
           class="footer-action-btn"
           @click="handleRedeem"
@@ -63,16 +68,17 @@
           积分兑
         </a-button>
         <a-button
-          type="primary"
+          :type="product.stock === 0 ? 'secondary' : 'primary'"
+          :disabled="product.stock === 0"
           shape="round"
           size="large"
           class="buy-btn"
           @click="handleBuy"
         >
-          ¥{{ product.price }} · 立即购买
+          {{ product.stock === 0 ? '暂无库存' : '¥' + product.price + ' · 立即购买' }}
         </a-button>
         <a-button
-          v-if="isMonday"
+          v-if="isMonday && product.stock !== 0"
           type="primary"
           status="warning"
           shape="round"

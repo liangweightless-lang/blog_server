@@ -5,14 +5,12 @@
     :closable="false"
     :visible="visible"
     :footer="false"
-    :width="380"
+    :width="isMobile ? 'calc(100% - 32px)' : 380"
     :mask-closable="false"
     @cancel="handleClose"
     modal-class="universal-cashier-modal"
   >
     <div class="cashier-pay-box">
-      <!-- 移动端顶部下拉拉手 (Handle Bar) -->
-      <div class="sheet-handle-bar"></div>
       <button class="sheet-circle-close" @click="handleClose" aria-label="关闭">
         <icon-close />
       </button>
@@ -586,5 +584,34 @@ export default {
 .paid-done-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .cashier-pay-box {
+    padding: 20px 18px 16px;
+    max-height: calc(82vh - 70px);
+  }
+  .sheet-circle-close {
+    top: auto !important;
+    right: auto !important;
+    bottom: -58px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+    background: rgba(30, 30, 30, 0.45) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
+    color: #FFFFFF !important;
+    font-size: 18px !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+    z-index: 9999 !important;
+  }
+  .sheet-circle-close:active {
+    transform: translateX(-50%) scale(0.9) !important;
+    background: rgba(0, 0, 0, 0.75) !important;
+  }
 }
 </style>

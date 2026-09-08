@@ -10,16 +10,19 @@
       :pagination="{ pageSize: 10 }"
     >
       <template #columns>
-        <a-table-column title="商品信息" :width="220">
+        <a-table-column title="商品信息" :width="230">
           <template #cell="{ record }">
             <div class="table-prod-cell">
-              <img :src="getProdImage(record.productId)" class="table-thumb-img" />
+              <img :src="$formatImageUrl(getProdImage(record.productId))" class="table-thumb-img" />
               <div class="table-prod-info">
                 <span class="table-prod-name">{{ getProdName(record.productId) }}</span>
                 <span class="table-prod-spec" v-if="record.selectedSpec">规格: {{ record.selectedSpec }}</span>
-                <a-tag :color="record.orderType === 'GROUP' ? 'orange' : 'blue'" size="small">
-                  {{ record.orderType === 'GROUP' ? '拼团' : '单买' }}
-                </a-tag>
+                <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px;">
+                  <a-tag :color="record.orderType === 'GROUP' ? 'orange' : 'blue'" size="small">
+                    {{ record.orderType === 'GROUP' ? '拼团' : '单买' }}
+                  </a-tag>
+                  <a-tag color="red" size="small">× {{ record.quantity || 1 }} 件</a-tag>
+                </div>
               </div>
             </div>
           </template>
@@ -32,15 +35,26 @@
         <a-table-column title="买家与地址">
           <template #cell="{ record }">
             <div class="table-addr-box">
-              <div class="buyer-line"><icon-user /> 买家UID: {{ record.userId }}</div>
+              <div class="buyer-line" style="display: flex; gap: 12px; align-items: center;">
+                <span><icon-user /> 买家UID: {{ record.userId }}</span>
+                <span v-if="record.contactPhone" style="color: #165dff; font-weight: 500;">
+                  <icon-phone /> <a :href="'tel:' + record.contactPhone" style="color: inherit;">{{ record.contactPhone }}</a>
+                </span>
+              </div>
               <div class="addr-line"><icon-location /> {{ record.shippingAddress || '未填写' }}</div>
+              <div v-if="record.remark" style="color: #D46B08; font-size: 12px; background: #FFF7E8; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 2px;">
+                <icon-message /> 顾客备注: {{ record.remark }}
+              </div>
               <div class="time-line"><icon-clock-circle /> {{ $formatTime(record.createTime) }}</div>
             </div>
           </template>
         </a-table-column>
-        <a-table-column title="实付金额" :width="120">
+        <a-table-column title="实付金额" :width="130">
           <template #cell="{ record }">
             <div class="table-price">¥{{ record.amount }}</div>
+            <div style="font-size: 11px; color: #86909c;">
+              {{ (record.deliveryFee && record.deliveryFee > 0) ? '含运费 ¥' + record.deliveryFee : '免配送费' }}
+            </div>
             <div class="table-points" v-if="record.pointsUsed">抵扣: {{ record.pointsUsed }}分</div>
           </template>
         </a-table-column>
@@ -81,27 +95,41 @@
 
           <!-- 商品主要信息区 -->
           <div class="m-card-prod-row">
-            <img :src="getProdImage(order.productId)" class="m-prod-thumb" />
+            <img :src="$formatImageUrl(getProdImage(order.productId))" class="m-prod-thumb" />
             <div class="m-prod-details">
               <h4 class="m-prod-name">{{ getProdName(order.productId) }}</h4>
-              <p class="m-prod-spec" v-if="order.selectedSpec">规格: {{ order.selectedSpec }}</p>
+              <div style="display: flex; align-items: center; gap: 8px; margin: 4px 0;">
+                <span class="m-prod-spec" v-if="order.selectedSpec">规格: {{ order.selectedSpec }}</span>
+                <a-tag color="red" size="small">数量: ×{{ order.quantity || 1 }}</a-tag>
+              </div>
               <div class="m-buyer-tag">
                 <icon-user /> 买家UID: <strong>{{ order.userId }}</strong>
               </div>
             </div>
             <div class="m-price-col">
               <span class="m-price-val">¥{{ order.amount }}</span>
+              <span style="font-size: 10px; color: #86909c;">
+                {{ (order.deliveryFee && order.deliveryFee > 0) ? '含运费¥' + order.deliveryFee : '免运费' }}
+              </span>
               <span v-if="order.pointsUsed" class="m-deduct-tip">抵扣{{ order.pointsUsed }}分</span>
             </div>
           </div>
 
-          <!-- 配送地址与时间 -->
+          <!-- 配送地址与联系人 -->
           <div class="m-card-addr-box">
+            <div class="m-addr-line" v-if="order.contactPhone" style="margin-bottom: 4px; color: #165DFF; font-weight: 500;">
+              <icon-phone class="m-addr-icon" />
+              <span>电话: <a :href="'tel:' + order.contactPhone" style="color: inherit; text-decoration: underline;">{{ order.contactPhone }}</a></span>
+            </div>
             <div class="m-addr-line">
               <icon-location class="m-addr-icon" />
-              <span>{{ order.shippingAddress || '买家未填写收货地址' }}</span>
+              <span>地址: {{ order.shippingAddress || '买家未填写收货地址' }}</span>
             </div>
-            <div class="m-time-line">
+            <div class="m-remark-line" v-if="order.remark" style="margin-top: 6px; padding: 6px 10px; background: #FFF7E8; border-radius: 6px; color: #D46B08; font-size: 12px; display: flex; align-items: flex-start; gap: 4px;">
+              <icon-message style="margin-top: 2px;" />
+              <span><strong>顾客备注:</strong> {{ order.remark }}</span>
+            </div>
+            <div class="m-time-line" style="margin-top: 6px;">
               <icon-clock-circle /> 下单时间: {{ $formatTime(order.createTime) }}
             </div>
           </div>

@@ -13,11 +13,16 @@
         </a-button>
       </div>
       <div class="right-filters">
+        <a-radio-group v-model="selectedStatus" type="button" size="small" @change="fetchProducts" style="margin-right: 8px;">
+          <a-radio :value="null">全部</a-radio>
+          <a-radio :value="1">销售中</a-radio>
+          <a-radio :value="0">已下架</a-radio>
+        </a-radio-group>
         <a-select 
           v-model="selectedCategoryId" 
           placeholder="全部分类" 
           allow-clear 
-          style="width: 140px;" 
+          style="width: 130px;" 
           @change="fetchProducts"
         >
           <a-option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</a-option>
@@ -25,7 +30,7 @@
         <a-input-search 
           v-model="searchKeyword" 
           placeholder="搜索商品名称..." 
-          style="width: 180px;" 
+          style="width: 160px;" 
           @search="fetchProducts" 
         />
       </div>
@@ -43,7 +48,7 @@
       <template #columns>
         <a-table-column title="商品图片" :width="90">
           <template #cell="{ record }">
-            <img v-if="record.image" :src="record.image" class="table-prod-img" />
+            <img v-if="record.image" :src="$formatImageUrl(record.image)" class="table-prod-img" />
             <span v-else class="text-muted">无图</span>
           </template>
         </a-table-column>
@@ -53,27 +58,39 @@
             <a-tag size="small" color="arcoblue">{{ getCategoryName(record.categoryId) }}</a-tag>
           </template>
         </a-table-column>
-        <a-table-column title="价格" :width="110">
+        <a-table-column title="价格/运费" :width="130">
           <template #cell="{ record }">
-            <span class="price-text">¥{{ record.price }}</span>
+            <div class="price-text">¥{{ record.price }}</div>
+            <div style="font-size: 11px; color: #86909c;">
+              {{ (record.deliveryFee && record.deliveryFee > 0) ? '运费 ¥' + record.deliveryFee : '免配送费' }}
+            </div>
           </template>
         </a-table-column>
-        <a-table-column title="库存" :width="100">
+        <a-table-column title="库存" :width="90">
           <template #cell="{ record }">
-            <span>{{ record.stock === -1 ? '不限' : record.stock }}</span>
+            <a-tag v-if="record.stock === 0" color="red" size="small">缺货</a-tag>
+            <span v-else>{{ record.stock === -1 ? '不限' : record.stock }}</span>
           </template>
         </a-table-column>
-        <a-table-column title="类型" :width="100">
+        <a-table-column title="状态" :width="90">
           <template #cell="{ record }">
-            <a-tag :color="record.isDigital ? 'green' : 'orangered'" size="small">
-              {{ record.isDigital ? '数字' : '实物' }}
+            <a-tag :color="record.status === 0 ? 'gray' : 'green'" size="small">
+              {{ record.status === 0 ? '已下架' : '销售中' }}
             </a-tag>
           </template>
         </a-table-column>
-        <a-table-column title="操作" :width="140" fixed="right">
+        <a-table-column title="操作" :width="200" fixed="right">
           <template #cell="{ record }">
             <a-button type="text" size="small" @click="openEditProductDialog(record)">编辑</a-button>
-            <a-button type="text" status="danger" size="small" @click="handleDeleteProduct(record)">删除</a-button>
+            <a-button 
+              type="text" 
+              size="small" 
+              :status="record.status === 0 ? 'success' : 'warning'" 
+              @click="handleToggleStatus(record)"
+            >
+              {{ record.status === 0 ? '上架' : '下架' }}
+            </a-button>
+            <a-button type="text" status="danger" size="small" @click="handleDeleteProduct(record)">彻底删除</a-button>
           </template>
         </a-table-column>
       </template>
@@ -84,27 +101,47 @@
       <a-spin :loading="loadingProducts" style="width: 100%; display: block;">
         <div v-for="prod in products" :key="prod.id" class="mobile-card-item">
           <div class="card-cover-row">
-            <img v-if="prod.image" :src="prod.image" class="mobile-prod-img" />
+            <img v-if="prod.image" :src="$formatImageUrl(prod.image)" class="mobile-prod-img" />
             <div class="mobile-prod-info">
-              <h4 class="mobile-prod-title">{{ prod.name }}</h4>
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <h4 class="mobile-prod-title">{{ prod.name }}</h4>
+                <a-tag :color="prod.status === 0 ? 'gray' : 'green'" size="small">
+                  {{ prod.status === 0 ? '已下架' : '销售中' }}
+                </a-tag>
+              </div>
               <div class="mobile-prod-tags">
                 <a-tag size="small" color="arcoblue">{{ getCategoryName(prod.categoryId) }}</a-tag>
                 <a-tag :color="prod.isDigital ? 'green' : 'orangered'" size="small">
                   {{ prod.isDigital ? '数字商品' : '实物' }}
                 </a-tag>
+                <a-tag v-if="prod.deliveryFee && prod.deliveryFee > 0" color="purple" size="small">
+                  运费: ¥{{ prod.deliveryFee }}
+                </a-tag>
+                <a-tag v-else color="cyan" size="small">免配送费</a-tag>
               </div>
               <div class="mobile-prod-price-row">
                 <span class="mobile-price">¥{{ prod.price }}</span>
-                <span class="mobile-stock">库存: {{ prod.stock === -1 ? '不限量' : prod.stock }}</span>
+                <span class="mobile-stock" :style="{ color: prod.stock === 0 ? '#F53F3F' : '#86909C' }">
+                  {{ prod.stock === 0 ? '已缺货' : (prod.stock === -1 ? '库存: 不限量' : '库存: ' + prod.stock) }}
+                </span>
               </div>
             </div>
           </div>
           <div class="mobile-card-actions">
             <a-button type="outline" size="small" shape="round" @click="openEditProductDialog(prod)">
-              <template #icon><icon-edit /></template> 编辑商品
+              <template #icon><icon-edit /></template> 编辑
+            </a-button>
+            <a-button 
+              type="outline" 
+              :status="prod.status === 0 ? 'success' : 'warning'" 
+              size="small" 
+              shape="round" 
+              @click="handleToggleStatus(prod)"
+            >
+              <template #icon><icon-swap /></template> {{ prod.status === 0 ? '重新上架' : '下架入库' }}
             </a-button>
             <a-button type="primary" status="danger" size="small" shape="round" @click="handleDeleteProduct(prod)">
-              <template #icon><icon-delete /></template> 下架删除
+              <template #icon><icon-delete /></template> 删除
             </a-button>
           </div>
         </div>
@@ -193,6 +230,11 @@
               </div>
             </div>
 
+            <div class="custom-form-item">
+              <label class="form-label">配送费 (元) <span class="label-tag">0 为免配送费</span></label>
+              <a-input-number v-model="productForm.deliveryFee" :precision="2" :min="0" placeholder="0.00" size="large" class="luxury-form-input" />
+            </div>
+
             <!-- 商品主图上传 -->
             <div class="custom-form-item">
               <label class="form-label">商品封面大图</label>
@@ -204,7 +246,7 @@
               >
                 <template #upload-button>
                   <div class="product-image-uploader-card">
-                    <img v-if="productForm.image" :src="productForm.image" class="product-upload-preview" />
+                    <img v-if="productForm.image" :src="$formatImageUrl(productForm.image)" class="product-upload-preview" />
                     <div v-else class="product-upload-placeholder">
                       <icon-camera class="camera-icon" />
                       <span>点击上传封面图片</span>
@@ -279,7 +321,7 @@
 </template>
 
 <script>
-import { getProducts, updateProduct, saveProduct, deleteProduct } from '@/api/product';
+import { getProducts, updateProduct, saveProduct, deleteProduct, updateProductStatus } from '@/api/product';
 import { getProductCategories } from '@/api/productCategory';
 import CategoryManagerDialog from './CategoryManagerDialog.vue';
 import { Message, Modal } from '@arco-design/web-vue';
@@ -302,6 +344,7 @@ export default {
       categoryDialogVisible: false,
       isEditing: false,
       selectedCategoryId: null,
+      selectedStatus: null,
       searchKeyword: '',
       currentTab: 'basic',
       productForm: {
@@ -309,8 +352,10 @@ export default {
         name: '',
         description: '',
         price: 0,
+        deliveryFee: 0,
         image: '',
         isDigital: true,
+        status: 1,
         stock: -1,
         categoryId: null,
         specsList: []
@@ -343,7 +388,11 @@ export default {
     async fetchProducts() {
       this.loadingProducts = true;
       try {
-        const res = await getProducts();
+        const params = {};
+        if (this.selectedStatus !== null && this.selectedStatus !== undefined) {
+          params.status = this.selectedStatus;
+        }
+        const res = await getProducts(params);
         let list = res.data.data || [];
         if (this.selectedCategoryId) {
           list = list.filter(p => p.categoryId === this.selectedCategoryId);
@@ -358,6 +407,17 @@ export default {
         this.loadingProducts = false;
       }
     },
+    async handleToggleStatus(prod) {
+      const targetStatus = prod.status === 1 ? 0 : 1;
+      try {
+        await updateProductStatus(prod.id, targetStatus);
+        prod.status = targetStatus;
+        Message.success(targetStatus === 1 ? '商品已重新上架销售' : '商品已下架，已妥善保留在商品库');
+        this.fetchProducts();
+      } catch (e) {
+        Message.error(e.response?.data?.message || '状态切换失败');
+      }
+    },
     openCreateProductDialog() {
       this.isEditing = false;
       this.currentTab = 'basic';
@@ -366,8 +426,10 @@ export default {
         name: '',
         description: '',
         price: 0,
+        deliveryFee: 0,
         image: '',
         isDigital: true,
+        status: 1,
         stock: -1,
         categoryId: null,
         specsList: []
@@ -387,6 +449,8 @@ export default {
       }
       this.productForm = {
         ...prod,
+        deliveryFee: prod.deliveryFee !== undefined ? prod.deliveryFee : 0,
+        status: prod.status !== undefined ? prod.status : 1,
         specsList: specs.map(s => ({ ...s, inputVisible: false, inputValue: '' }))
       };
       this.productDialogVisible = true;
@@ -465,12 +529,14 @@ export default {
     },
     handleDeleteProduct(prod) {
       Modal.confirm({
-        title: '提示',
-        content: `确定要删除商品 "${prod.name}" 吗？`,
+        title: '彻底删除商品',
+        content: `确定要从商品库彻底删除商品 "${prod.name}" 吗？删除后将无法恢复。如需暂时不售卖，建议使用“下架”功能。`,
+        okText: '彻底删除',
+        okButtonProps: { status: 'danger' },
         onOk: async () => {
           try {
             await deleteProduct(prod.id);
-            Message.success('商品已删除');
+            Message.success('商品已彻底删除');
             this.fetchProducts();
           } catch (e) {
             Message.error('删除失败');

@@ -2,7 +2,7 @@
   <a-modal 
     title="地图定位" 
     :visible="visible" 
-    :width="isMobile ? '95%' : '600px'" 
+    :width="isMobile ? 'calc(100% - 32px)' : '600px'" 
     @cancel="handleCancel" 
     @ok="handleConfirm" 
     :ok-button-props="{disabled: !selectedAddress}" 

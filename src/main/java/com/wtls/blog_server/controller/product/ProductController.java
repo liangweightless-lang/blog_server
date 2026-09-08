@@ -40,8 +40,11 @@ public class ProductController {
     }
 
     @GetMapping
-    @Operation(summary = "获取所有商品列表")
-    public Result<List<Product>> getAll() {
+    @Operation(summary = "获取商品列表")
+    public Result<List<Product>> getAll(@RequestParam(value = "status", required = false) Integer status) {
+        if (status != null) {
+            return Result.success(productService.getProductsByStatus(status));
+        }
         return Result.success(productService.getAllProducts());
     }
 
@@ -66,6 +69,14 @@ public class ProductController {
         product.setId(id);
         productService.updateProduct(product);
         return Result.success("Product updated");
+    }
+
+    @PutMapping("/{id}/status")
+    @Operation(summary = "切换商品上下架状态 (Admin)")
+    public Result<String> updateStatus(@RequestHeader("Authorization") String authHeader, @PathVariable Long id, @RequestParam("status") Integer status) {
+        checkAdmin(authHeader);
+        productService.updateProductStatus(id, status);
+        return Result.success(status == 1 ? "商品已上架" : "商品已下架");
     }
 
     @DeleteMapping("/{id}")

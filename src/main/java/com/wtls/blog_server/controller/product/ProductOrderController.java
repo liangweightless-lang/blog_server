@@ -41,6 +41,12 @@ public class ProductOrderController {
         public Integer pointsToUse;
         @Schema(description = "选中的规格", example = "标准,去冰")
         public String spec;
+        @Schema(description = "购买数量", example = "1")
+        public Integer quantity;
+        @Schema(description = "联系手机号", example = "13800000000")
+        public String contactPhone;
+        @Schema(description = "顾客备注", example = "放门口自提")
+        public String remark;
     }
 
     private Long getUserIdFromToken(String authHeader) {
@@ -60,7 +66,7 @@ public class ProductOrderController {
     @Operation(summary = "创建新订单", description = "支持个人购买和发起拼团")
     public Result<ProductOrder> createOrder(@RequestHeader("Authorization") String authHeader, @Valid @RequestBody CreateOrderRequest req) {
         Long userId = getUserIdFromToken(authHeader);
-        ProductOrder order = orderService.createOrder(userId, req.productId, req.address, req.type == null ? "INDIVIDUAL" : req.type, req.pointsToUse, req.spec);
+        ProductOrder order = orderService.createOrder(userId, req.productId, req.address, req.type == null ? "INDIVIDUAL" : req.type, req.pointsToUse, req.spec, req.quantity, req.contactPhone, req.remark);
         return Result.success(order);
     }
 

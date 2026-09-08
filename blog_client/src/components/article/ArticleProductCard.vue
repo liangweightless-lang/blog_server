@@ -2,7 +2,7 @@
   <div class="recommended-product" v-if="product && product.id" @click="handleClick">
     <div class="product-card-inner">
       <div class="product-badge">推荐好物</div>
-      <img :src="product.image" class="product-thumb" />
+      <img :src="$formatImageUrl(product.image)" class="product-thumb" />
       <div class="product-info-mini">
         <h4 class="product-name-mini">{{ product.name }}</h4>
         <div class="product-price-row">

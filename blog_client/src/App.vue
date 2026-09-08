@@ -29,6 +29,7 @@ import IosInstallGuide from './components/common/IosInstallGuide.vue'
 import { mapState, mapActions } from 'pinia'
 import { useUserStore } from '@/stores/user'
 import { App as CapApp } from '@capacitor/app'
+import { Message } from '@arco-design/web-vue'
 
 export default {
   name: 'App',
@@ -63,23 +64,38 @@ export default {
     
     this.fetchUser();
 
-    // 拦截 Android 硬件返回键 / 侧滑返回手势
+    // 拦截 Android 硬件返回键 / 侧滑返回手势 (解决滑动手势误退应用问题)
     const isCapacitor = typeof window !== 'undefined' && window.Capacitor;
     if (isCapacitor) {
+      this.lastBackTime = 0;
       CapApp.addListener('backButton', () => {
-        // 如果登录弹窗处于打开状态，仅关闭弹窗而不是退出应用或返回上一页
+        // 1. 如果登录弹窗处于打开状态，仅关闭弹窗
         if (this.loginDialogVisible) {
           this.loginDialogVisible = false;
           return;
         }
-        
-        // 定义顶级标签页路径，在这些页面点击返回键将退出应用
-        const topLevelPaths = ['/', '/store', '/profile'];
-        if (topLevelPaths.includes(this.$route.path)) {
+
+        const currentPath = this.$route.path;
+
+        // 2. 如果当前不是首页根路径，优先返回上一页或返回首页
+        if (currentPath !== '/') {
+          if (currentPath === '/store' || currentPath === '/profile') {
+            // 如果在商城页或个人主页等主 Tab，统一平滑返回到首页
+            this.$router.push('/');
+          } else {
+            // 其他子页面优先回退上一页
+            this.$router.back();
+          }
+          return;
+        }
+
+        // 3. 如果当前已经在首页根路径，采用现代 App 双击防误触退出机制
+        const now = Date.now();
+        if (this.lastBackTime && (now - this.lastBackTime < 2000)) {
           CapApp.exitApp();
         } else {
-          // 否则返回上一级页面
-          this.$router.back();
+          this.lastBackTime = now;
+          Message.info({ content: '再按一次或右划退出应用', duration: 2000 });
         }
       });
     }
@@ -194,33 +210,39 @@ body {
     -webkit-backdrop-filter: blur(10px);
   }
   
-  /* 彻底屏蔽所有移动端 Arco 默认 PC 头部与左上角关闭按钮 (彻底解决怪异X按钮问题) */
-  .arco-modal-header,
-  .arco-modal-close-btn {
+  /* 彻底屏蔽所有移动端 Arco 默认 PC 头部 (使用统一的卡片内容与标题) */
+  .arco-modal-header {
     display: none !important;
   }
 
   /* 遮罩层高质感半透明暗光与高斯模糊 */
   .arco-modal-mask {
-    background-color: rgba(0, 0, 0, 0.5) !important;
+    background-color: rgba(0, 0, 0, 0.52) !important;
     backdrop-filter: blur(6px) !important;
     -webkit-backdrop-filter: blur(6px) !important;
   }
 
+  /* 移动端弹窗容器统一垂直居中，底部留出空间放置悬浮关闭按钮 */
   .arco-modal-wrapper {
     display: flex !important;
-    align-items: flex-end !important;
+    align-items: center !important;
     justify-content: center !important;
-    padding: 0 !important;
+    padding: 24px 0 68px !important;
+  }
+
+  /* 全局屏蔽移动端顶部拉手条 (已全面摒弃贴底抽屉，统一为标准浮动卡片) */
+  .sheet-handle-bar,
+  .handle-bar,
+  .sheet-handle-wrapper {
+    display: none !important;
   }
 
   /* 全局防灵动岛遮挡规则：若出现 Modal.confirm 等轻量确认框，强制下移安全居中 */
   .arco-modal-simple {
-    margin-bottom: max(40px, env(safe-area-inset-bottom, 40px)) !important;
-    border-radius: 22px !important;
+    border-radius: 24px !important;
     max-width: 88% !important;
     padding: 20px 16px !important;
-    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2) !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22) !important;
   }
 
   /* 解决长弹窗滚动条体验 */
@@ -235,34 +257,104 @@ body {
     border-radius: 10px;
   }
 
-  /* 统一将所有业务弹窗在移动端转为标准小红书/美团/iOS原生级底部抽屉 (Bottom Sheet) */
+  /* 【市面手机主流规范】全站移动端弹窗一律统一为：左右有间距、四周24px全圆角、悬浮卡片 */
   .arco-modal,
-  .arco-modal-simple,
   .checkout-modal,
-  .buy-modal,
-  .buy-modal-sheet,
   .creator-modal-mobile,
   .group-dialog,
   .custom-share-modal,
   .wechat-pay-modal,
+  .universal-cashier-modal,
+  .universal-bottom-sheet-modal,
   .login-dialog-modal {
-    width: 100% !important;
-    max-width: 100% !important;
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    margin: 0 !important;
+    width: calc(100% - 32px) !important;
+    max-width: 440px !important;
+    position: relative !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: auto !important;
+    margin: auto !important;
     padding: 0 !important;
-    border-radius: 24px 24px 0 0 !important;
+    border-radius: 24px !important;
     border: none !important;
     background: #FFFFFF !important;
-    box-shadow: 0 -12px 36px rgba(0, 0, 0, 0.18) !important;
-    max-height: 85vh !important;
-    animation: slideUpBottomSheet 0.3s cubic-bezier(0.25, 1, 0.5, 1) !important;
-    overflow: hidden !important;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.22) !important;
+    max-height: calc(85vh - 70px) !important;
+    overflow: visible !important;
     display: flex !important;
     flex-direction: column !important;
+    align-items: center !important;
+    animation: floatingScaleIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  /* 对于自定义外置关闭按钮的卡片，背景设为透明，避免双重阴影 */
+  .arco-modal.floating-card-modal {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .arco-modal .arco-modal-body {
+    width: 100% !important;
+    border-radius: 24px !important;
+    overflow-y: auto !important;
+    max-height: calc(85vh - 70px) !important;
+    padding: 0 !important;
+  }
+
+  /* 【核心交互】移动端 Arco 默认关闭按钮统一转换为：居中悬浮在白色卡片正下方外部的圆形关闭按钮 */
+  .arco-modal:not(.floating-card-modal) .arco-modal-close-btn,
+  .sheet-circle-close {
+    display: flex !important;
+    position: absolute !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: -58px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+    background: rgba(30, 30, 30, 0.45) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
+    color: #FFFFFF !important;
+    font-size: 18px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+    cursor: pointer !important;
+    z-index: 9999 !important;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  }
+  .arco-modal:not(.floating-card-modal) .arco-modal-close-btn:active,
+  .sheet-circle-close:active {
+    transform: translateX(-50%) scale(0.9) !important;
+    background: rgba(0, 0, 0, 0.75) !important;
+  }
+  .arco-modal .arco-modal-close-btn .arco-icon,
+  .sheet-circle-close .arco-icon {
+    font-size: 18px !important;
+    color: #FFFFFF !important;
+  }
+  .arco-modal .arco-modal-close-btn .arco-icon-hover {
+    background: transparent !important;
+  }
+
+  /* 当已存在专门的 outside-close-wrapper 时，隐藏冗余的关闭按钮 */
+  .floating-card-modal .arco-modal-close-btn {
+    display: none !important;
+  }
+
+  @keyframes floatingScaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.92) translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
   }
   
   .arco-modal-body {

@@ -14,11 +14,15 @@ public class ProductOrder {
     private String id;
     private Long userId;
     private Long productId;
+    private Integer quantity; // 购买数量
     private BigDecimal amount;
     private Integer status; // 0: pending, 1: paid
     private String shippingAddress;
+    private String contactPhone; // 联系手机号
+    private String remark; // 顾客备注
     private String orderType; // "INDIVIDUAL" or "GROUP"
     private Integer pointsUsed;
+    private BigDecimal deliveryFee; // 配送费
     private String selectedSpec;
     private LocalDateTime createTime;
     private LocalDateTime payTime;

@@ -1,7 +1,7 @@
 <template>
   <a-modal 
     :visible="visible" 
-    :width="isMobile ? '100%' : '520px'" 
+    :width="isMobile ? 'calc(100% - 32px)' : '520px'" 
     :footer="false"
     :header="false"
     :mask-closable="true"
@@ -9,10 +9,7 @@
     unmount-on-close
   >
     <div class="sheet-modern-container">
-      <!-- 移动端顶部拉手横杠 -->
-      <div class="sheet-handle-bar" v-if="isMobile"></div>
-      
-      <!-- 右上角磨砂圆圈关闭按钮 -->
+      <!-- 磨砂圆圈关闭按钮 -->
       <button class="sheet-circle-close" @click="handleCancel" aria-label="关闭">
         <icon-close />
       </button>
@@ -392,5 +389,12 @@ export default {
 .sheet-main-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .sheet-modern-container {
+    padding: 20px 18px 16px;
+    max-height: calc(82vh - 70px);
+  }
 }
 </style>

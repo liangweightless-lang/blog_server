@@ -14,7 +14,11 @@ public class ProductService {
     private ProductMapper productMapper;
 
     public List<Product> getAllProducts() {
-        return productMapper.findAll();
+        return productMapper.findAll(null);
+    }
+
+    public List<Product> getProductsByStatus(Integer status) {
+        return productMapper.findAll(status);
     }
 
     public Product getProductById(Long id) {
@@ -22,11 +26,21 @@ public class ProductService {
     }
 
     public void createProduct(Product product) {
+        if (product.getStatus() == null) {
+            product.setStatus(1); // 默认上架
+        }
+        if (product.getDeliveryFee() == null) {
+            product.setDeliveryFee(java.math.BigDecimal.ZERO);
+        }
         productMapper.insert(product);
     }
 
     public void updateProduct(Product product) {
         productMapper.updateById(product);
+    }
+
+    public void updateProductStatus(Long id, Integer status) {
+        productMapper.updateStatus(id, status);
     }
 
     public void deleteProduct(Long id) {

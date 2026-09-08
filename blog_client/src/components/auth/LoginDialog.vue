@@ -698,45 +698,60 @@ export default {
   text-decoration: underline;
 }
 
-/* ================= 移动端小红书 / 美团 Bottom Sheet 样式 ================= */
+/* ================= 移动端标准悬浮卡片样式 (左右间距、四周全圆角、关闭在下方) ================= */
 @media (max-width: 768px) {
   .auth-overlay {
-    align-items: flex-end;
-    padding: 0;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 16px 68px;
   }
 
   .auth-container.is-mobile {
-    max-width: 100%;
-    border-radius: 24px 24px 0 0;
-    padding: 12px 20px max(24px, env(safe-area-inset-bottom, 24px));
-    animation: sheetSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-    max-height: 90vh;
+    width: calc(100% - 32px);
+    max-width: 400px;
+    border-radius: 24px;
+    padding: 24px 20px max(24px, env(safe-area-inset-bottom, 24px));
+    animation: floatingScaleIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: calc(85vh - 70px);
     overflow-y: auto;
+    position: relative;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.22);
   }
 
   .auth-container.is-closing {
-    animation: sheetSlideDown 0.2s ease forwards !important;
+    animation: floatingScaleOut 0.2s ease forwards !important;
   }
 
   .sheet-handle-wrapper {
-    display: flex;
-    justify-content: center;
-    padding: 6px 0 14px;
-    cursor: pointer;
+    display: none !important;
   }
 
-  .sheet-handle {
-    width: 36px;
-    height: 4px;
-    background: #E5E6EB;
-    border-radius: 2px;
-  }
-
+  /* 悬浮在卡片正下方外部的圆形关闭按钮 */
   .close-btn {
-    top: 14px;
-    right: 16px;
-    width: 28px;
-    height: 28px;
+    top: auto !important;
+    right: auto !important;
+    bottom: -58px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+    background: rgba(30, 30, 30, 0.45) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
+    color: #FFFFFF !important;
+    font-size: 18px !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 9999 !important;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  }
+  .close-btn:active {
+    transform: translateX(-50%) scale(0.9) !important;
+    background: rgba(0, 0, 0, 0.75) !important;
   }
 
   .brand-badge {

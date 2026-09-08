@@ -29,7 +29,7 @@
           <div class="card-cover-box">
             <img 
               v-if="isValidUrl(item.data.coverUrl)" 
-              :src="item.data.coverUrl" 
+              :src="$formatImageUrl(item.data.coverUrl)" 
               class="card-img"
               alt="cover" 
               loading="lazy" 

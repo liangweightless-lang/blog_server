@@ -9,8 +9,10 @@ const app = createApp(App)
 const pinia = createPinia()
 
 import { formatTime, formatDate } from './utils/date'
+import { formatImageUrl } from './utils/image'
 app.config.globalProperties.$formatTime = formatTime
 app.config.globalProperties.$formatDate = formatDate
+app.config.globalProperties.$formatImageUrl = formatImageUrl
 
 app.use(pinia)
 app.use(router)

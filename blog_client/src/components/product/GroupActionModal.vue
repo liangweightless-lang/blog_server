@@ -2,13 +2,13 @@
   <a-modal
     :title="actionType === 'join' ? '加入拼团确认' : '发起拼团确认'"
     :visible="visible"
-    :width="isMobile ? '95%' : '450px'"
+    :width="isMobile ? 'calc(100% - 32px)' : '450px'"
     @cancel="handleCancel"
     :footer="false"
     modal-class="group-dialog">
     <div class="group-dialog-content" v-if="product && product.id">
       <div class="product-mini-info">
-        <a-image :src="product.image" class="mini-img" width="60" height="60" fit="cover" />
+        <a-image :src="$formatImageUrl(product.image)" class="mini-img" width="60" height="60" fit="cover" />
         <div class="mini-text">
           <h4>{{ product.name }}</h4>
           <p class="price-row">

@@ -4,12 +4,11 @@
     :header="false"
     :closable="false"
     :visible="visible" 
-    :width="isMobile ? '100%' : '500px'" 
+    :width="isMobile ? 'calc(100% - 32px)' : '500px'" 
     @cancel="handleCancel" 
     :footer="false"
   >
     <div v-if="order" class="order-detail-container">
-      <div class="sheet-handle-bar" v-if="isMobile"></div>
       <button class="sheet-circle-close" @click="handleCancel" aria-label="关闭">
         <icon-close />
       </button>
@@ -26,18 +25,25 @@
 
       <!-- 收货地址区 -->
       <div class="detail-card">
-        <div class="card-title"><icon-location /> 配送信息</div>
-        <div class="address-text">{{ order.shippingAddress || '暂无地址信息' }}</div>
+        <div class="card-title"><icon-location /> 配送与联系信息</div>
+        <div class="address-text" style="font-weight: 500;">{{ order.shippingAddress || '暂无地址信息' }}</div>
+        <div v-if="order.contactPhone" style="margin-top: 6px; font-size: 13px; color: #165DFF;">
+          <icon-phone /> 联系电话: {{ order.contactPhone }}
+        </div>
+        <div v-if="order.remark" style="margin-top: 6px; font-size: 13px; color: #D46B08; background: #FFF7E8; padding: 4px 8px; border-radius: 4px;">
+          <icon-message /> 备注: {{ order.remark }}
+        </div>
       </div>
 
       <!-- 商品区 -->
       <div class="detail-card">
         <div class="card-title"><icon-gift /> 商品信息</div>
         <div class="product-item">
-          <a-image :src="order.productImage" class="product-img" width="60" height="60" fit="cover" />
+          <a-image :src="$formatImageUrl(order.productImage)" class="product-img" width="60" height="60" fit="cover" />
           <div class="product-info">
             <div class="pname">{{ order.productName || '商品ID: ' + order.productId }}</div>
             <div class="pspec" v-if="order.selectedSpec">规格: {{ order.selectedSpec }}</div>
+            <div class="pqty" style="color: #FF5A34; font-size: 12px; margin-top: 2px;">数量: ×{{ order.quantity || 1 }}</div>
           </div>
         </div>
       </div>
@@ -60,6 +66,14 @@
         <div class="info-row">
           <span class="info-label">订单类型</span>
           <span class="info-value">{{ order.orderType === 'GROUP' ? '拼团订单' : '普通订单' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">购买数量</span>
+          <span class="info-value">{{ order.quantity || 1 }} 件</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">配送费</span>
+          <span class="info-value">{{ (order.deliveryFee && order.deliveryFee > 0) ? '¥' + order.deliveryFee : '免配送费' }}</span>
         </div>
         <div class="info-row" v-if="order.pointsUsed">
           <span class="info-label">积分抵扣</span>
@@ -319,5 +333,34 @@ export default {
   justify-content: flex-end;
   gap: 12px;
   margin-top: 24px;
+}
+
+@media (max-width: 768px) {
+  .order-detail-container {
+    padding: 20px 18px 16px;
+    max-height: calc(82vh - 70px);
+  }
+  .sheet-circle-close {
+    top: auto !important;
+    right: auto !important;
+    bottom: -58px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+    background: rgba(30, 30, 30, 0.45) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
+    color: #FFFFFF !important;
+    font-size: 18px !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+    z-index: 9999 !important;
+  }
+  .sheet-circle-close:active {
+    transform: translateX(-50%) scale(0.9) !important;
+    background: rgba(0, 0, 0, 0.75) !important;
+  }
 }
 </style>

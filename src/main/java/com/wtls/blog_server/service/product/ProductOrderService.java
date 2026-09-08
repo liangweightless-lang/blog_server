@@ -29,18 +29,24 @@ public class ProductOrderService {
     private UserMapper userMapper;
 
     @Transactional
-    public ProductOrder createOrder(Long userId, Long productId, String address, String type, Integer pointsToUse, String spec) {
+    public ProductOrder createOrder(Long userId, Long productId, String address, String type, Integer pointsToUse, String spec, Integer quantity, String contactPhone, String remark) {
         Product product = productMapper.selectById(productId);
         if (product == null) {
             throw new BusinessException("Product not found");
         }
         
-        // 校验库存
-        if (product.getStock() != null && product.getStock() <= 0) {
-            throw new BusinessException("商品库存不足");
+        int buyCount = (quantity != null && quantity > 0) ? quantity : 1;
+
+        // 校验库存 (stock == -1 表示不限量)
+        if (product.getStock() != null && product.getStock() != -1 && product.getStock() < buyCount) {
+            throw new BusinessException("商品库存不足，剩余库存: " + product.getStock());
         }
 
-        java.math.BigDecimal originalAmount = "GROUP".equals(type) && product.getGroupPrice() != null ? product.getGroupPrice() : product.getPrice();
+        java.math.BigDecimal unitPrice = "GROUP".equals(type) && product.getGroupPrice() != null ? product.getGroupPrice() : product.getPrice();
+        java.math.BigDecimal deliveryFee = product.getDeliveryFee() != null ? product.getDeliveryFee() : java.math.BigDecimal.ZERO;
+        
+        // 总金额 = 单价 * 数量 + 配送费
+        java.math.BigDecimal originalAmount = unitPrice.multiply(new java.math.BigDecimal(buyCount)).add(deliveryFee);
         java.math.BigDecimal deduction = java.math.BigDecimal.ZERO;
         
         int actualPointsToUse = 0;
@@ -53,7 +59,7 @@ public class ProductOrderService {
             // 100 points = 1 Yuan
             deduction = new java.math.BigDecimal(pointsToUse).divide(new java.math.BigDecimal(100), 2, java.math.RoundingMode.HALF_UP);
             
-            // Ensure deduction doesn't exceed amount (at least 0.01 left?)
+            // Ensure deduction doesn't exceed amount (at least 0.01 left)
             if (deduction.compareTo(originalAmount) >= 0) {
                 deduction = originalAmount.subtract(new java.math.BigDecimal("0.01"));
                 actualPointsToUse = deduction.multiply(new java.math.BigDecimal(100)).intValue();
@@ -66,10 +72,14 @@ public class ProductOrderService {
         order.setId(IdUtil.fastSimpleUUID());
         order.setUserId(userId);
         order.setProductId(productId);
+        order.setQuantity(buyCount);
         order.setAmount(originalAmount.subtract(deduction));
         order.setPointsUsed(actualPointsToUse);
         order.setStatus(0); // Pending
         order.setShippingAddress(address);
+        order.setContactPhone(contactPhone);
+        order.setRemark(remark);
+        order.setDeliveryFee(deliveryFee);
         order.setOrderType(type);
         order.setSelectedSpec(spec);
 
@@ -79,6 +89,11 @@ public class ProductOrderService {
 
         orderMapper.insert(order);
         return order;
+    }
+
+    // 重载方法兼容老接口
+    public ProductOrder createOrder(Long userId, Long productId, String address, String type, Integer pointsToUse, String spec) {
+        return createOrder(userId, productId, address, type, pointsToUse, spec, 1, null, null);
     }
 
     @Transactional
@@ -94,8 +109,9 @@ public class ProductOrderService {
             throw new BusinessException("Invalid order or already paid");
         }
 
+        int count = order.getQuantity() != null && order.getQuantity() > 0 ? order.getQuantity() : 1;
         // 扣减库存
-        int rows = productMapper.reduceStock(order.getProductId(), 1);
+        int rows = productMapper.reduceStock(order.getProductId(), count);
         if (rows == 0) {
             throw new BusinessException("支付失败：商品库存不足");
         }

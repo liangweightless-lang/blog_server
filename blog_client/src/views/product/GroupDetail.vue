@@ -20,7 +20,7 @@
     <div v-else-if="group" class="detail-content">
       <!-- 商品概览卡片 -->
       <div class="section-card product-summary-card">
-        <img :src="product.image" class="product-img">
+        <img :src="$formatImageUrl(product.image)" class="product-img">
         <div class="product-text">
           <h2 class="p-title">{{ product.name }}</h2>
           <p class="p-desc">{{ product.description }}</p>

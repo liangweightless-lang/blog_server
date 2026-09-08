@@ -2,10 +2,11 @@ import request from '@/utils/request';
 
 /**
  * 获取商品列表
+ * @param {object} [params] - 查询参数 { status: 1 }
  * @returns {Promise}
  */
-export function getProducts() {
-  return request.get('/api/products');
+export function getProducts(params) {
+  return request.get('/api/products', { params });
 }
 
 /**
@@ -34,6 +35,16 @@ export function saveProduct(data) {
  */
 export function updateProduct(id, data) {
   return request.put(`/api/products/${id}`, data);
+}
+
+/**
+ * 更新商品上下架状态 (管理端)
+ * @param {string|number} id - 商品 ID
+ * @param {number} status - 状态 (1: 上架, 0: 下架)
+ * @returns {Promise}
+ */
+export function updateProductStatus(id, status) {
+  return request.put(`/api/products/${id}/status`, null, { params: { status } });
 }
 
 /**

@@ -1,7 +1,7 @@
 <template>
   <a-modal 
     :visible="visible" 
-    :width="isMobile ? '100%' : '560px'" 
+    :width="isMobile ? 'calc(100% - 32px)' : '560px'" 
     :footer="false"
     :header="false"
     :mask-closable="true"
@@ -9,8 +9,6 @@
     unmount-on-close
   >
     <div class="sheet-modern-container">
-      <div class="sheet-handle-bar" v-if="isMobile"></div>
-      
       <button class="sheet-circle-close" @click="handleCancel" aria-label="关闭">
         <icon-close />
       </button>

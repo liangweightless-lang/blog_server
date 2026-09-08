@@ -10,7 +10,6 @@
     @close="handleClose"
   >
     <div class="apply-container">
-      <div class="sheet-handle-bar" v-if="isMobile"></div>
       <button class="sheet-circle-close" @click="handleClose" aria-label="关闭">
         <icon-close />
       </button>
@@ -302,27 +301,10 @@ export default {
 }
 
 @media (max-width: 768px) {
-  :deep(.creator-modal-mobile) {
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    border-radius: 24px 24px 0 0 !important;
-    padding-bottom: max(16px, env(safe-area-inset-bottom));
-    animation: sheetSlideUp 0.35s cubic-bezier(0.25, 1, 0.5, 1);
-    max-height: 88vh;
+  .apply-container {
+    padding: 20px 18px 16px;
+    max-height: calc(82vh - 70px);
     overflow-y: auto;
   }
-  .apply-container {
-    padding-bottom: 20px;
-  }
-}
-
-@keyframes sheetSlideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
 }
 </style>

@@ -106,6 +106,9 @@
     <!-- 结账弹窗 -->
     <a-modal v-model:visible="checkoutVisible" :footer="false" :header="false" modal-class="checkout-modal" unmount-on-close>
       <div class="checkout-content">
+        <button class="sheet-circle-close" @click="checkoutVisible = false" aria-label="关闭">
+          <icon-close />
+        </button>
         <h2 class="checkout-title">确认订单</h2>
         <a-form :model="orderForm" layout="vertical">
           <a-form-item label="取货人姓名" required>

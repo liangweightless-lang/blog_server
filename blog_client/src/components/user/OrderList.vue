@@ -18,10 +18,11 @@
           </a-tag>
         </div>
         <div class="order-card-body">
-          <a-image :src="order.productImage" class="full-order-img" width="60" height="60" fit="cover" />
+          <a-image :src="$formatImageUrl(order.productImage)" class="full-order-img" width="60" height="60" fit="cover" />
           <div class="order-main-info">
             <p class="order-pname">{{ order.productName || '商品ID: ' + order.productId }}</p>
             <p class="order-spec" v-if="order.selectedSpec">规格: {{ order.selectedSpec }}</p>
+            <p class="order-qty" style="color: #FF5A34; font-size: 12px; margin: 2px 0;">数量: ×{{ order.quantity || 1 }}</p>
             <p class="order-time">{{ $formatTime(order.createTime) }}</p>
           </div>
           <div class="order-price-info">

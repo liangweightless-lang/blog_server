@@ -9,13 +9,23 @@ import java.util.List;
 @Mapper
 public interface ProductMapper extends BaseMapper<Product> {
 
-    @Select("SELECT p.*, c.name as categoryName FROM product p LEFT JOIN product_category c ON p.category_id = c.id ORDER BY p.id ASC")
-    List<Product> findAll();
+    @Select("<script>" +
+            "SELECT p.*, c.name as categoryName FROM product p " +
+            "LEFT JOIN product_category c ON p.category_id = c.id " +
+            "<where>" +
+            "  <if test='status != null'> p.status = #{status} </if>" +
+            "</where> " +
+            "ORDER BY (CASE WHEN p.stock = 0 THEN 1 ELSE 0 END) ASC, p.id DESC" +
+            "</script>")
+    List<Product> findAll(@Param("status") Integer status);
 
     @Select("SELECT * FROM product WHERE id = #{id}")
     Product findById(Long id);
 
-    @Update("UPDATE product SET stock = stock - #{count} WHERE id = #{id} AND stock >= #{count}")
+    @Update("UPDATE product SET stock = stock - #{count} WHERE id = #{id} AND (stock = -1 OR stock >= #{count})")
     int reduceStock(@Param("id") Long id, @Param("count") int count);
+
+    @Update("UPDATE product SET status = #{status} WHERE id = #{id}")
+    int updateStatus(@Param("id") Long id, @Param("status") Integer status);
 }
 
