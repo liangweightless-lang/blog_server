@@ -24,13 +24,14 @@
         <div class="avatar-edit-section">
           <a-upload
             :action="uploadAction"
+            :headers="uploadHeaders"
             :show-file-list="false"
             @success="handleAvatarSuccess"
             @before-upload="beforeAvatarUpload"
           >
             <template #upload-button>
               <div class="avatar-ring-trigger">
-                <img :src="profileForm.avatarUrl || '/img/avatar.png'" class="avatar-preview-img" />
+                <img :src="$formatImageUrl(profileForm.avatarUrl) || '/img/avatar.png'" class="avatar-preview-img" />
                 <div class="avatar-camera-badge">
                   <icon-camera />
                 </div>
@@ -97,6 +98,7 @@
 
 <script>
 import { updateUserProfile } from '@/api/user';
+import { getUploadUrl, getUploadHeaders } from '@/api/common';
 import { Message } from '@arco-design/web-vue';
 import MapLocationDialog from '@/components/common/MapLocationDialog.vue';
 import { mapState } from 'pinia';
@@ -139,8 +141,10 @@ export default {
       }
     },
     uploadAction() {
-      const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
-      return base + '/api/common/upload';
+      return getUploadUrl();
+    },
+    uploadHeaders() {
+      return getUploadHeaders();
     }
   },
   watch: {
@@ -181,9 +185,13 @@ export default {
       return true;
     },
     handleAvatarSuccess(fileItem) {
-      if (fileItem && fileItem.response && fileItem.response.data) {
-        this.profileForm.avatarUrl = fileItem.response.data;
-        Message.success('头像已更新');
+      if (fileItem && fileItem.response) {
+        const res = fileItem.response;
+        const url = res.url || res.data || (typeof res === 'string' ? res : '');
+        if (url) {
+          this.profileForm.avatarUrl = url;
+          Message.success('头像已更新');
+        }
       }
     },
     openMapDialog() {

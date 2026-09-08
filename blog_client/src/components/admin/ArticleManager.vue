@@ -113,6 +113,7 @@
               <label class="form-label">图片素材</label>
               <a-upload
                 :action="uploadAction"
+                :headers="uploadHeaders"
                 list-type="picture-card"
                 v-model:file-list="editFileList"
                 @success="handleUploadSuccess"
@@ -139,6 +140,7 @@
 <script>
 import { getArticles, updateArticle, deleteArticle } from '@/api/article';
 import { getProducts } from '@/api/product';
+import { getUploadUrl, getUploadHeaders } from '@/api/common';
 import { Message, Modal } from '@arco-design/web-vue';
 
 export default {
@@ -168,8 +170,10 @@ export default {
   },
   computed: {
     uploadAction() {
-      const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
-      return base + '/api/common/upload';
+      return getUploadUrl();
+    },
+    uploadHeaders() {
+      return getUploadHeaders();
     }
   },
   created() {
@@ -218,6 +222,7 @@ export default {
       const res = fileItem.response;
       let url = (res && res.data) ? res.data : ((res && res.url) ? res.url : (typeof res === 'string' ? res : ''));
       fileItem.uploadedUrl = url;
+      fileItem.url = this.$formatImageUrl(url);
       Message.success('上传成功');
     },
     handleUploadError() {
@@ -250,7 +255,7 @@ export default {
         this.editFileList = (Array.isArray(urls) ? urls : []).map((url, idx) => ({
           uid: 'edit-img-' + idx,
           name: 'image-' + idx,
-          url: url,
+          url: this.$formatImageUrl(url),
           uploadedUrl: url,
           status: 'done'
         }));

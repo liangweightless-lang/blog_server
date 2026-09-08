@@ -4,12 +4,13 @@
       <a-form-item label="首页头像">
         <a-upload
           :action="uploadAction"
+          :headers="uploadHeaders"
           :show-file-list="false"
           @success="handleHomeAvatarSuccess"
           @before-upload="beforeProductImageUpload">
           <template #upload-button>
             <div class="product-image-uploader">
-              <img v-if="homeConfigForm.avatarUrl" :src="homeConfigForm.avatarUrl" class="product-upload-preview">
+              <img v-if="homeConfigForm.avatarUrl" :src="$formatImageUrl(homeConfigForm.avatarUrl)" class="product-upload-preview">
               <div v-else class="product-upload-placeholder">
                 <icon-plus />
                 <span>上传头像</span>
@@ -21,12 +22,13 @@
       <a-form-item label="微信客服二维码">
         <a-upload
           :action="uploadAction"
+          :headers="uploadHeaders"
           :show-file-list="false"
           @success="handleWechatQrSuccess"
           @before-upload="beforeProductImageUpload">
           <template #upload-button>
             <div class="product-image-uploader">
-              <img v-if="homeConfigForm.wechatQrUrl" :src="homeConfigForm.wechatQrUrl" class="product-upload-preview">
+              <img v-if="homeConfigForm.wechatQrUrl" :src="$formatImageUrl(homeConfigForm.wechatQrUrl)" class="product-upload-preview">
               <div v-else class="product-upload-placeholder">
                 <icon-plus />
                 <span>上传客服码</span>
@@ -38,12 +40,13 @@
       <a-form-item label="微信商家收款码 (用于收银台微信扫码支付)">
         <a-upload
           :action="uploadAction"
+          :headers="uploadHeaders"
           :show-file-list="false"
           @success="handleWechatMerchantQrSuccess"
           @before-upload="beforeProductImageUpload">
           <template #upload-button>
             <div class="product-image-uploader">
-              <img v-if="homeConfigForm.wechatMerchantQrUrl" :src="homeConfigForm.wechatMerchantQrUrl" class="product-upload-preview">
+              <img v-if="homeConfigForm.wechatMerchantQrUrl" :src="$formatImageUrl(homeConfigForm.wechatMerchantQrUrl)" class="product-upload-preview">
               <div v-else class="product-upload-placeholder">
                 <icon-plus />
                 <span>上传商家码</span>
@@ -82,7 +85,7 @@
 </template>
 
 <script>
-import { getHomeConfig, updateHomeConfig } from '@/api/common';
+import { getHomeConfig, updateHomeConfig, getUploadUrl, getUploadHeaders } from '@/api/common';
 import { Message } from '@arco-design/web-vue';
 
 export default {
@@ -107,8 +110,10 @@ export default {
   },
   computed: {
     uploadAction() {
-      const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
-      return base + '/api/files/upload';
+      return getUploadUrl();
+    },
+    uploadHeaders() {
+      return getUploadHeaders();
     }
   },
   methods: {
@@ -148,7 +153,7 @@ export default {
         Message.error('图片上传失败，服务器返回了错误的格式。');
         return;
       }
-      let url = (res && res.url) ? res.url : (typeof res === 'string' ? res : '');
+      let url = (res && res.url) ? res.url : ((res && res.data) ? res.data : (typeof res === 'string' ? res : ''));
       if (url && (url.trim().startsWith('<!DOCTYPE') || url.trim().startsWith('<html'))) {
         Message.error('图片上传失败，服务器返回了错误的格式。');
         return;
@@ -162,7 +167,7 @@ export default {
         Message.error('二维码上传失败，服务器返回了错误的格式。');
         return;
       }
-      let url = (res && res.url) ? res.url : (typeof res === 'string' ? res : '');
+      let url = (res && res.url) ? res.url : ((res && res.data) ? res.data : (typeof res === 'string' ? res : ''));
       if (url && (url.trim().startsWith('<!DOCTYPE') || url.trim().startsWith('<html'))) {
         Message.error('二维码上传失败，服务器返回了错误的格式。');
         return;
@@ -176,7 +181,7 @@ export default {
         Message.error('商家收款码上传失败，服务器返回了错误的格式。');
         return;
       }
-      let url = (res && res.url) ? res.url : (typeof res === 'string' ? res : '');
+      let url = (res && res.url) ? res.url : ((res && res.data) ? res.data : (typeof res === 'string' ? res : ''));
       if (url && (url.trim().startsWith('<!DOCTYPE') || url.trim().startsWith('<html'))) {
         Message.error('商家收款码上传失败，服务器返回了错误的格式。');
         return;

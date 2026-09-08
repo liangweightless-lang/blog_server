@@ -156,7 +156,8 @@ import RichTextEditor from '@/components/common/RichTextEditor.vue'
 import MapLocationDialog from '@/components/common/MapLocationDialog.vue'
 import ImageCropperDialog from '@/components/common/ImageCropperDialog.vue'
 import { Message } from '@arco-design/web-vue'
-import axios from '@/utils/request'
+import { uploadFile } from '@/api/common'
+import { formatImageUrl } from '@/utils/image'
 
 export default {
   name: 'CreateArticle',
@@ -237,14 +238,12 @@ export default {
       this.fileList = this.fileList.filter(f => f.file !== this.currentCropFile);
     },
     async executeUpload(file, onSuccess, onError) {
-      const formData = new FormData();
-      formData.append('file', file);
       try {
-        const res = await axios.post('/api/common/upload', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
-        const url = res.data.data;
-        onSuccess({ url });
+        const res = await uploadFile(file);
+        const data = res.data;
+        const rawUrl = data.url || data.data || data;
+        const fullUrl = formatImageUrl(rawUrl);
+        onSuccess({ url: fullUrl, rawUrl });
         Message.success('上传成功');
       } catch (e) {
         onError(e);
@@ -252,12 +251,10 @@ export default {
       }
     },
     async customUploadImage(file) {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await axios.post('/api/common/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      return res.data.data;
+      const res = await uploadFile(file);
+      const data = res.data;
+      const rawUrl = data.url || data.data || data;
+      return formatImageUrl(rawUrl);
     },
     async onSubmit() {
       if (!this.form.title || !this.form.title.trim()) {
@@ -269,8 +266,8 @@ export default {
       
       // 提取上传的媒体图片列表
       const urls = this.fileList
-        .filter(f => f.response && f.response.url)
-        .map(f => f.response.url);
+        .filter(f => f.response && (f.response.rawUrl || f.response.url))
+        .map(f => f.response.rawUrl || f.response.url);
       
       this.form.mediaUrls = JSON.stringify(urls);
 

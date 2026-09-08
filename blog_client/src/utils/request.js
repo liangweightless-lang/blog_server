@@ -1,11 +1,11 @@
 import axios from 'axios';
 import { Message } from '@arco-design/web-vue';
+import { getApiBaseUrl } from './image';
 
 // 1. 创建独立的 Axios 实例，不污染全局
 const request = axios.create({
-  // 优先使用环境变量，其次根据是否在 Capacitor (App) 中设置回退地址
-  baseURL: import.meta.env?.VITE_API_BASE_URL || 
-          (typeof window !== 'undefined' && window.Capacitor ? 'https://caibread.com' : ''),
+  // 智能区分本地、测试服务器 (test.caibread.com) 与生产服 (caibread.com)，避免 App 错连
+  baseURL: getApiBaseUrl(),
   timeout: 10000
 });
 

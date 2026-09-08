@@ -60,13 +60,14 @@
         <a-form-item label="作品或资质图片 (选填)">
           <a-upload
             :action="uploadAction"
+            :headers="uploadHeaders"
             :show-file-list="false"
             @success="handleUploadSuccess"
             @before-upload="beforeUpload"
           >
             <template #upload-button>
               <div class="credentials-uploader">
-                <img v-if="form.credentialsUrl" :src="form.credentialsUrl" class="credentials-preview" />
+                <img v-if="form.credentialsUrl" :src="$formatImageUrl(form.credentialsUrl)" class="credentials-preview" />
                 <div v-else class="credentials-placeholder">
                   <icon-plus />
                   <span>上传作品或资质图</span>
@@ -93,6 +94,7 @@
 
 <script>
 import { applyCreator } from '@/api/creator';
+import { getUploadUrl, getUploadHeaders } from '@/api/common';
 import { Message } from '@arco-design/web-vue';
 
 export default {
@@ -119,8 +121,10 @@ export default {
       set(val) { this.$emit('update:show', val); }
     },
     uploadAction() {
-      const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
-      return base + '/api/files/upload';
+      return getUploadUrl();
+    },
+    uploadHeaders() {
+      return getUploadHeaders();
     }
   },
   methods: {
@@ -133,7 +137,7 @@ export default {
     },
     handleUploadSuccess(fileItem) {
       const res = fileItem.response;
-      let url = (res && res.url) ? res.url : (typeof res === 'string' ? res : '');
+      let url = (res && res.url) ? res.url : ((res && res.data) ? res.data : (typeof res === 'string' ? res : ''));
       if (url) {
         this.form.credentialsUrl = url;
         Message.success('资质图片上传成功！');

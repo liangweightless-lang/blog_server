@@ -240,6 +240,7 @@
               <label class="form-label">商品封面大图</label>
               <a-upload
                 :action="uploadAction"
+                :headers="uploadHeaders"
                 :show-file-list="false"
                 @success="handleProductImageSuccess"
                 @before-upload="beforeProductImageUpload"
@@ -323,17 +324,14 @@
 <script>
 import { getProducts, updateProduct, saveProduct, deleteProduct, updateProductStatus } from '@/api/product';
 import { getProductCategories } from '@/api/productCategory';
+import { getUploadUrl, getUploadHeaders } from '@/api/common';
 import CategoryManagerDialog from './CategoryManagerDialog.vue';
 import { Message, Modal } from '@arco-design/web-vue';
 
 export default {
   name: 'ProductManager',
-  components: { CategoryManagerDialog },
-  props: {
-    isMobile: {
-      type: Boolean,
-      default: false
-    }
+  components: {
+    CategoryManagerDialog
   },
   data() {
     return {
@@ -364,8 +362,10 @@ export default {
   },
   computed: {
     uploadAction() {
-      const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
-      return base + '/api/common/upload';
+      return getUploadUrl();
+    },
+    uploadHeaders() {
+      return getUploadHeaders();
     }
   },
   created() {
