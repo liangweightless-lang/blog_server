@@ -1,9 +1,48 @@
 <template>
   <div class="order-manager">
+    <!-- 顶部状态分类与快捷搜索过滤栏 -->
+    <div class="order-filter-bar">
+      <!-- 状态分类 Tabs -->
+      <div class="status-tabs-container">
+        <button 
+          v-for="tab in statusTabs" 
+          :key="tab.key"
+          class="status-tab-btn" 
+          :class="{ active: activeStatus === tab.key }"
+          @click="activeStatus = tab.key"
+        >
+          <span class="tab-name">{{ tab.label }}</span>
+          <span 
+            class="tab-badge" 
+            :class="{ 
+              'badge-highlight': (tab.key === 0 || tab.key === 1) && getStatusCount(tab.key) > 0,
+              'badge-zero': getStatusCount(tab.key) === 0
+            }"
+          >
+            {{ getStatusCount(tab.key) }}
+          </span>
+        </button>
+      </div>
+
+      <!-- 快捷搜索框 -->
+      <div class="filter-search-container">
+        <a-input
+          v-model="searchKeyword"
+          placeholder="搜索单号 / 手机号 / 买家UID / 商品名"
+          allow-clear
+          class="order-search-input"
+        >
+          <template #prefix>
+            <icon-search />
+          </template>
+        </a-input>
+      </div>
+    </div>
+
     <!-- PC 端表格视图 -->
     <a-table 
       v-if="!isMobile" 
-      :data="orders" 
+      :data="filteredOrders" 
       :loading="loadingOrders" 
       stripe 
       style="margin-top: 16px;" 
@@ -79,7 +118,7 @@
     <!-- 移动端专属：高定现代大卡片视图 (信息清晰完整、核对一目了然) -->
     <div v-else class="mobile-card-list">
       <a-spin :loading="loadingOrders" style="width: 100%; display: block;">
-        <div v-for="order in orders" :key="order.id" class="mobile-order-card">
+        <div v-for="order in filteredOrders" :key="order.id" class="mobile-order-card">
           <!-- 头部：单号与状态 -->
           <div class="m-card-header">
             <div class="m-header-left">
@@ -148,7 +187,7 @@
           </div>
         </div>
 
-        <a-empty v-if="orders.length === 0 && !loadingOrders" description="暂无订单记录" />
+        <a-empty v-if="filteredOrders.length === 0 && !loadingOrders" :description="emptyDescription" style="padding: 40px 0;" />
       </a-spin>
     </div>
 
@@ -237,13 +276,72 @@ export default {
       loadingOrders: false,
       confirmDrawerVisible: false,
       currentOrder: null,
-      submitting: false
+      submitting: false,
+      activeStatus: 'ALL',
+      searchKeyword: '',
+      statusTabs: [
+        { key: 'ALL', label: '全部' },
+        { key: 0, label: '待支付' },
+        { key: 1, label: '待发货' },
+        { key: 3, label: '已发货' },
+        { key: 2, label: '已取消' }
+      ]
+    }
+  },
+  computed: {
+    statusCounts() {
+      const counts = {
+        ALL: this.orders.length,
+        0: 0,
+        1: 0,
+        2: 0,
+        3: 0
+      };
+      this.orders.forEach(order => {
+        if (counts[order.status] !== undefined) {
+          counts[order.status]++;
+        }
+      });
+      return counts;
+    },
+    filteredOrders() {
+      let list = this.orders;
+      // 1. 状态分类过滤
+      if (this.activeStatus !== 'ALL') {
+        list = list.filter(o => o.status === this.activeStatus);
+      }
+      // 2. 关键词检索过滤
+      const kw = (this.searchKeyword || '').trim().toLowerCase();
+      if (kw) {
+        list = list.filter(o => {
+          const idMatch = String(o.id || '').toLowerCase().includes(kw);
+          const userMatch = String(o.userId || '').toLowerCase().includes(kw);
+          const phoneMatch = String(o.contactPhone || '').toLowerCase().includes(kw);
+          const prodName = (this.getProdName(o.productId) || '').toLowerCase();
+          const prodMatch = prodName.includes(kw);
+          const remarkMatch = (o.remark || '').toLowerCase().includes(kw);
+          const specMatch = (o.selectedSpec || '').toLowerCase().includes(kw);
+          return idMatch || userMatch || phoneMatch || prodMatch || remarkMatch || specMatch;
+        });
+      }
+      return list;
+    },
+    emptyDescription() {
+      if (this.searchKeyword) return '没有找到符合条件的订单';
+      if (this.activeStatus === 0) return '暂无待支付订单';
+      if (this.activeStatus === 1) return '暂无待发货订单';
+      if (this.activeStatus === 3) return '暂无已发货订单';
+      if (this.activeStatus === 2) return '暂无已取消订单';
+      return '暂无订单记录';
     }
   },
   created() {
     this.fetchData();
   },
   methods: {
+    getStatusCount(key) {
+      return this.statusCounts[key] || 0;
+    },
     async fetchData() {
       this.loadingOrders = true;
       try {
@@ -318,6 +416,141 @@ export default {
 <style scoped>
 .order-manager {
   padding: 10px 0;
+}
+
+/* 顶部分类与搜索过滤栏 */
+.order-filter-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  background: #FFFFFF;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid #F2F3F5;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  margin-bottom: 12px;
+}
+
+.status-tabs-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 2px 0;
+}
+.status-tabs-container::-webkit-scrollbar {
+  display: none;
+}
+
+.status-tab-btn {
+  border: 1px solid #E5E6EB;
+  background: #F7F8FA;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #4E5969;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  outline: none;
+}
+.status-tab-btn:hover {
+  background: #F2F3F5;
+  color: #1D2129;
+}
+.status-tab-btn:active {
+  transform: scale(0.96);
+}
+.status-tab-btn.active {
+  background: #1D2129;
+  color: #FFFFFF;
+  border-color: #1D2129;
+  box-shadow: 0 4px 12px rgba(29, 33, 41, 0.16);
+}
+
+.tab-name {
+  font-size: 13px;
+}
+
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  height: 18px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #E5E6EB;
+  color: #4E5969;
+  line-height: 1;
+  transition: all 0.2s ease;
+}
+.status-tab-btn.active .tab-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
+}
+.tab-badge.badge-highlight {
+  background: #FFE8E6;
+  color: #F53F3F;
+}
+.status-tab-btn.active .tab-badge.badge-highlight {
+  background: #F53F3F;
+  color: #FFFFFF;
+}
+.tab-badge.badge-zero {
+  opacity: 0.6;
+}
+
+.filter-search-container {
+  width: 300px;
+  flex-shrink: 0;
+}
+.order-search-input :deep(.arco-input-wrapper) {
+  border-radius: 20px;
+  background: #F7F8FA;
+  border: 1px solid #E5E6EB;
+  transition: all 0.2s ease;
+}
+.order-search-input :deep(.arco-input-wrapper:hover) {
+  background: #FFFFFF;
+  border-color: #C9CDD4;
+}
+.order-search-input :deep(.arco-input-wrapper.arco-input-focus) {
+  background: #FFFFFF;
+  border-color: #165DFF;
+  box-shadow: 0 0 0 2px rgba(22, 93, 255, 0.1);
+}
+
+@media (max-width: 768px) {
+  .order-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 8px 4px;
+    gap: 10px;
+    margin-bottom: 8px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+  .filter-search-container {
+    width: 100%;
+  }
+  .status-tabs-container {
+    width: 100%;
+    padding-bottom: 4px;
+  }
+  .status-tab-btn {
+    padding: 5px 12px;
+    font-size: 12px;
+  }
 }
 
 /* PC 端样式 */
