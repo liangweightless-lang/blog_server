@@ -3,7 +3,7 @@
   "appName": "小柴包",
   "webDir": "dist",
   "server": {
-    "url": "https://test.caibread.com",
+    "url": "https://caibread.com",
     "cleartext": true
   },
   "plugins": {
