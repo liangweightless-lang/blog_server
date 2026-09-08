@@ -1,45 +1,71 @@
 <template>
   <div class="product-manager">
-    <!-- 顶部操作栏 -->
-    <div class="header-action-bar">
-      <div class="left-actions">
-        <a-button type="primary" shape="round" @click="openCreateProductDialog">
-          <template #icon><icon-plus /></template>
-          上架新商品
-        </a-button>
-        <a-button type="outline" shape="round" @click="categoryDialogVisible = true">
-          <template #icon><icon-tags /></template>
-          分类管理
-        </a-button>
+    <!-- 顶部综合操作与筛选过滤栏 -->
+    <div class="prod-header-bar" :class="{ 'is-mobile-header': isMobile }">
+      <!-- 快捷主操作区 (上架新商品 + 分类管理) -->
+      <div class="main-action-row">
+        <button class="create-prod-capsule-btn" @click="openCreateProductDialog">
+          <icon-plus /> <span>上架新商品</span>
+        </button>
+        <button class="category-mgr-btn" @click="categoryDialogVisible = true">
+          <icon-tags /> <span>分类管理</span>
+        </button>
       </div>
-      <div class="right-filters">
-        <a-radio-group v-model="selectedStatus" type="button" size="small" @change="fetchProducts" style="margin-right: 8px;">
-          <a-radio :value="null">全部</a-radio>
-          <a-radio :value="1">销售中</a-radio>
-          <a-radio :value="0">已下架</a-radio>
-        </a-radio-group>
-        <a-select 
-          v-model="selectedCategoryId" 
-          placeholder="全部分类" 
-          allow-clear 
-          style="width: 130px;" 
-          @change="fetchProducts"
+
+      <!-- 状态胶囊 Tabs (横向可滑动，带动态角标) -->
+      <div class="status-tabs-container">
+        <button 
+          v-for="tab in statusTabs" 
+          :key="tab.key"
+          class="status-tab-btn" 
+          :class="{ active: activeStatus === tab.key }"
+          @click="activeStatus = tab.key"
         >
-          <a-option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</a-option>
-        </a-select>
-        <a-input-search 
-          v-model="searchKeyword" 
-          placeholder="搜索商品名称..." 
-          style="width: 160px;" 
-          @search="fetchProducts" 
-        />
+          <span class="tab-name">{{ tab.label }}</span>
+          <span 
+            class="tab-badge" 
+            :class="{ 
+              'badge-sale': tab.key === 1 && getStatusCount(tab.key) > 0,
+              'badge-offline': tab.key === 0 && getStatusCount(tab.key) > 0,
+              'badge-zero': getStatusCount(tab.key) === 0 
+            }"
+          >
+            {{ getStatusCount(tab.key) }}
+          </span>
+        </button>
+      </div>
+
+      <!-- 过滤检索行 (搜索商品 + 分类选择) -->
+      <div class="filter-search-row">
+        <div class="search-input-wrap">
+          <a-input
+            v-model="searchKeyword"
+            placeholder="搜索商品名称..."
+            allow-clear
+            class="prod-search-input"
+          >
+            <template #prefix>
+              <icon-search />
+            </template>
+          </a-input>
+        </div>
+        <div class="category-select-wrap">
+          <a-select 
+            v-model="selectedCategoryId" 
+            placeholder="全部分类" 
+            allow-clear 
+            class="prod-category-select"
+          >
+            <a-option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</a-option>
+          </a-select>
+        </div>
       </div>
     </div>
 
     <!-- PC 端表格视图 -->
     <a-table 
       v-if="!isMobile" 
-      :data="products" 
+      :data="filteredProducts" 
       :loading="loadingProducts" 
       stripe 
       style="margin-top: 16px;" 
@@ -96,56 +122,60 @@
       </template>
     </a-table>
 
-    <!-- 移动端卡片视图 -->
+    <!-- 移动端专属高定卡片流 (极简轻奢、大图通透、操作顺畅) -->
     <div v-else class="mobile-card-list">
       <a-spin :loading="loadingProducts" style="width: 100%; display: block;">
-        <div v-for="prod in products" :key="prod.id" class="mobile-card-item">
-          <div class="card-cover-row">
-            <img v-if="prod.image" :src="$formatImageUrl(prod.image)" class="mobile-prod-img" />
-            <div class="mobile-prod-info">
-              <div style="display: flex; align-items: center; justify-content: space-between;">
-                <h4 class="mobile-prod-title">{{ prod.name }}</h4>
-                <a-tag :color="prod.status === 0 ? 'gray' : 'green'" size="small">
-                  {{ prod.status === 0 ? '已下架' : '销售中' }}
-                </a-tag>
-              </div>
-              <div class="mobile-prod-tags">
-                <a-tag size="small" color="arcoblue">{{ getCategoryName(prod.categoryId) }}</a-tag>
-                <a-tag :color="prod.isDigital ? 'green' : 'orangered'" size="small">
-                  {{ prod.isDigital ? '数字商品' : '实物' }}
-                </a-tag>
-                <a-tag v-if="prod.deliveryFee && prod.deliveryFee > 0" color="purple" size="small">
-                  运费: ¥{{ prod.deliveryFee }}
-                </a-tag>
-                <a-tag v-else color="cyan" size="small">免配送费</a-tag>
-              </div>
-              <div class="mobile-prod-price-row">
-                <span class="mobile-price">¥{{ prod.price }}</span>
-                <span class="mobile-stock" :style="{ color: prod.stock === 0 ? '#F53F3F' : '#86909C' }">
-                  {{ prod.stock === 0 ? '已缺货' : (prod.stock === -1 ? '库存: 不限量' : '库存: ' + prod.stock) }}
+        <div v-for="prod in filteredProducts" :key="prod.id" class="luxury-prod-card">
+          <!-- 上半部分：首图与主要信息 -->
+          <div class="prod-main-body">
+            <div class="prod-img-box">
+              <img v-if="prod.image" :src="$formatImageUrl(prod.image)" class="card-thumb-img" />
+              <div v-else class="card-thumb-empty"><icon-image /></div>
+              <span class="prod-stock-badge" :class="{ 'is-out': prod.stock === 0 }">
+                {{ prod.stock === 0 ? '缺货' : (prod.stock === -1 ? '不限量' : '库存 ' + prod.stock) }}
+              </span>
+            </div>
+            <div class="prod-info-col">
+              <div class="prod-title-line">
+                <h4 class="prod-title-text">{{ prod.name }}</h4>
+                <span class="prod-status-pill" :class="prod.status === 1 ? 'pill-online' : 'pill-offline'">
+                  {{ prod.status === 1 ? '销售中' : '已下架' }}
                 </span>
+              </div>
+              <div class="prod-tags-row">
+                <span class="micro-tag cat-tag">{{ getCategoryName(prod.categoryId) }}</span>
+                <span class="micro-tag type-tag">{{ prod.isDigital ? '数字商品' : '实物' }}</span>
+                <span class="micro-tag fee-tag" v-if="prod.deliveryFee && prod.deliveryFee > 0">运费¥{{ prod.deliveryFee }}</span>
+                <span class="micro-tag fee-free-tag" v-else>免运费</span>
+              </div>
+              <div class="prod-price-stock-row">
+                <div class="prod-price-area">
+                  <span class="currency-symbol">¥</span>
+                  <span class="price-integer">{{ prod.price }}</span>
+                </div>
+                <div class="prod-id-tag">#{{ prod.id }}</div>
               </div>
             </div>
           </div>
-          <div class="mobile-card-actions">
-            <a-button type="outline" size="small" shape="round" @click="openEditProductDialog(prod)">
-              <template #icon><icon-edit /></template> 编辑
-            </a-button>
-            <a-button 
-              type="outline" 
-              :status="prod.status === 0 ? 'success' : 'warning'" 
-              size="small" 
-              shape="round" 
+
+          <!-- 底部专属操作行 -->
+          <div class="prod-card-bottom-actions">
+            <button class="action-capsule-btn btn-edit" @click="openEditProductDialog(prod)">
+              <icon-edit /> <span>编辑</span>
+            </button>
+            <button 
+              class="action-capsule-btn" 
+              :class="prod.status === 1 ? 'btn-offline' : 'btn-online'"
               @click="handleToggleStatus(prod)"
             >
-              <template #icon><icon-swap /></template> {{ prod.status === 0 ? '重新上架' : '下架入库' }}
-            </a-button>
-            <a-button type="primary" status="danger" size="small" shape="round" @click="handleDeleteProduct(prod)">
-              <template #icon><icon-delete /></template> 删除
-            </a-button>
+              <icon-swap /> <span>{{ prod.status === 1 ? '下架商品' : '重新上架' }}</span>
+            </button>
+            <button class="action-capsule-btn btn-delete" @click="handleDeleteProduct(prod)">
+              <icon-delete /> <span>彻底删除</span>
+            </button>
           </div>
         </div>
-        <a-empty v-if="products.length === 0 && !loadingProducts" description="暂无商品" />
+        <a-empty v-if="filteredProducts.length === 0 && !loadingProducts" :description="emptyDescription" style="padding: 40px 0;" />
       </a-spin>
     </div>
 
@@ -333,17 +363,28 @@ export default {
   components: {
     CategoryManagerDialog
   },
+  props: {
+    isMobile: {
+      type: Boolean,
+      default: () => typeof window !== 'undefined' && window.innerWidth <= 768
+    }
+  },
   data() {
     return {
-      products: [],
+      allProducts: [],
       categories: [],
       loadingProducts: false,
       productDialogVisible: false,
       categoryDialogVisible: false,
       isEditing: false,
       selectedCategoryId: null,
-      selectedStatus: null,
+      activeStatus: 'ALL',
       searchKeyword: '',
+      statusTabs: [
+        { key: 'ALL', label: '全部' },
+        { key: 1, label: '销售中' },
+        { key: 0, label: '已下架' }
+      ],
       currentTab: 'basic',
       productForm: {
         id: null,
@@ -366,6 +407,43 @@ export default {
     },
     uploadHeaders() {
       return getUploadHeaders();
+    },
+    statusCounts() {
+      const counts = {
+        ALL: this.allProducts.length,
+        1: 0,
+        0: 0
+      };
+      this.allProducts.forEach(p => {
+        if (counts[p.status] !== undefined) {
+          counts[p.status]++;
+        }
+      });
+      return counts;
+    },
+    filteredProducts() {
+      let list = this.allProducts;
+      // 1. 状态分类过滤
+      if (this.activeStatus !== 'ALL') {
+        list = list.filter(p => p.status === this.activeStatus);
+      }
+      // 2. 分类过滤
+      if (this.selectedCategoryId) {
+        list = list.filter(p => p.categoryId === this.selectedCategoryId);
+      }
+      // 3. 关键字搜索过滤
+      const kw = (this.searchKeyword || '').trim().toLowerCase();
+      if (kw) {
+        list = list.filter(p => p.name && p.name.toLowerCase().includes(kw));
+      }
+      return list;
+    },
+    emptyDescription() {
+      if (this.searchKeyword) return '没有找到符合条件的商品';
+      if (this.selectedCategoryId) return '该分类下暂无商品';
+      if (this.activeStatus === 1) return '暂无销售中的商品';
+      if (this.activeStatus === 0) return '暂无已下架的商品';
+      return '暂无商品记录';
     }
   },
   created() {
@@ -373,6 +451,9 @@ export default {
     this.fetchProducts();
   },
   methods: {
+    getStatusCount(key) {
+      return this.statusCounts[key] || 0;
+    },
     async fetchCategories() {
       try {
         const res = await getProductCategories();
@@ -388,19 +469,8 @@ export default {
     async fetchProducts() {
       this.loadingProducts = true;
       try {
-        const params = {};
-        if (this.selectedStatus !== null && this.selectedStatus !== undefined) {
-          params.status = this.selectedStatus;
-        }
-        const res = await getProducts(params);
-        let list = res.data.data || [];
-        if (this.selectedCategoryId) {
-          list = list.filter(p => p.categoryId === this.selectedCategoryId);
-        }
-        if (this.searchKeyword) {
-          list = list.filter(p => p.name && p.name.includes(this.searchKeyword));
-        }
-        this.products = list;
+        const res = await getProducts();
+        this.allProducts = res.data.data || [];
       } catch (e) {
         Message.error('获取商品列表失败');
       } finally {
@@ -556,72 +626,298 @@ export default {
   padding: 10px 0;
 }
 
-.header-action-bar {
+/* 顶部综合操作与筛选过滤栏 */
+.prod-header-bar {
+  background: #FFFFFF;
+  border-radius: 14px;
+  border: 1px solid #F2F3F5;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  padding: 12px 16px;
   display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+/* 快捷主操作行 */
+.main-action-row {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
   gap: 10px;
 }
 
-.left-actions, .right-filters {
+.create-prod-capsule-btn {
+  flex: 1;
+  height: 40px;
+  border-radius: 20px;
+  background: #1D2129;
+  color: #FFFFFF;
+  border: none;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(29, 33, 41, 0.16);
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.create-prod-capsule-btn:active {
+  transform: scale(0.97);
+}
+
+.category-mgr-btn {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 20px;
+  background: #F7F8FA;
+  border: 1px solid #E5E6EB;
+  color: #4E5969;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.category-mgr-btn:active {
+  transform: scale(0.97);
+  background: #F2F3F5;
+}
+
+/* 状态胶囊 Tabs */
+.status-tabs-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 2px 0;
+}
+.status-tabs-container::-webkit-scrollbar {
+  display: none;
+}
+
+.status-tab-btn {
+  border: 1px solid #E5E6EB;
+  background: #F7F8FA;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #4E5969;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  outline: none;
+}
+.status-tab-btn:hover {
+  background: #F2F3F5;
+  color: #1D2129;
+}
+.status-tab-btn:active {
+  transform: scale(0.96);
+}
+.status-tab-btn.active {
+  background: #1D2129;
+  color: #FFFFFF;
+  border-color: #1D2129;
+  box-shadow: 0 4px 12px rgba(29, 33, 41, 0.16);
+}
+
+.tab-name {
+  font-size: 13px;
+}
+
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  height: 18px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #E5E6EB;
+  color: #4E5969;
+  line-height: 1;
+  transition: all 0.2s ease;
+}
+.status-tab-btn.active .tab-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
+}
+.tab-badge.badge-sale {
+  background: #E8FFEA;
+  color: #00B42A;
+}
+.status-tab-btn.active .tab-badge.badge-sale {
+  background: #00B42A;
+  color: #FFFFFF;
+}
+.tab-badge.badge-offline {
+  background: #F2F3F5;
+  color: #86909C;
+}
+.status-tab-btn.active .tab-badge.badge-offline {
+  background: rgba(255, 255, 255, 0.3);
+  color: #FFFFFF;
+}
+.tab-badge.badge-zero {
+  opacity: 0.6;
+}
+
+/* 过滤搜索行 */
+.filter-search-row {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
+}
+.search-input-wrap {
+  flex: 1;
+  min-width: 0;
+}
+.category-select-wrap {
+  width: 130px;
+  flex-shrink: 0;
+}
+.prod-search-input :deep(.arco-input-wrapper),
+.prod-category-select :deep(.arco-select-view-single) {
+  border-radius: 20px;
+  background: #F7F8FA;
+  border: 1px solid #E5E6EB;
+  height: 38px;
+  transition: all 0.2s ease;
+}
+.prod-search-input :deep(.arco-input-wrapper:hover),
+.prod-category-select :deep(.arco-select-view-single:hover) {
+  background: #FFFFFF;
+  border-color: #C9CDD4;
 }
 
+/* PC 端桌面适配 */
+@media (min-width: 769px) {
+  .prod-header-bar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+  .main-action-row {
+    flex: none;
+  }
+  .create-prod-capsule-btn {
+    flex: none;
+    padding: 0 20px;
+  }
+  .filter-search-row {
+    margin-left: auto;
+  }
+  .search-input-wrap {
+    width: 220px;
+  }
+}
+
+/* PC 端表格样式 */
 .table-prod-img {
   width: 48px;
   height: 48px;
   border-radius: 8px;
   object-fit: cover;
 }
-
 .price-text {
   font-weight: 700;
   color: #FF3B30;
 }
 
+/* 移动端高定商品卡片列表 */
 .mobile-card-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 16px;
+  gap: 14px;
 }
 
-.mobile-card-item {
-  background: #F7F8FA;
+.luxury-prod-card {
+  background: #FFFFFF;
   border-radius: 16px;
   padding: 14px;
+  border: 1px solid #F0F2F5;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
   display: flex;
   flex-direction: column;
   gap: 12px;
+  transition: all 0.2s ease;
 }
 
-.card-cover-row {
+.prod-main-body {
   display: flex;
   gap: 12px;
-  align-items: center;
 }
 
-.mobile-prod-img {
-  width: 64px;
-  height: 64px;
+.prod-img-box {
+  width: 76px;
+  height: 76px;
   border-radius: 12px;
-  object-fit: cover;
+  overflow: hidden;
+  position: relative;
   flex-shrink: 0;
+  background: #F7F8FA;
+}
+.card-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.card-thumb-empty {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #C9CDD4;
+  font-size: 24px;
+}
+.prod-stock-badge {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.65);
+  color: #FFFFFF;
+  font-size: 10px;
+  text-align: center;
+  padding: 2px 0;
+  font-weight: 600;
+  backdrop-filter: blur(2px);
+}
+.prod-stock-badge.is-out {
+  background: #F53F3F;
 }
 
-.mobile-prod-info {
+.prod-info-col {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  justify-content: space-between;
 }
 
-.mobile-prod-title {
+.prod-title-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.prod-title-text {
   margin: 0;
   font-size: 15px;
   font-weight: 700;
@@ -630,36 +926,123 @@ export default {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
-.mobile-prod-tags {
-  display: flex;
-  gap: 6px;
-}
-
-.mobile-prod-price-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 2px;
-}
-
-.mobile-price {
-  font-size: 16px;
-  font-weight: 800;
-  color: #FF3B30;
-}
-
-.mobile-stock {
+.prod-status-pill {
   font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.pill-online {
+  background: #E8FFEA;
+  color: #00B42A;
+}
+.pill-offline {
+  background: #F2F3F5;
   color: #86909C;
 }
 
-.mobile-card-actions {
+.prod-tags-row {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 4px 0;
+}
+.micro-tag {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+.cat-tag {
+  background: #E8F3FF;
+  color: #165DFF;
+}
+.type-tag {
+  background: #F2F3F5;
+  color: #4E5969;
+}
+.fee-tag {
+  background: #F5E8FF;
+  color: #722ED1;
+}
+.fee-free-tag {
+  background: #E8FFFB;
+  color: #00B42A;
+}
+
+.prod-price-stock-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.prod-price-area {
+  color: #FF3B30;
+  font-weight: 800;
+  display: flex;
+  align-items: baseline;
+}
+.currency-symbol {
+  font-size: 12px;
+  margin-right: 1px;
+}
+.price-integer {
+  font-size: 18px;
+  letter-spacing: -0.5px;
+}
+.prod-id-tag {
+  font-size: 11px;
+  color: #86909C;
+  font-family: monospace;
+}
+
+/* 底部操作胶囊按键 */
+.prod-card-bottom-actions {
+  display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 8px;
-  border-top: 1px solid rgba(0, 0, 0, 0.04);
+  border-top: 1px solid #F7F8FA;
   padding-top: 10px;
+}
+
+.action-capsule-btn {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  outline: none;
+}
+.action-capsule-btn:active {
+  transform: scale(0.95);
+}
+
+.btn-edit {
+  background: #F7F8FA;
+  border: 1px solid #E5E6EB;
+  color: #1D2129;
+}
+.btn-offline {
+  background: #FFF7E8;
+  border: 1px solid #FFE4BA;
+  color: #FF7D00;
+}
+.btn-online {
+  background: #E8FFEA;
+  border: 1px solid #AFF0B5;
+  color: #00B42A;
+}
+.btn-delete {
+  background: #FFF0F0;
+  border: 1px solid #FFCCC7;
+  color: #F53F3F;
 }
 
 /* 标准抽屉样式 */

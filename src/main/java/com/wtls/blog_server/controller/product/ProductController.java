@@ -41,7 +41,13 @@ public class ProductController {
 
     @GetMapping
     @Operation(summary = "获取商品列表")
-    public Result<List<Product>> getAll(@RequestParam(value = "status", required = false) Integer status) {
+    public Result<List<Product>> getAll(@RequestParam(value = "status", required = false) String statusStr) {
+        Integer status = null;
+        if (statusStr != null && !statusStr.trim().isEmpty() && !"ALL".equalsIgnoreCase(statusStr.trim()) && !"null".equalsIgnoreCase(statusStr.trim())) {
+            try {
+                status = Integer.parseInt(statusStr.trim());
+            } catch (NumberFormatException ignored) {}
+        }
         if (status != null) {
             return Result.success(productService.getProductsByStatus(status));
         }
