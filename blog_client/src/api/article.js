@@ -97,3 +97,13 @@ export function checkFavoriteStatus(articleId) {
 export function toggleFavorite(articleId) {
   return request.post('/api/favorites/toggle', { articleId });
 }
+
+/**
+ * 设置或取消文章置顶
+ * @param {number|string} id - 文章ID
+ * @param {number} isTop - 1置顶，0取消
+ * @returns {Promise}
+ */
+export function updateArticleTop(id, isTop) {
+  return request.put(`/api/articles/${id}/top?isTop=${isTop}`);
+}

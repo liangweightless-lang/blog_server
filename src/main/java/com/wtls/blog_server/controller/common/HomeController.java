@@ -19,16 +19,6 @@ public class HomeController {
 
     private final String configPath = System.getProperty("user.dir") + "/uploads/home-config.json";
 
-    private void checkAdmin(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new UnauthorizedException("未授权访问，请重新登录");
-        }
-        Claims claims = JwtUtils.parseToken(authHeader.substring(7));
-        String role = claims.get("role", String.class);
-        if (!"ADMIN".equals(role)) {
-            throw new UnauthorizedException("权限不足，需要管理员权限");
-        }
-    }
 
     /**
      * 将包含绝对域名的 URL 归一化为相对路径，避免跨环境加载错乱
@@ -77,7 +67,7 @@ public class HomeController {
 
     @PostMapping("/config")
     public Result<String> saveConfig(@RequestHeader("Authorization") String authHeader, @RequestBody Map<String, Object> config) {
-        checkAdmin(authHeader);
+        JwtUtils.checkAdmin(authHeader);
         try {
             File dir = new File(System.getProperty("user.dir") + "/uploads");
             if (!dir.exists()) {

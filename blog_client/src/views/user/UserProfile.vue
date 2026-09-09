@@ -164,9 +164,11 @@ export default {
     this.fetchMyCampaignOrders();
     this.fetchCreatorStatus();
     window.addEventListener('resize', this.handleResize);
+    window.addEventListener('tab-refresh', this.handleTabRefresh);
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.handleResize);
+    window.removeEventListener('tab-refresh', this.handleTabRefresh);
   },
   computed: {
     ...mapState(useUserStore, ['userInfo']),
@@ -179,6 +181,14 @@ export default {
   },
   methods: {
     ...mapActions(useUserStore, ['clearUser', 'fetchUser']),
+    handleTabRefresh(e) {
+      if (e.detail?.path === '/profile' || this.$route.path === '/profile') {
+        this.fetchUser();
+        this.fetchMyFavorites();
+        this.fetchMyOrders();
+        this.fetchMyCampaignOrders();
+      }
+    },
     handleResize() {
       this.isMobile = window.innerWidth <= 768;
     },

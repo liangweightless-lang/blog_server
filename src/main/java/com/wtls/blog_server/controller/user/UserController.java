@@ -78,13 +78,7 @@ public class UserController {
     @GetMapping("/me")
     @Operation(summary = "获取当前用户信息", description = "根据Token获取个人详细资料")
     public Result<User> getMe(@RequestHeader(value = "Authorization", required = false) String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new UnauthorizedException("未授权访问，请重新登录");
-        }
-        String token = authHeader.substring(7);
-        Claims claims = JwtUtils.parseToken(token);
-        Object userIdObj = claims.get("userId");
-        Long userId = userIdObj != null ? Long.valueOf(userIdObj.toString()) : null;
+        Long userId = JwtUtils.getUserIdFromHeader(authHeader);
         User user = userService.getUserInfo(userId);
         return Result.success(user);
     }
@@ -92,9 +86,7 @@ public class UserController {
     @PostMapping("/checkin")
     @Operation(summary = "每日签到", description = "每天可签到一次，奖励10积分")
     public Result<String> checkin(@RequestHeader("Authorization") String authHeader) {
-        Claims claims = JwtUtils.parseToken(authHeader.substring(7));
-        Object userIdObj = claims.get("userId");
-        Long userId = userIdObj != null ? Long.valueOf(userIdObj.toString()) : null;
+        Long userId = JwtUtils.getUserIdFromHeader(authHeader);
         userService.dailyCheckin(userId);
         return Result.success(null, "签到成功，获得10积分！");
     }
@@ -102,13 +94,7 @@ public class UserController {
     @PutMapping("/profile")
     public Result<User> updateProfile(@RequestHeader("Authorization") String authHeader,
             @RequestBody User profileData) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new UnauthorizedException("未授权访问，请重新登录");
-        }
-        String token = authHeader.substring(7);
-        Claims claims = JwtUtils.parseToken(token);
-        Object userIdObj = claims.get("userId");
-        Long userId = userIdObj != null ? Long.valueOf(userIdObj.toString()) : null;
+        Long userId = JwtUtils.getUserIdFromHeader(authHeader);
 
         // Fetch current user and update fields selectively
         User user = userService.getUserInfo(userId);
@@ -121,17 +107,7 @@ public class UserController {
 
     @GetMapping
     public Result<List<User>> getAllUsers(@RequestHeader("Authorization") String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new UnauthorizedException("未授权访问，请重新登录");
-        }
-        String token = authHeader.substring(7);
-        Claims claims = JwtUtils.parseToken(token);
-        Object userIdObj = claims.get("userId");
-        Long userId = userIdObj != null ? Long.valueOf(userIdObj.toString()) : null;
-        User admin = userService.getUserInfo(userId);
-        if (!"ADMIN".equals(admin.getRole())) {
-            throw new UnauthorizedException("禁止访问，仅限管理员");
-        }
+        JwtUtils.checkAdmin(authHeader);
         return Result.success(userService.getAllUsers());
     }
 }

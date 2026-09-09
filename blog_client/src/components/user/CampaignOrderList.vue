@@ -18,7 +18,10 @@
         <div class="order-card-body" style="align-items: flex-start;">
           <div class="order-main-info" style="width: 100%;">
             <p class="order-pname">{{ order.campaign?.title || '团购活动' }}</p>
-            <p class="order-spec" style="background: transparent; color: #86909c; padding: 0;">提货点: {{ order.campaign?.deliveryLocation?.name || '未知' }}</p>
+            <p class="order-spec" style="background: transparent; color: #86909c; padding: 0;">提货点: {{ order.campaign?.deliveryLocation?.name || '校内指定提货点' }}</p>
+            <p class="order-delivery-time" v-if="order.campaign?.deliveryTime" style="color: #FF5A34; font-size: 12px; margin: 4px 0; display: flex; align-items: center; gap: 4px; font-weight: 500;">
+              <icon-clock-circle /> 预计发货/自提: {{ $formatTime(order.campaign.deliveryTime) }}
+            </p>
             <div class="m-order-items" style="margin-top: 10px;">
               <div v-for="item in order.items" :key="item.id" style="display: flex; gap: 10px; margin-bottom: 8px; align-items: center;">
                 <img :src="item.productImage" style="width: 48px; height: 48px; object-fit: cover; border-radius: 8px; background: #f2f3f5; box-shadow: 0 2px 8px rgba(0,0,0,0.05);" v-if="item.productImage" />
@@ -35,7 +38,7 @@
           </div>
           <div class="order-price-info">
             <span class="price-val">¥{{ order.totalAmount }}</span>
-            <div class="unpaid-actions" v-if="order.status === 0">
+            <div class="unpaid-actions" v-if="order.status === 0 || order.status === 3">
               <a-button 
                 type="text" 
                 status="danger" 
@@ -46,6 +49,7 @@
                 删除
               </a-button>
               <a-button 
+                v-if="order.status === 0"
                 type="primary" 
                 size="small" 
                 shape="round" 
@@ -88,13 +92,15 @@ export default {
     handleDeleteOrder(order) {
       Modal.confirm({
         title: '删除跟团订单确认',
-        content: '确定要删除此未支付跟团订单吗？删除后不可恢复。',
+        content: order.status === 0 
+          ? '确定要删除此未支付跟团订单吗？删除后不可恢复。' 
+          : '确定要删除此已取消跟团订单记录吗？',
         okText: '确认删除',
         cancelText: '取消',
         onOk: async () => {
           try {
             await deleteUnpaidCampaignOrder(order.id);
-            Message.success('未支付跟团订单已成功删除');
+            Message.success('跟团订单已成功删除');
             this.$emit('refresh');
           } catch (e) {
             Message.error(e.response?.data?.message || '删除跟团订单失败');

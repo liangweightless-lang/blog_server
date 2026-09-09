@@ -22,9 +22,11 @@ public class FavoriteController {
     private ArticleFavoriteService favoriteService;
 
     private Long getUserIdFromToken(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) return null;
-        Claims claims = JwtUtils.parseToken(authHeader.substring(7));
-        return claims.get("userId", Long.class);
+        try {
+            return JwtUtils.getUserIdFromHeader(authHeader);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     @Data

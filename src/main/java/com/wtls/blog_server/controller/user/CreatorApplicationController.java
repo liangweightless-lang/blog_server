@@ -30,24 +30,6 @@ public class CreatorApplicationController {
     @Autowired
     private UserMapper userMapper;
 
-    private Long getUserIdFromHeader(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new UnauthorizedException("未登录，请先登录");
-        }
-        Claims claims = JwtUtils.parseToken(authHeader.substring(7));
-        return claims.get("userId", Long.class);
-    }
-
-    private void checkAdmin(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new UnauthorizedException("未授权访问，请重新登录");
-        }
-        Claims claims = JwtUtils.parseToken(authHeader.substring(7));
-        String role = claims.get("role", String.class);
-        if (!"ADMIN".equals(role)) {
-            throw new UnauthorizedException("权限不足，需要管理员权限");
-        }
-    }
 
     /**
      * 普通用户提交申请成为主理人
@@ -56,7 +38,7 @@ public class CreatorApplicationController {
     @Operation(summary = "提交主理人入驻申请")
     public Result<String> apply(@RequestHeader("Authorization") String authHeader,
                                 @RequestBody CreatorApplication request) {
-        Long userId = getUserIdFromHeader(authHeader);
+        Long userId = JwtUtils.getUserIdFromHeader(authHeader);
         User user = userMapper.findById(userId);
         if (user == null) {
             return Result.error(404, "用户不存在");
@@ -101,7 +83,7 @@ public class CreatorApplicationController {
     @GetMapping("/my-status")
     @Operation(summary = "查询我的主理人申请状态")
     public Result<Map<String, Object>> getMyStatus(@RequestHeader("Authorization") String authHeader) {
-        Long userId = getUserIdFromHeader(authHeader);
+        Long userId = JwtUtils.getUserIdFromHeader(authHeader);
         User user = userMapper.findById(userId);
         if (user == null) {
             return Result.error(404, "用户不存在");
@@ -121,7 +103,7 @@ public class CreatorApplicationController {
     @GetMapping("/admin/list")
     @Operation(summary = "管理员获取主理人申请列表")
     public Result<List<Map<String, Object>>> getAdminList(@RequestHeader("Authorization") String authHeader) {
-        checkAdmin(authHeader);
+        JwtUtils.checkAdmin(authHeader);
         List<Map<String, Object>> list = applicationMapper.selectAllWithUserInfo();
         return Result.success(list);
     }
@@ -132,7 +114,7 @@ public class CreatorApplicationController {
     @PostMapping("/admin/{id}/approve")
     @Operation(summary = "管理员审核通过主理人申请")
     public Result<String> approve(@RequestHeader("Authorization") String authHeader, @PathVariable Long id) {
-        checkAdmin(authHeader);
+        JwtUtils.checkAdmin(authHeader);
         CreatorApplication app = applicationMapper.selectById(id);
         if (app == null) {
             return Result.error(404, "申请记录不存在");
@@ -159,7 +141,7 @@ public class CreatorApplicationController {
     public Result<String> reject(@RequestHeader("Authorization") String authHeader,
                                  @PathVariable Long id,
                                  @RequestBody(required = false) Map<String, String> body) {
-        checkAdmin(authHeader);
+        JwtUtils.checkAdmin(authHeader);
         CreatorApplication app = applicationMapper.selectById(id);
         if (app == null) {
             return Result.error(404, "申请记录不存在");

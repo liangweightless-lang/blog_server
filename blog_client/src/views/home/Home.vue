@@ -1,34 +1,36 @@
 <template>
   <div class="home-aesthetic-root">
-    <!-- 主理人轻氧杂志风卡片 -->
-    <ProfileHero />
-    
-    <!-- 金刚区高定矢量导航 (彻底告别Emoji) -->
-    <HomeNavGrid />
+    <PullToRefresh @refresh="handlePullRefresh">
+      <!-- 主理人轻氧杂志风卡片 -->
+      <ProfileHero />
+      
+      <!-- 金刚区高定矢量导航 (彻底告别Emoji) -->
+      <HomeNavGrid />
 
-    <!-- 浮空微胶囊搜索区 -->
-    <div class="search-floating-wrapper">
-      <SearchBar @search="handleSearch" />
-    </div>
-
-    <!-- 极简吸顶分类导航栏 (纯矢量微胶囊) -->
-    <div class="category-sticky-bar">
-      <div class="category-scroll-track">
-        <button 
-          v-for="cat in categories" 
-          :key="cat.key" 
-          class="cat-pill-btn"
-          :class="{ active: activeCategory === cat.key }"
-          @click="selectCategory(cat.key)"
-        >
-          <component :is="cat.icon" class="cat-vector-icon" />
-          <span class="cat-pill-text">{{ cat.title }}</span>
-        </button>
+      <!-- 浮空微胶囊搜索区 -->
+      <div class="search-floating-wrapper">
+        <SearchBar @search="handleSearch" />
       </div>
-    </div>
 
-    <!-- 小红书双列现代流光瀑布流 -->
-    <ArticleGrid :articles="filteredArticles" :campaigns="showStore ? campaigns : []" :loading="loading" />
+      <!-- 极简吸顶分类导航栏 (纯矢量微胶囊) -->
+      <div class="category-sticky-bar">
+        <div class="category-scroll-track">
+          <button 
+            v-for="cat in categories" 
+            :key="cat.key" 
+            class="cat-pill-btn"
+            :class="{ active: activeCategory === cat.key }"
+            @click="selectCategory(cat.key)"
+          >
+            <component :is="cat.icon" class="cat-vector-icon" />
+            <span class="cat-pill-text">{{ cat.title }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 小红书双列现代流光瀑布流 -->
+      <ArticleGrid :articles="filteredArticles" :campaigns="showStore ? campaigns : []" :loading="loading" />
+    </PullToRefresh>
     
     <!-- 创作者专属悬浮快捷按钮 -->
     <div v-if="canCreate" class="creative-fab-btn" @click="$router.push('/create')" title="书写新灵感">
@@ -43,6 +45,7 @@ import ProfileHero from '@/components/home/ProfileHero.vue'
 import HomeNavGrid from '@/components/home/HomeNavGrid.vue'
 import ArticleGrid from '@/components/home/ArticleGrid.vue'
 import SearchBar from '@/components/common/SearchBar.vue'
+import PullToRefresh from '@/components/common/PullToRefresh.vue'
 import { getCampaigns } from '@/api/campaign'
 import { Message } from '@arco-design/web-vue'
 import { mapState } from 'pinia'
@@ -54,7 +57,8 @@ export default {
     ProfileHero,
     HomeNavGrid,
     ArticleGrid,
-    SearchBar
+    SearchBar,
+    PullToRefresh
   },
   data() {
     return {
@@ -93,25 +97,40 @@ export default {
     }
   },
   created() {
-    this.fetchArticles()
+    this.fetchArticles();
+  },
+  mounted() {
+    window.addEventListener('tab-refresh', this.handleTabRefresh);
+  },
+  beforeUnmount() {
+    window.removeEventListener('tab-refresh', this.handleTabRefresh);
   },
   methods: {
+    handleTabRefresh(e) {
+      if (e.detail?.path === '/' || this.$route.path === '/') {
+        this.fetchArticles();
+      }
+    },
+    async handlePullRefresh(resolve) {
+      await this.fetchArticles();
+      if (resolve) resolve();
+    },
     selectCategory(key) {
       this.activeCategory = key;
     },
     handleSearch(query) {
-      this.searchQuery = query
-      clearTimeout(this.searchTimer)
+      this.searchQuery = query;
+      clearTimeout(this.searchTimer);
       this.searchTimer = setTimeout(() => {
-        this.fetchArticles()
-      }, 350)
+        this.fetchArticles();
+      }, 350);
     },
     async fetchArticles() {
-      this.loading = true
+      this.loading = true;
       try {
-        let url = '/api/articles'
+        let url = '/api/articles';
         if (this.searchQuery) {
-          url = `/api/articles/search?keyword=${encodeURIComponent(this.searchQuery)}`
+          url = `/api/articles/search?keyword=${encodeURIComponent(this.searchQuery)}`;
         }
         
         const [artRes, camRes] = await Promise.all([
@@ -122,9 +141,9 @@ export default {
         this.articles = artRes.data.data || [];
         this.campaigns = (camRes.data.data || []).filter(c => c.status === 1);
       } catch (error) {
-        Message.error('获取内容失败')
+        Message.error('获取内容失败');
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     }
   }

@@ -179,7 +179,8 @@ public class ProductOrderService {
     }
 
     public void shipOrder(String orderId) {
-        orderMapper.updateStatus(orderId, 2); // 2: Shipped
+        // 0: 待支付, 1: 已支付, 2: 已取消, 3: 已发货
+        orderMapper.updateStatus(orderId, 3); // 3: Shipped
     }
 
     @Transactional
@@ -191,11 +192,12 @@ public class ProductOrderService {
         if (!order.getUserId().equals(userId)) {
             throw new BusinessException("只能删除自己的订单");
         }
-        if (order.getStatus() != 0) {
-            throw new BusinessException("只能删除未支付的订单");
+        // 允许删除未支付(0) 或 已取消(2) 的订单
+        if (order.getStatus() != 0 && order.getStatus() != 2) {
+            throw new BusinessException("只能删除未支付或已取消的订单");
         }
-        // 如果使用了积分，安全归还积分
-        if (order.getPointsUsed() != null && order.getPointsUsed() > 0) {
+        // 如果是未支付订单且使用了积分，安全归还积分（已取消状态在取消时已退还）
+        if (order.getStatus() == 0 && order.getPointsUsed() != null && order.getPointsUsed() > 0) {
             userMapper.addPoints(userId, order.getPointsUsed());
         }
         orderMapper.deleteById(orderId);

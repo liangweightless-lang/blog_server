@@ -22,16 +22,6 @@ public class ProductCategoryController {
     @Autowired
     private ProductCategoryService categoryService;
 
-    private void checkAdmin(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new UnauthorizedException("未授权访问，请重新登录");
-        }
-        Claims claims = JwtUtils.parseToken(authHeader.substring(7));
-        String role = claims.get("role", String.class);
-        if (!"ADMIN".equals(role)) {
-            throw new UnauthorizedException("权限不足，需要管理员权限");
-        }
-    }
 
     @GetMapping
     @Operation(summary = "获取所有商品分类")
@@ -42,7 +32,7 @@ public class ProductCategoryController {
     @PostMapping
     @Operation(summary = "新增商品分类 (Admin)")
     public Result<String> create(@RequestHeader("Authorization") String authHeader, @RequestBody ProductCategory category) {
-        checkAdmin(authHeader);
+        JwtUtils.checkAdmin(authHeader);
         categoryService.createCategory(category);
         return Result.success("Category created");
     }
@@ -50,7 +40,7 @@ public class ProductCategoryController {
     @PutMapping("/{id}")
     @Operation(summary = "更新商品分类 (Admin)")
     public Result<String> update(@RequestHeader("Authorization") String authHeader, @PathVariable Long id, @RequestBody ProductCategory category) {
-        checkAdmin(authHeader);
+        JwtUtils.checkAdmin(authHeader);
         category.setId(id);
         categoryService.updateCategory(category);
         return Result.success("Category updated");
@@ -59,7 +49,7 @@ public class ProductCategoryController {
     @DeleteMapping("/{id}")
     @Operation(summary = "删除商品分类 (Admin)")
     public Result<String> delete(@RequestHeader("Authorization") String authHeader, @PathVariable Long id) {
-        checkAdmin(authHeader);
+        JwtUtils.checkAdmin(authHeader);
         categoryService.deleteCategory(id);
         return Result.success("Category deleted");
     }
@@ -67,7 +57,7 @@ public class ProductCategoryController {
     @PostMapping("/sort")
     @Operation(summary = "更新分类排序 (Admin)")
     public Result<String> updateSortOrders(@RequestHeader("Authorization") String authHeader, @RequestBody List<ProductCategory> categories) {
-        checkAdmin(authHeader);
+        JwtUtils.checkAdmin(authHeader);
         categoryService.updateSortOrders(categories);
         return Result.success("Categories sorted");
     }

@@ -66,6 +66,12 @@ public class GroupBuyCampaignService {
     }
     
     private void fillCampaignDetails(GroupBuyCampaign campaign) {
+        // 活动到期自动流转为已结束状态(2)
+        if (campaign.getStatus() != null && campaign.getStatus() == 1 && campaign.getEndTime() != null && campaign.getEndTime().isBefore(LocalDateTime.now())) {
+            campaign.setStatus(2);
+            campaign.setUpdateTime(LocalDateTime.now());
+            campaignMapper.updateById(campaign);
+        }
         if (campaign.getDeliveryLocationId() != null) {
             campaign.setDeliveryLocation(deliveryLocationMapper.selectById(campaign.getDeliveryLocationId()));
         }
@@ -273,8 +279,9 @@ public class GroupBuyCampaignService {
         if (!order.getUserId().equals(userId)) {
             throw new RuntimeException("只能删除自己的跟团订单");
         }
-        if (order.getStatus() != 0) {
-            throw new RuntimeException("只能删除未支付的跟团订单");
+        // 允许删除未支付(0) 或 已取消/已退款(3) 的跟团订单
+        if (order.getStatus() != 0 && order.getStatus() != 3) {
+            throw new RuntimeException("只能删除未支付或已取消的跟团订单");
         }
         // 删除订单项
         QueryWrapper<CampaignOrderItem> itemQuery = new QueryWrapper<>();

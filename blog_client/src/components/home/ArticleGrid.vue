@@ -42,13 +42,21 @@
             <!-- 照片底部细腻暗光遮罩 (提升标签辨识度) -->
             <div class="cover-bottom-scrim"></div>
 
-            <div v-if="item.data.tags && item.data.tags.length" class="floating-tag-pill">
-              #{{ item.data.tags[0] }}
+            <!-- 置顶高定微标识 -->
+            <div v-if="item.data.isTop === 1" class="top-pinned-badge">
+              <icon-pushpin /> 置顶
+            </div>
+
+            <div v-if="getFirstTag(item.data)" class="floating-tag-pill">
+              #{{ getFirstTag(item.data) }}
             </div>
           </div>
           
           <div class="card-meta-box">
-            <h3 class="card-story-title">{{ item.data.title }}</h3>
+            <h3 class="card-story-title">
+              <span v-if="item.data.isTop === 1" class="inline-top-badge">置顶</span>
+              {{ item.data.title }}
+            </h3>
             
             <div class="card-footer-row">
               <div class="author-micro-info">
@@ -177,6 +185,18 @@ export default {
     handleImgError(article) {
       if (article) {
         article.coverUrl = '';
+      }
+    },
+    getFirstTag(data) {
+      if (!data || !data.tags) return null;
+      if (Array.isArray(data.tags)) return data.tags[0] || null;
+      try {
+        const parsed = JSON.parse(data.tags);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed[0];
+        return String(parsed);
+      } catch (e) {
+        const first = String(data.tags).split(',')[0]?.replace(/[\[\]"]/g, '').trim();
+        return first || null;
       }
     },
     isLiked(id) {
@@ -408,6 +428,34 @@ export default {
 .campaign-spotlight-card {
   background: linear-gradient(180deg, #FFFDFB 0%, #FFFFFF 100%);
   border: 1px solid rgba(255, 126, 103, 0.15);
+}
+
+.top-pinned-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: linear-gradient(135deg, #FF4B2B 0%, #FF7E67 100%);
+  color: #FFFFFF;
+  padding: 2px 7px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  box-shadow: 0 2px 8px rgba(255, 75, 43, 0.35);
+  z-index: 2;
+}
+
+.inline-top-badge {
+  background: #FF4B2B;
+  color: #FFFFFF;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-right: 4px;
+  vertical-align: middle;
 }
 
 .campaign-fire-badge {

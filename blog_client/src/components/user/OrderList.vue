@@ -27,7 +27,7 @@
           </div>
           <div class="order-price-info">
             <span class="price-val">¥{{ order.amount }}</span>
-            <div class="unpaid-actions" v-if="order.status === 0">
+            <div class="unpaid-actions" v-if="order.status === 0 || order.status === 2">
               <a-button 
                 type="text" 
                 status="danger" 
@@ -38,6 +38,7 @@
                 删除
               </a-button>
               <a-button 
+                v-if="order.status === 0"
                 type="primary" 
                 size="small" 
                 shape="round" 
@@ -80,13 +81,15 @@ export default {
     handleDeleteOrder(order) {
       Modal.confirm({
         title: '删除订单确认',
-        content: '确定要删除此未支付订单吗？删除后不可恢复。',
+        content: order.status === 0 
+          ? '确定要删除此未支付订单吗？删除后不可恢复。' 
+          : '确定要删除此已取消订单记录吗？',
         okText: '确认删除',
         cancelText: '取消',
         onOk: async () => {
           try {
             await deleteUnpaidOrder(order.id);
-            Message.success('未支付订单已成功删除');
+            Message.success('订单已成功删除');
             this.$emit('refresh');
           } catch (e) {
             Message.error(e.response?.data?.message || '删除订单失败');

@@ -49,23 +49,10 @@ public class ProductOrderController {
         public String remark;
     }
 
-    private Long getUserIdFromToken(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new UnauthorizedException("未授权访问，请重新登录");
-        }
-        String token = authHeader.substring(7);
-        Claims claims = JwtUtils.parseToken(token);
-        Object userId = claims.get("userId");
-        if (userId == null) {
-            throw new UnauthorizedException("Token无效，缺少用户信息");
-        }
-        return Long.valueOf(userId.toString());
-    }
-
     @PostMapping("/create")
     @Operation(summary = "创建新订单", description = "支持个人购买和发起拼团")
     public Result<ProductOrder> createOrder(@RequestHeader("Authorization") String authHeader, @Valid @RequestBody CreateOrderRequest req) {
-        Long userId = getUserIdFromToken(authHeader);
+        Long userId = JwtUtils.getUserIdFromHeader(authHeader);
         ProductOrder order = orderService.createOrder(userId, req.productId, req.address, req.type == null ? "INDIVIDUAL" : req.type, req.pointsToUse, req.spec, req.quantity, req.contactPhone, req.remark);
         return Result.success(order);
     }
@@ -73,42 +60,33 @@ public class ProductOrderController {
     @PostMapping("/{orderId}/pay")
     @Operation(summary = "模拟支付", description = "将订单状态从待支付更新为已支付")
     public Result<ProductOrder> payOrder(@RequestHeader("Authorization") String authHeader, @PathVariable String orderId) {
-        getUserIdFromToken(authHeader); // Just to validate token
+        JwtUtils.getUserIdFromHeader(authHeader); // 校验登录状态
         ProductOrder order = orderService.mockPay(orderId);
         return Result.success(order);
     }
 
     @PostMapping("/redeem")
     public Result<ProductOrder> redeem(@RequestHeader("Authorization") String authHeader, @Valid @RequestBody CreateOrderRequest req) {
-        Long userId = getUserIdFromToken(authHeader);
+        Long userId = JwtUtils.getUserIdFromHeader(authHeader);
         ProductOrder order = orderService.redeemWithPoints(userId, req.productId);
         return Result.success(order);
     }
 
     @GetMapping("/me")
     public Result<List<ProductOrder>> getMyOrders(@RequestHeader("Authorization") String authHeader) {
-        Long userId = getUserIdFromToken(authHeader);
+        Long userId = JwtUtils.getUserIdFromHeader(authHeader);
         return Result.success(orderService.getUserOrders(userId));
     }
 
     @GetMapping
     public Result<List<ProductOrder>> getAllOrders(@RequestHeader("Authorization") String authHeader) {
-        String token = authHeader.substring(7);
-        Claims claims = JwtUtils.parseToken(token);
-        String role = claims.get("role", String.class);
-        if (!"ADMIN".equals(role)) {
-            throw new UnauthorizedException("拒绝访问，只能操作自己的数据");
-        }
+        JwtUtils.checkAdmin(authHeader);
         return Result.success(orderService.getAllOrders());
     }
 
     @PostMapping("/{orderId}/ship")
     public Result<String> shipOrder(@RequestHeader("Authorization") String authHeader, @PathVariable String orderId) {
-        String token = authHeader.substring(7);
-        Claims claims = JwtUtils.parseToken(token);
-        if (!"ADMIN".equals(claims.get("role", String.class))) {
-            throw new UnauthorizedException("拒绝访问，只能操作自己的数据");
-        }
+        JwtUtils.checkAdmin(authHeader);
         orderService.shipOrder(orderId);
         return Result.success("Order shipped");
     }
@@ -116,20 +94,16 @@ public class ProductOrderController {
     @PostMapping("/{orderId}/confirm-pay")
     @Operation(summary = "管理员手动确认收款", description = "核对微信商家码到账后，将订单手动流转为已支付")
     public Result<String> confirmPay(@RequestHeader("Authorization") String authHeader, @PathVariable String orderId) {
-        String token = authHeader.substring(7);
-        Claims claims = JwtUtils.parseToken(token);
-        if (!"ADMIN".equals(claims.get("role", String.class))) {
-            throw new UnauthorizedException("拒绝访问，需要管理员权限");
-        }
+        JwtUtils.checkAdmin(authHeader);
         orderService.handlePaymentSuccess(orderId);
         return Result.success("订单已成功确认为已支付状态");
     }
 
     @DeleteMapping("/{orderId}")
-    @Operation(summary = "删除未支付订单", description = "用户取消并删除自己未支付的订单")
+    @Operation(summary = "取消或删除订单", description = "用户取消未支付订单或删除已取消订单")
     public Result<String> deleteUnpaidOrder(@RequestHeader("Authorization") String authHeader, @PathVariable String orderId) {
-        Long userId = getUserIdFromToken(authHeader);
+        Long userId = JwtUtils.getUserIdFromHeader(authHeader);
         orderService.cancelUnpaidOrder(userId, orderId);
-        return Result.success("未支付订单已删除");
+        return Result.success("订单已成功取消/删除");
     }
 }

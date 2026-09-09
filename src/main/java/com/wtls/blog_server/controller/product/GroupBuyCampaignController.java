@@ -24,22 +24,11 @@ public class GroupBuyCampaignController {
     private GroupBuyCampaignService service;
 
     private void checkAdmin(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new UnauthorizedException("未授权访问，请重新登录");
-        }
-        Claims claims = JwtUtils.parseToken(authHeader.substring(7));
-        String role = claims.get("role", String.class);
-        if (!"ADMIN".equals(role)) {
-            throw new UnauthorizedException("权限不足，需要管理员权限");
-        }
+        JwtUtils.checkAdmin(authHeader);
     }
 
     private Long getUserIdFromToken(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new UnauthorizedException("未授权访问");
-        }
-        Claims claims = JwtUtils.parseToken(authHeader.substring(7));
-        return claims.get("userId", Long.class);
+        return JwtUtils.getUserIdFromHeader(authHeader);
     }
 
     // --- Campaign API ---

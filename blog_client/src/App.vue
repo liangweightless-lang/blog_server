@@ -284,6 +284,11 @@ body {
     background: transparent !important;
     box-shadow: none !important;
   }
+  .arco-modal.floating-card-modal .arco-modal-body {
+    overflow: visible !important;
+    max-height: none !important;
+    background: transparent !important;
+  }
 
   .arco-modal:not(.arco-modal-simple) .arco-modal-body {
     width: 100% !important;

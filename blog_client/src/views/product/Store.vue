@@ -1,62 +1,62 @@
 <template>
   <div class="store-container">
-
-    <!-- 社区快团区 -->
-    <div v-if="campaigns.length > 0" class="group-buy-section">
-      <h2 class="section-title" style="color: #FF5A34;"><icon-fire /> 社区快团</h2>
-      <a-grid :cols="{ xs: 1, sm: 2, md: 3 }" :colGap="20" :rowGap="20">
-        <a-grid-item v-for="campaign in campaigns" :key="campaign.id">
-          <a-card class="campaign-card" hoverable :bordered="false" :body-style="{ padding: '20px' }" @click="$router.push(`/campaign/${campaign.id}`)" style="cursor: pointer;">
-            <div class="campaign-header">
-              <h3 class="campaign-title">{{ campaign.title }}</h3>
-              <a-tag color="#FF4B2B" size="small" class="campaign-tag">进行中</a-tag>
-            </div>
-            <div class="campaign-details">
-              <div class="detail-row">
-                <icon-location class="detail-icon" /> 
-                <span class="detail-text">提货点: <span class="detail-highlight">{{ campaign.deliveryLocation?.name || '未知' }}</span></span>
+    <PullToRefresh @refresh="handlePullRefresh">
+      <!-- 社区快团区 -->
+      <div v-if="campaigns.length > 0" class="group-buy-section">
+        <h2 class="section-title" style="color: #FF5A34;"><icon-fire /> 社区快团</h2>
+        <a-grid :cols="{ xs: 1, sm: 2, md: 3 }" :colGap="20" :rowGap="20">
+          <a-grid-item v-for="campaign in campaigns" :key="campaign.id">
+            <a-card class="campaign-card" hoverable :bordered="false" :body-style="{ padding: '20px' }" @click="$router.push(`/campaign/${campaign.id}`)" style="cursor: pointer;">
+              <div class="campaign-header">
+                <h3 class="campaign-title">{{ campaign.title }}</h3>
+                <a-tag color="#FF4B2B" size="small" class="campaign-tag">进行中</a-tag>
               </div>
-              <div class="detail-row">
-                <icon-clock-circle class="detail-icon" /> 
-                <div class="detail-text" style="display: flex; align-items: center;">
-                  距结束: <a-countdown :value="new Date(campaign.endTime).getTime()" format="D 天 H 时 m 分 s 秒" :value-style="{color: '#FF4B2B', fontSize: '13px', fontWeight: 'bold', marginLeft: '4px'}" />
+              <div class="campaign-details">
+                <div class="detail-row">
+                  <icon-location class="detail-icon" /> 
+                  <span class="detail-text">提货点: <span class="detail-highlight">{{ campaign.deliveryLocation?.name || '未知' }}</span></span>
+                </div>
+                <div class="detail-row">
+                  <icon-clock-circle class="detail-icon" /> 
+                  <div class="detail-text" style="display: flex; align-items: center;">
+                    距结束: <a-countdown :value="new Date(campaign.endTime).getTime()" format="D 天 H 时 m 分 s 秒" :value-style="{color: '#FF4B2B', fontSize: '13px', fontWeight: 'bold', marginLeft: '4px'}" />
+                  </div>
                 </div>
               </div>
-            </div>
-            
-            <div class="campaign-progress" v-if="campaign.targetNum > 0" style="margin-bottom: 12px;">
-               <div style="display: flex; justify-content: space-between; font-size: 12px; color: #86909c; margin-bottom: 4px;">
-                 <span>已跟团 {{ campaign.currentNum || 0 }} 人</span>
-                 <span>目标 {{ campaign.targetNum }} 人</span>
-               </div>
-               <a-progress :percent="Math.min((campaign.currentNum || 0) / campaign.targetNum, 1)" size="small" color="#FF4B2B" />
-            </div>
-            
-            <div v-if="campaign.joinedAvatars && campaign.joinedAvatars.length > 0" class="joined-avatars">
-              <a-avatar-group :size="24" :max-count="5">
-                <a-avatar v-for="(avatar, idx) in campaign.joinedAvatars" :key="idx">
-                  <img :src="avatar" />
-                </a-avatar>
-              </a-avatar-group>
-              <span class="joined-text">等 {{ campaign.currentNum }} 人已跟团</span>
-            </div>
-            
-            <div class="campaign-products-preview" v-if="campaign.products && campaign.products.length > 0">
-              <div class="preview-imgs">
-                <img v-for="cp in campaign.products.slice(0, 4)" :key="cp.id" :src="$formatImageUrl(cp.product?.image)" class="preview-img" />
-                <div v-if="campaign.products.length > 4" class="preview-more">+{{ campaign.products.length - 4 }}</div>
+              
+              <div class="campaign-progress" v-if="campaign.targetNum > 0" style="margin-bottom: 12px;">
+                 <div style="display: flex; justify-content: space-between; font-size: 12px; color: #86909c; margin-bottom: 4px;">
+                   <span>已跟团 {{ campaign.currentNum || 0 }} 人</span>
+                   <span>目标 {{ campaign.targetNum }} 人</span>
+                 </div>
+                 <a-progress :percent="Math.min((campaign.currentNum || 0) / campaign.targetNum, 1)" size="small" color="#FF4B2B" />
               </div>
-              <div class="preview-text">
-                <span class="price-start">¥{{ getMinPrice(campaign) }}<span class="price-suffix">起</span></span>
-                <span class="count-text">共 {{ campaign.products.length }} 款</span>
+              
+              <div v-if="campaign.joinedAvatars && campaign.joinedAvatars.length > 0" class="joined-avatars">
+                <a-avatar-group :size="24" :max-count="5">
+                  <a-avatar v-for="(avatar, idx) in campaign.joinedAvatars" :key="idx">
+                    <img :src="avatar" />
+                  </a-avatar>
+                </a-avatar-group>
+                <span class="joined-text">等 {{ campaign.currentNum }} 人已跟团</span>
               </div>
-            </div>
-            
-            <a-button type="primary" class="campaign-btn" shape="round" long @click.stop="$router.push(`/campaign/${campaign.id}`)">立即跟团</a-button>
-          </a-card>
-        </a-grid-item>
-      </a-grid>
-    </div>
+              
+              <div class="campaign-products-preview" v-if="campaign.products && campaign.products.length > 0">
+                <div class="preview-imgs">
+                  <img v-for="cp in campaign.products.slice(0, 4)" :key="cp.id" :src="$formatImageUrl(cp.product?.image)" class="preview-img" />
+                  <div v-if="campaign.products.length > 4" class="preview-more">+{{ campaign.products.length - 4 }}</div>
+                </div>
+                <div class="preview-text">
+                  <span class="price-start">¥{{ getMinPrice(campaign) }}<span class="price-suffix">起</span></span>
+                  <span class="count-text">共 {{ campaign.products.length }} 款</span>
+                </div>
+              </div>
+              
+              <a-button type="primary" class="campaign-btn" shape="round" long @click.stop="$router.push(`/campaign/${campaign.id}`)">立即跟团</a-button>
+            </a-card>
+          </a-grid-item>
+        </a-grid>
+      </div>
 
     <!-- 普通单品区 -->
     <div class="product-grid" style="margin-top: 32px;">
@@ -109,6 +109,7 @@
       </a-grid-item>
     </a-grid>
     </div>
+    </PullToRefresh>
 
     <!-- 订单确认业务组件 (已封装) -->
     <ProductBuyModal 
@@ -138,6 +139,7 @@ import { redeemOrder } from '@/api/order';
 import { Message } from '@arco-design/web-vue';
 import ProductBuyModal from '@/components/product/ProductBuyModal.vue';
 import GroupActionModal from '@/components/product/GroupActionModal.vue';
+import PullToRefresh from '@/components/common/PullToRefresh.vue';
 import { mapState, mapActions } from 'pinia'
 import { useUserStore } from '@/stores/user'
 import dayjs from 'dayjs'
@@ -181,8 +183,30 @@ export default {
     this.fetchActiveGroups();
     this.fetchCampaigns();
   },
+  mounted() {
+    window.addEventListener('tab-refresh', this.handleTabRefresh);
+  },
+  beforeUnmount() {
+    window.removeEventListener('tab-refresh', this.handleTabRefresh);
+  },
   methods: {
     ...mapActions(useUserStore, ['updatePoints']),
+    handleTabRefresh(e) {
+      if (e.detail?.path === '/store' || this.$route.path === '/store') {
+        this.refreshAll();
+      }
+    },
+    async handlePullRefresh(resolve) {
+      await this.refreshAll();
+      if (resolve) resolve();
+    },
+    async refreshAll() {
+      await Promise.all([
+        this.fetchProducts(),
+        this.fetchActiveGroups(),
+        this.fetchCampaigns()
+      ]);
+    },
     getMinPrice(campaign) {
       if (!campaign.products || campaign.products.length === 0) return 0;
       return Math.min(...campaign.products.map(p => p.groupPrice)).toFixed(2);

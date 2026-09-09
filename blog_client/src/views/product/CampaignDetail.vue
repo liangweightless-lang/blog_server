@@ -200,7 +200,7 @@
 <script>
 import { getCampaignById, createCampaignOrder } from '@/api/campaign';
 import { createAlipay, createWechatPay, createXunhupay } from '@/api/order';
-import { Message } from '@arco-design/web-vue';
+import { Message, Modal } from '@arco-design/web-vue';
 import dayjs from 'dayjs';
 import { mapState } from 'pinia';
 import { useUserStore } from '@/stores/user';
@@ -407,10 +407,21 @@ export default {
       }
     },
     handlePaymentSuccess() {
-      this.paymentConfirmVisible = false;
-      this.wechatQrVisible = false;
-      Message.success('支付成功，跟团订单已刷新');
-      this.$router.push('/profile');
+      Modal.confirm({
+        title: '确认已完成支付？',
+        content: '请确保您已成功完成付款。确认后系统将为您跳转至个人中心查看跟团订单与提货进度。',
+        okText: '确认已付款',
+        cancelText: '尚未付款',
+        okButtonProps: {
+          style: { backgroundColor: '#FF7E67', borderColor: '#FF7E67' }
+        },
+        onOk: () => {
+          this.paymentConfirmVisible = false;
+          this.wechatQrVisible = false;
+          Message.success('支付成功，跟团订单已刷新');
+          this.$router.push('/profile');
+        }
+      });
     },
     handlePaymentFail() {
       this.paymentConfirmVisible = false;

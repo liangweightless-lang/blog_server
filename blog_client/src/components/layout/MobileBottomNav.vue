@@ -41,8 +41,9 @@ export default {
   methods: {
     navTo(path) {
       if (this.$route.path === path) {
-        // 如果已经在当前页，平滑滚回顶部
+        // 如果已经在当前页，平滑滚回顶部并触发当前页刷新
         window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.dispatchEvent(new CustomEvent('tab-refresh', { detail: { path } }));
         return;
       }
       this.$router.push(path);

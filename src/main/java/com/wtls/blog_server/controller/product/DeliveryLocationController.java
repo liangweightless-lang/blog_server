@@ -22,21 +22,11 @@ public class DeliveryLocationController {
     @Autowired
     private DeliveryLocationService service;
 
-    private void checkAdmin(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new UnauthorizedException("未授权访问，请重新登录");
-        }
-        Claims claims = JwtUtils.parseToken(authHeader.substring(7));
-        String role = claims.get("role", String.class);
-        if (!"ADMIN".equals(role)) {
-            throw new UnauthorizedException("权限不足，需要管理员权限");
-        }
-    }
 
     @GetMapping
     @Operation(summary = "获取所有提货点 (管理员用)")
     public Result<List<DeliveryLocation>> getAll(@RequestHeader(value = "Authorization", required = false) String authHeader) {
-        checkAdmin(authHeader);
+        JwtUtils.checkAdmin(authHeader);
         return Result.success(service.getAllLocations());
     }
     
@@ -49,7 +39,7 @@ public class DeliveryLocationController {
     @PostMapping
     @Operation(summary = "新增提货点 (Admin)")
     public Result<String> create(@RequestHeader("Authorization") String authHeader, @RequestBody DeliveryLocation location) {
-        checkAdmin(authHeader);
+        JwtUtils.checkAdmin(authHeader);
         service.createLocation(location);
         return Result.success("Location created");
     }
@@ -57,7 +47,7 @@ public class DeliveryLocationController {
     @PutMapping("/{id}")
     @Operation(summary = "更新提货点 (Admin)")
     public Result<String> update(@RequestHeader("Authorization") String authHeader, @PathVariable Long id, @RequestBody DeliveryLocation location) {
-        checkAdmin(authHeader);
+        JwtUtils.checkAdmin(authHeader);
         location.setId(id);
         service.updateLocation(location);
         return Result.success("Location updated");
@@ -66,7 +56,7 @@ public class DeliveryLocationController {
     @DeleteMapping("/{id}")
     @Operation(summary = "删除提货点 (Admin)")
     public Result<String> delete(@RequestHeader("Authorization") String authHeader, @PathVariable Long id) {
-        checkAdmin(authHeader);
+        JwtUtils.checkAdmin(authHeader);
         service.deleteLocation(id);
         return Result.success("Location deleted");
     }

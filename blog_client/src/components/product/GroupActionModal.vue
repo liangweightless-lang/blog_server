@@ -21,26 +21,21 @@
       
       <div class="order-form">
         <div class="form-item">
-          <p class="form-label">配送地址 <span class="required">*</span></p>
-          <a-textarea 
-            v-model="orderAddress" 
-            placeholder="请输入详细收货地址" 
-            :auto-size="{ minRows: 3, maxRows: 5 }">
-          </a-textarea>
-          <p class="address-tip" v-if="!orderAddress">建议前往“个人资料”设置默认地址</p>
+          <p class="form-label">校内配送/自提地址 <span class="required">*</span></p>
+          <CampusLocationSelect v-model="orderAddress" />
         </div>
         
         <div class="form-item">
           <p class="form-label">预计配送时间</p>
-          <a-tag color="gray">成团后 3 个工作日内发货</a-tag>
+          <a-tag color="orange"><icon-clock-circle style="margin-right: 4px;" />成团后 24~48 小时内校内配送发货</a-tag>
         </div>
 
         <div class="rule-box">
           <p><icon-info-circle /> 拼团须知：</p>
           <ul>
-            <li>需满 8 人方可成团</li>
-            <li>24小时内未成团将自动退款</li>
-            <li>成团后不支持取消订单</li>
+            <li>达到目标人数即拼团成功</li>
+            <li>超时未成团系统将原路全额自动退款</li>
+            <li>成团后将按提货点通知自提/派送</li>
           </ul>
         </div>
       </div>
@@ -60,9 +55,13 @@ import { createAlipay } from '@/api/order';
 import { Message } from '@arco-design/web-vue';
 import { mapState } from 'pinia'
 import { useUserStore } from '@/stores/user'
+import CampusLocationSelect from '@/components/common/CampusLocationSelect.vue';
 
 export default {
   name: 'GroupActionModal',
+  components: {
+    CampusLocationSelect
+  },
   props: {
     show: {
       type: Boolean,

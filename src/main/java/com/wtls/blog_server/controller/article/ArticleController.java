@@ -25,16 +25,6 @@ public class ArticleController {
     @Autowired
     private UserService userService;
 
-    private void checkAdmin(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new UnauthorizedException("未授权访问，请重新登录");
-        }
-        Claims claims = JwtUtils.parseToken(authHeader.substring(7));
-        String role = claims.get("role", String.class);
-        if (!"ADMIN".equals(role)) {
-            throw new UnauthorizedException("权限不足，需要管理员权限");
-        }
-    }
 
     @GetMapping
     @Operation(summary = "获取所有文章")
@@ -57,7 +47,7 @@ public class ArticleController {
     @PostMapping
     @Operation(summary = "发布文章 (Admin)")
     public Result<Article> create(@RequestHeader("Authorization") String authHeader, @RequestBody Article article) {
-        checkAdmin(authHeader);
+        JwtUtils.checkAdmin(authHeader);
         articleService.createArticle(article);
         return Result.success(article);
     }
@@ -65,7 +55,7 @@ public class ArticleController {
     @PutMapping("/{id}")
     @Operation(summary = "更新文章 (Admin)")
     public Result<String> update(@RequestHeader("Authorization") String authHeader, @PathVariable Long id, @RequestBody Article article) {
-        checkAdmin(authHeader);
+        JwtUtils.checkAdmin(authHeader);
         article.setId(id);
         articleService.updateArticle(article);
         return Result.success("Article updated");
@@ -74,7 +64,7 @@ public class ArticleController {
     @DeleteMapping("/{id}")
     @Operation(summary = "删除文章 (Admin)")
     public Result<String> delete(@RequestHeader("Authorization") String authHeader, @PathVariable Long id) {
-        checkAdmin(authHeader);
+        JwtUtils.checkAdmin(authHeader);
         articleService.deleteArticle(id);
         return Result.success("Article deleted");
     }
@@ -84,5 +74,13 @@ public class ArticleController {
     public Result<Void> likeArticle(@PathVariable Long id) {
         articleService.likeArticle(id);
         return Result.success(null);
+    }
+
+    @PutMapping("/{id}/top")
+    @Operation(summary = "设置或取消文章置顶 (Admin)")
+    public Result<String> updateTop(@RequestHeader("Authorization") String authHeader, @PathVariable Long id, @RequestParam Integer isTop) {
+        JwtUtils.checkAdmin(authHeader);
+        articleService.updateTop(id, isTop);
+        return Result.success(isTop == 1 ? "文章已置顶" : "已取消置顶");
     }
 }

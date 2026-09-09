@@ -28,16 +28,6 @@ public class ProductController {
     @Autowired
     private UserService userService;
 
-    private void checkAdmin(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new UnauthorizedException("未授权访问，请重新登录");
-        }
-        Claims claims = JwtUtils.parseToken(authHeader.substring(7));
-        String role = claims.get("role", String.class);
-        if (!"ADMIN".equals(role)) {
-            throw new UnauthorizedException("权限不足，需要管理员权限");
-        }
-    }
 
     @GetMapping
     @Operation(summary = "获取商品列表")
@@ -63,7 +53,7 @@ public class ProductController {
     @PostMapping
     @Operation(summary = "新增商品 (Admin)")
     public Result<String> create(@RequestHeader("Authorization") String authHeader, @RequestBody Product product) {
-        checkAdmin(authHeader);
+        JwtUtils.checkAdmin(authHeader);
         productService.createProduct(product);
         return Result.success("Product created");
     }
@@ -71,7 +61,7 @@ public class ProductController {
     @PutMapping("/{id}")
     @Operation(summary = "更新商品信息 (Admin)")
     public Result<String> update(@RequestHeader("Authorization") String authHeader, @PathVariable Long id, @RequestBody Product product) {
-        checkAdmin(authHeader);
+        JwtUtils.checkAdmin(authHeader);
         product.setId(id);
         productService.updateProduct(product);
         return Result.success("Product updated");
@@ -80,7 +70,7 @@ public class ProductController {
     @PutMapping("/{id}/status")
     @Operation(summary = "切换商品上下架状态 (Admin)")
     public Result<String> updateStatus(@RequestHeader("Authorization") String authHeader, @PathVariable Long id, @RequestParam("status") Integer status) {
-        checkAdmin(authHeader);
+        JwtUtils.checkAdmin(authHeader);
         productService.updateProductStatus(id, status);
         return Result.success(status == 1 ? "商品已上架" : "商品已下架");
     }
@@ -88,7 +78,7 @@ public class ProductController {
     @DeleteMapping("/{id}")
     @Operation(summary = "删除商品 (Admin)")
     public Result<String> delete(@RequestHeader("Authorization") String authHeader, @PathVariable Long id) {
-        checkAdmin(authHeader);
+        JwtUtils.checkAdmin(authHeader);
         productService.deleteProduct(id);
         return Result.success("Product deleted");
     }

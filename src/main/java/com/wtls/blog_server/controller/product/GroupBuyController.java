@@ -23,17 +23,6 @@ public class GroupBuyController {
     @Autowired
     private GroupBuyService groupBuyService;
 
-    private Long getUserId(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new UnauthorizedException("未授权访问，请重新登录");
-        }
-        Claims claims = JwtUtils.parseToken(authHeader.substring(7));
-        Object userId = claims.get("userId");
-        if (userId == null) {
-            throw new UnauthorizedException("Token无效，缺少用户信息");
-        }
-        return Long.valueOf(userId.toString());
-    }
 
     @GetMapping("/active")
     @Operation(summary = "获取正在进行中的拼团列表")
@@ -56,18 +45,14 @@ public class GroupBuyController {
     @GetMapping
     @Operation(summary = "获取所有拼团记录 (Admin)")
     public Result<List<GroupBuy>> getAllGroups(@RequestHeader("Authorization") String authHeader) {
-        String token = authHeader.substring(7);
-        Claims claims = JwtUtils.parseToken(token);
-        if (!"ADMIN".equals(claims.get("role", String.class))) {
-            throw new UnauthorizedException("拒绝访问，只能操作自己的数据");
-        }
+        JwtUtils.checkAdmin(authHeader);
         return Result.success(groupBuyService.getAllGroups());
     }
 
     @PostMapping("/start")
     @Operation(summary = "发起新拼团")
     public Result<Map<String, Object>> startGroup(@RequestHeader("Authorization") String authHeader, @RequestBody Map<String, Object> body) {
-        Long userId = getUserId(authHeader);
+        Long userId = JwtUtils.getUserIdFromHeader(authHeader);
         Long productId = Long.valueOf(body.get("productId").toString());
         String address = body.getOrDefault("address", "").toString();
         GroupBuy gb = groupBuyService.startGroup(userId, productId, address);
@@ -81,7 +66,7 @@ public class GroupBuyController {
     @PostMapping("/{groupId}/join")
     @Operation(summary = "加入拼团")
     public Result<Map<String, Object>> joinGroup(@RequestHeader("Authorization") String authHeader, @PathVariable Long groupId, @RequestBody(required = false) Map<String, Object> body) {
-        Long userId = getUserId(authHeader);
+        Long userId = JwtUtils.getUserIdFromHeader(authHeader);
         String address = (body != null && body.containsKey("address")) ? body.get("address").toString() : "";
         GroupBuy gb = groupBuyService.joinGroup(userId, groupId, address);
         
@@ -94,7 +79,7 @@ public class GroupBuyController {
     @PostMapping("/{groupId}/force-success")
     @Operation(summary = "强制拼团成功 (Admin)")
     public Result<String> forceSuccess(@RequestHeader("Authorization") String authHeader, @PathVariable Long groupId) {
-        checkAdmin(authHeader);
+        JwtUtils.checkAdmin(authHeader);
         groupBuyService.forceSuccess(groupId);
         return Result.success("Group buy forced success");
     }
@@ -102,23 +87,15 @@ public class GroupBuyController {
     @PostMapping("/{groupId}/force-fail")
     @Operation(summary = "强制拼团失败并退款 (Admin)")
     public Result<String> forceFail(@RequestHeader("Authorization") String authHeader, @PathVariable Long groupId) {
-        checkAdmin(authHeader);
+        JwtUtils.checkAdmin(authHeader);
         groupBuyService.forceFail(groupId);
         return Result.success("Group buy forced fail and refunded");
-    }
-
-    private void checkAdmin(String authHeader) {
-        String token = authHeader.substring(7);
-        Claims claims = JwtUtils.parseToken(token);
-        if (!"ADMIN".equals(claims.get("role", String.class))) {
-            throw new UnauthorizedException("拒绝访问，只能操作自己的数据");
-        }
     }
 
     @GetMapping("/me")
     @Operation(summary = "获取我的拼团记录")
     public Result<List<GroupBuy>> getMyGroups(@RequestHeader("Authorization") String authHeader) {
-        Long userId = getUserId(authHeader);
+        Long userId = JwtUtils.getUserIdFromHeader(authHeader);
         return Result.success(groupBuyService.getUserGroups(userId));
     }
 }

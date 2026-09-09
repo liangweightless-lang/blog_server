@@ -152,7 +152,7 @@
 <script>
 import { checkWechatPayStatus, checkXunhupayStatus, createXunhupay } from '@/api/order';
 import { getHomeConfig } from '@/api/common';
-import { Message } from '@arco-design/web-vue';
+import { Message, Modal } from '@arco-design/web-vue';
 import QRCode from 'qrcode';
 
 export default {
@@ -300,8 +300,22 @@ export default {
         this.timer = null;
       }
     },
-    async handleManualCheck() {
+    handleManualCheck() {
       if (!this.orderId) return;
+      Modal.confirm({
+        title: '确认已完成付款？',
+        content: '请确保您已在微信或支付宝客户端成功完成付款。确认后系统将立即核对到账信息并更新订单。',
+        okText: '确认已付款',
+        cancelText: '尚未付款',
+        okButtonProps: {
+          style: { backgroundColor: '#FF7E67', borderColor: '#FF7E67' }
+        },
+        onOk: async () => {
+          await this.doManualCheck();
+        }
+      });
+    },
+    async doManualCheck() {
       this.checking = true;
       try {
         const [wechatRes, xunhuRes] = await Promise.all([

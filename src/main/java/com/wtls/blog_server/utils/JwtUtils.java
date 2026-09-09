@@ -35,4 +35,33 @@ public class JwtUtils {
             throw new com.wtls.blog_server.exception.UnauthorizedException("登录状态已过期或无效，请重新登录");
         }
     }
+
+    public static Long getUserIdFromHeader(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new com.wtls.blog_server.exception.UnauthorizedException("未授权访问，请先登录");
+        }
+        String token = authHeader.substring(7);
+        Claims claims = parseToken(token);
+        Object userIdObj = claims.get("userId");
+        if (userIdObj == null) {
+            throw new com.wtls.blog_server.exception.UnauthorizedException("Token无效，缺少用户信息");
+        }
+        return Long.valueOf(userIdObj.toString());
+    }
+
+    public static String getRoleFromHeader(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new com.wtls.blog_server.exception.UnauthorizedException("未授权访问，请先登录");
+        }
+        String token = authHeader.substring(7);
+        Claims claims = parseToken(token);
+        return claims.get("role", String.class);
+    }
+
+    public static void checkAdmin(String authHeader) {
+        String role = getRoleFromHeader(authHeader);
+        if (!"ADMIN".equals(role)) {
+            throw new com.wtls.blog_server.exception.UnauthorizedException("权限不足，需要管理员权限");
+        }
+    }
 }

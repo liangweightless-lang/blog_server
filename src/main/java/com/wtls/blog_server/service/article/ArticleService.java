@@ -40,4 +40,8 @@ public class ArticleService {
     public void deleteArticle(Long id) {
         articleMapper.delete(id);
     }
+
+    public void updateTop(Long id, Integer isTop) {
+        articleMapper.updateTop(id, isTop);
+    }
 }

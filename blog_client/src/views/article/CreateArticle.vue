@@ -269,11 +269,16 @@ export default {
         .filter(f => f.response && (f.response.rawUrl || f.response.url))
         .map(f => f.response.rawUrl || f.response.url);
       
-      this.form.mediaUrls = JSON.stringify(urls);
+      const payload = {
+        ...this.form,
+        coverUrl: urls.length > 0 ? urls[0] : (this.form.coverUrl || null),
+        mediaUrls: JSON.stringify(urls),
+        tags: Array.isArray(this.form.tags) ? JSON.stringify(this.form.tags) : (this.form.tags || '[]')
+      };
 
       this.submitting = true;
       try {
-        await saveArticle(this.form);
+        await saveArticle(payload);
         Message.success('灵感日记发布成功！');
         this.$router.push('/');
       } catch (e) {

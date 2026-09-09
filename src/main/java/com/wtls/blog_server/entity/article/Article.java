@@ -11,6 +11,7 @@ public class Article {
     private String coverUrl;
     private String mediaUrls;
     private Integer likesCount;
+    private Integer isTop; // 是否置顶: 0否, 1是
     private Long productId;
     private String tags;
     private String location;

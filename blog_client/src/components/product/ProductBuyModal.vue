@@ -13,6 +13,11 @@
     <div class="floating-modal-container" v-if="product">
       <!-- 白色主卡片 (四周大圆角 24px，左右有间距) -->
       <div class="modal-card-main">
+        <!-- 浮窗顶层固定关闭按钮 (无论内容多长均在顶层固定可见，免下拉) -->
+        <button class="card-top-close-btn" @click="visible = false" aria-label="关闭">
+          <icon-close />
+        </button>
+
         <!-- 顶部商品基本信息（瑞幸风格：大标题+缩略图/价格） -->
         <div class="card-header-product">
           <div class="header-product-info">
@@ -20,9 +25,10 @@
             <div class="product-price-row">
               <span class="price-symbol">¥</span>
               <span class="price-num">{{ product.price }}</span>
-              <span v-if="product.stock <= 5 && product.stock > 0" class="stock-tag warning">仅剩 {{ product.stock }} 件</span>
-              <span v-else-if="product.stock <= 0" class="stock-tag out">已售罄</span>
-              <span v-else class="stock-tag normal">库存: {{ product.stock === -1 ? '充足' : product.stock }}</span>
+              <span v-if="product.stock === 0" class="stock-tag out">已售罄</span>
+              <span v-else-if="product.stock > 0 && product.stock <= 5" class="stock-tag warning">仅剩 {{ product.stock }} 件</span>
+              <span v-else-if="product.stock === -1" class="stock-tag normal">库存充足</span>
+              <span v-else class="stock-tag normal">库存: {{ product.stock }}</span>
             </div>
           </div>
           <img :src="$formatImageUrl(product.image)" class="header-product-img" alt="商品图片" />
@@ -82,22 +88,12 @@
             </div>
           </div>
 
-          <!-- 配送与收货人 -->
+          <!-- 配送与收货人 (校园推广预设地址防乱填) -->
           <div class="item-section delivery-section">
             <div class="section-label" style="margin-bottom: 8px;">
               <icon-location style="margin-right: 4px;" /> 配送与联系人
             </div>
-            <div class="address-input-wrapper">
-              <a-input 
-                v-model="shippingAddress" 
-                placeholder="详细收货地址 (必填)" 
-                allow-clear 
-                class="compact-input"
-              />
-              <button class="map-picker-btn" @click="openMapDialog" type="button" title="地图定位">
-                <icon-location />
-              </button>
-            </div>
+            <CampusLocationSelect v-model="shippingAddress" />
             <div style="margin-top: 8px;">
               <a-input 
                 v-model="contactPhone" 
@@ -186,7 +182,7 @@
             @click="handleConfirm"
           >
             <icon-loading v-if="loading" :spin="true" />
-            <span v-else>{{ product.stock <= 0 ? '库存不足' : '立即支付' }}</span>
+            <span v-else>{{ product.stock === 0 ? '暂时缺货' : '立即支付' }}</span>
           </button>
         </div>
       </div>
@@ -234,17 +230,19 @@
 
 <script>
 import { createOrder, createAlipay, createWechatPay, createXunhupay } from '@/api/order';
-import { Message } from '@arco-design/web-vue';
+import { Message, Modal } from '@arco-design/web-vue';
 import { mapState, mapActions } from 'pinia';
 import { useUserStore } from '@/stores/user';
 import MapLocationDialog from '@/components/common/MapLocationDialog.vue';
 import WechatPayQrModal from '@/components/pay/WechatPayQrModal.vue';
+import CampusLocationSelect from '@/components/common/CampusLocationSelect.vue';
 
 export default {
   name: 'ProductBuyModal',
   components: {
     MapLocationDialog,
-    WechatPayQrModal
+    WechatPayQrModal,
+    CampusLocationSelect
   },
   props: {
     show: Boolean,
@@ -293,6 +291,7 @@ export default {
     isPayDisabled() {
       if (!this.product) return true;
       if (this.product.stock === 0) return true;
+      if (this.product.stock > 0 && this.buyQuantity > this.product.stock) return true;
       if (!this.shippingAddress || this.shippingAddress.trim() === '') return true;
       if (!this.contactPhone || this.contactPhone.trim() === '') return true;
       return this.parsedSpecs.some(spec => !this.selectedSpecs[spec.name]);
@@ -417,11 +416,22 @@ export default {
       }
     },
     handlePaymentSuccess() {
-      this.paymentConfirmVisible = false;
-      this.wechatQrVisible = false;
-      this.visible = false;
-      Message.success('支付成功，正在前往个人中心');
-      this.$router.push('/profile');
+      Modal.confirm({
+        title: '确认已完成支付？',
+        content: '请确保您已成功完成付款。确认后系统将为您跳转到订单中心查看发货与自提进度。',
+        okText: '确认已付款',
+        cancelText: '尚未付款',
+        okButtonProps: {
+          style: { backgroundColor: '#FF7E67', borderColor: '#FF7E67' }
+        },
+        onOk: () => {
+          this.paymentConfirmVisible = false;
+          this.wechatQrVisible = false;
+          this.visible = false;
+          Message.success('支付成功，正在前往个人中心');
+          this.$router.push('/profile');
+        }
+      });
     },
     handlePaymentFail() {
       this.paymentConfirmVisible = false;
@@ -444,6 +454,7 @@ export default {
 
 /* 白色主卡片：四周大圆角 24px，左右带边距，精致内阴影 */
 .modal-card-main {
+  position: relative;
   width: 100%;
   background: #FFFFFF;
   border-radius: 24px;
@@ -451,7 +462,35 @@ export default {
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
   display: flex;
   flex-direction: column;
-  max-height: calc(82vh - 70px);
+  max-height: calc(85vh - 50px);
+}
+
+/* 浮窗顶层固定关闭按钮 (随卡片顶层浮动，随时可见免下拉) */
+.card-top-close-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #F2F3F5;
+  color: #4E5969;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  cursor: pointer;
+  z-index: 50;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.card-top-close-btn:hover {
+  background: #E5E6EB;
+  color: #1D2129;
+}
+.card-top-close-btn:active {
+  transform: scale(0.9);
+  background: #C9CDD4;
 }
 
 /* 顶部商品信息行：大标题 + 价格 + 缩略图 */
@@ -460,7 +499,7 @@ export default {
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
-  padding: 20px 20px 14px 20px;
+  padding: 14px 52px 10px 18px; /* 右侧留空 52px 给固定关闭按钮 */
   border-bottom: 1px solid #F7F8FA;
 }
 .header-product-info {
@@ -468,8 +507,8 @@ export default {
   min-width: 0;
 }
 .product-title {
-  margin: 0 0 6px 0;
-  font-size: 19px;
+  margin: 0 0 4px 0;
+  font-size: 17px;
   font-weight: 800;
   color: #1D2129;
   line-height: 1.3;
@@ -485,7 +524,7 @@ export default {
   color: #FF7E67;
 }
 .price-num {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 800;
   color: #FF7E67;
 }
@@ -509,19 +548,19 @@ export default {
   background: #F2F3F5;
 }
 .header-product-img {
-  width: 68px;
-  height: 68px;
-  border-radius: 12px;
+  width: 58px;
+  height: 58px;
+  border-radius: 10px;
   object-fit: cover;
   flex-shrink: 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-/* 可滚动内容区 */
+/* 可滚动内容区 (更加紧凑通透) */
 .card-scroll-body {
   flex: 1;
   overflow-y: auto;
-  padding: 14px 20px;
+  padding: 10px 16px;
   -webkit-overflow-scrolling: touch;
 }
 .card-scroll-body::-webkit-scrollbar {
@@ -534,32 +573,32 @@ export default {
 
 /* 规格胶囊组 (瑞幸咖啡同款单选胶囊) */
 .specs-group-list {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 .spec-section {
-  margin-bottom: 14px;
+  margin-bottom: 8px;
 }
 .spec-section:last-child {
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 .spec-section-title {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: #1D2129;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 .spec-capsule-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 .spec-capsule-btn {
-  padding: 7px 16px;
-  border-radius: 8px;
+  padding: 5px 13px;
+  border-radius: 6px;
   background: #F4F5F7;
   border: 1.5px solid transparent;
   color: #4E5969;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   outline: none;
@@ -575,15 +614,15 @@ export default {
   font-weight: 700;
 }
 
-/* 辅助区块 */
+/* 辅助区块 (紧凑设计，大幅压缩空白垂直间距) */
 .item-section {
   background: #F7F8FA;
-  border-radius: 12px;
-  padding: 12px 14px;
-  margin-bottom: 10px;
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
 }
 .section-label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: #1D2129;
   display: flex;
@@ -814,7 +853,10 @@ export default {
 
 @media (max-width: 768px) {
   .modal-card-main {
-    max-height: calc(80vh - 60px);
+    max-height: 82vh;
+  }
+  .outside-close-wrapper {
+    display: none;
   }
 }
 </style>

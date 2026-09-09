@@ -55,9 +55,15 @@
       </a-tab-pane>
 
       <a-tab-pane key="orders" title="跟团订单" :disabled="!currentCampaign">
-        <div v-if="currentCampaign" style="margin-bottom: 16px;">
-          <a-button @click="activeTab = 'list'"><icon-left /> 返回活动列表</a-button>
-          <div :style="isMobile ? 'margin-top: 10px;' : 'margin-left: 16px; display: inline-block;'" style="font-weight: bold; color: #1D2129;">当前活动：{{ currentCampaign.title }}</div>
+        <div v-if="currentCampaign" style="margin-bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; background: #f7f8fa; padding: 10px 14px; border-radius: 10px;">
+          <a-button @click="activeTab = 'list'" size="small"><icon-left /> 返回活动列表</a-button>
+          <div style="font-weight: bold; color: #1D2129;">活动：{{ currentCampaign.title }}</div>
+          <a-tag color="orange" v-if="currentCampaign.deliveryTime">
+            <icon-clock-circle style="margin-right: 4px;" /> 预计提货/发货: {{ $formatTime(currentCampaign.deliveryTime) }}
+          </a-tag>
+          <a-tag color="arcoblue" v-if="currentCampaign.deliveryLocation">
+            <icon-location style="margin-right: 4px;" /> 提货点: {{ currentCampaign.deliveryLocation.name }}
+          </a-tag>
         </div>
 
         <!-- PC端表格 -->
@@ -120,6 +126,9 @@
               </div>
               <div class="m-card-body">
                 <div class="m-info-line"><icon-user /> {{ order.contactName }}  <icon-phone style="margin-left:8px;"/> {{ order.contactPhone }}</div>
+                <div class="m-info-line" v-if="currentCampaign?.deliveryTime" style="color: #FF5A34; font-size: 12px; margin-top: 4px;">
+                  <icon-clock-circle /> 预计提货: {{ $formatTime(currentCampaign.deliveryTime) }}
+                </div>
                 <div class="m-order-items">
                   <div v-for="item in order.items" :key="item.id" class="m-item-line">
                     <span class="m-item-name">{{ item.productName }}</span>

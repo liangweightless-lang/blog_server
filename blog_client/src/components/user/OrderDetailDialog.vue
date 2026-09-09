@@ -79,6 +79,10 @@
           <span class="info-label">积分抵扣</span>
           <span class="info-value deduct">- ¥{{ (order.pointsUsed / 100).toFixed(2) }} (使用 {{ order.pointsUsed }} 积分)</span>
         </div>
+        <div class="info-row" v-if="order.orderType === 'GROUP'">
+          <span class="info-label">预计发货</span>
+          <span class="info-value" style="color: #FF5A34; font-weight: 500;">成团后 24~48 小时内发货配送</span>
+        </div>
         <div class="info-row">
           <span class="info-label">实付款</span>
           <span class="info-value price">¥{{ order.amount }}</span>
@@ -86,9 +90,9 @@
       </div>
 
       <!-- 底部操作区 -->
-      <div class="action-footer" v-if="order.status === 0">
+      <div class="action-footer" v-if="order.status === 0 || order.status === 2">
         <a-button status="danger" shape="round" @click="handleDeleteCurrentOrder">删除订单</a-button>
-        <a-button type="primary" style="background-color: #FF5E3A;" shape="round" @click="handlePay">立即支付</a-button>
+        <a-button v-if="order.status === 0" type="primary" style="background-color: #FF5E3A;" shape="round" @click="handlePay">立即支付</a-button>
       </div>
     </div>
   </a-modal>
@@ -141,13 +145,15 @@ export default {
       if (!this.order) return;
       Modal.confirm({
         title: '删除订单确认',
-        content: '确定要删除此未支付订单吗？删除后不可恢复。',
+        content: this.order.status === 0 
+          ? '确定要删除此未支付订单吗？删除后不可恢复。' 
+          : '确定要删除此已取消订单记录吗？',
         okText: '确认删除',
         cancelText: '取消',
         onOk: async () => {
           try {
             await deleteUnpaidOrder(this.order.id);
-            Message.success('未支付订单已成功删除');
+            Message.success('订单已成功删除');
             this.visible = false;
             this.$emit('refresh');
           } catch (e) {

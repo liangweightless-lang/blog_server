@@ -22,6 +22,16 @@
             {{ $formatTime(record.createTime) }}
           </template>
         </a-table-column>
+        <a-table-column title="置顶" :width="80">
+          <template #cell="{ record }">
+            <a-switch 
+              :model-value="record.isTop === 1" 
+              size="small"
+              checked-color="#FF5A34"
+              @change="(val) => handleToggleTop(record, val)" 
+            />
+          </template>
+        </a-table-column>
         <a-table-column title="点赞数" data-index="likesCount" :width="100" />
         <a-table-column title="操作" :width="150" fixed="right">
           <template #cell="{ record }">
@@ -39,11 +49,23 @@
           <div class="card-cover-row">
             <img v-if="article.coverUrl" :src="article.coverUrl" class="mobile-article-cover" />
             <div class="mobile-article-info">
-              <h4 class="mobile-article-title">{{ article.title }}</h4>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <a-tag v-if="article.isTop === 1" color="red" size="small" style="font-weight: bold;">置顶</a-tag>
+                <h4 class="mobile-article-title">{{ article.title }}</h4>
+              </div>
               <span class="mobile-article-time">{{ $formatTime(article.createTime) }}</span>
             </div>
           </div>
           <div class="mobile-card-actions">
+            <a-button 
+              :type="article.isTop === 1 ? 'primary' : 'outline'" 
+              :status="article.isTop === 1 ? 'warning' : 'normal'" 
+              size="small" 
+              shape="round" 
+              @click="handleToggleTop(article, article.isTop !== 1)"
+            >
+              <template #icon><icon-pushpin /></template> {{ article.isTop === 1 ? '取消置顶' : '置顶' }}
+            </a-button>
             <a-button type="outline" size="small" shape="round" @click="handleEditArticle(article)">
               <template #icon><icon-edit /></template> 编辑
             </a-button>
@@ -138,7 +160,7 @@
 </template>
 
 <script>
-import { getArticles, updateArticle, deleteArticle } from '@/api/article';
+import { getArticles, updateArticle, deleteArticle, updateArticleTop } from '@/api/article';
 import { getProducts } from '@/api/product';
 import { getUploadUrl, getUploadHeaders } from '@/api/common';
 import { Message, Modal } from '@arco-design/web-vue';
@@ -190,6 +212,16 @@ export default {
         Message.error('加载文章失败');
       } finally {
         this.loadingArticles = false;
+      }
+    },
+    async handleToggleTop(article, willTop) {
+      try {
+        await updateArticleTop(article.id, willTop ? 1 : 0);
+        article.isTop = willTop ? 1 : 0;
+        Message.success(willTop ? '已成功置顶日记' : '已取消置顶');
+        this.fetchArticles();
+      } catch (e) {
+        Message.error(e.response?.data?.message || '置顶操作失败');
       }
     },
     goToCreateArticle() {
