@@ -32,6 +32,7 @@ import LoginDialog from './components/auth/LoginDialog.vue'
 import IosInstallGuide from './components/common/IosInstallGuide.vue'
 import { mapState, mapActions } from 'pinia'
 import { useUserStore } from '@/stores/user'
+import { Capacitor } from '@capacitor/core'
 import { App as CapApp } from '@capacitor/app'
 import { Message } from '@arco-design/web-vue'
 
@@ -72,13 +73,12 @@ export default {
     
     this.fetchUser();
 
-    // 监听全局触屏边缘右滑返回手势 (解决手机左右滑动手势交互)
+    // 监听全局触屏边缘右滑返回手势 (支持移动端浏览器与原生容器)
     window.addEventListener('touchstart', this.handleGlobalTouchStart, { passive: true });
     window.addEventListener('touchend', this.handleGlobalTouchEnd, { passive: true });
 
-    // 拦截 Android 硬件返回键 / 侧滑返回手势
-    const isCapacitor = typeof window !== 'undefined' && window.Capacitor;
-    if (isCapacitor) {
+    // 监听 Android 硬件返回键 / 系统全面屏侧滑手势
+    if (Capacitor.isNativePlatform()) {
       CapApp.addListener('backButton', () => {
         this.handleAppBack();
       });
@@ -96,10 +96,11 @@ export default {
   methods: {
     ...mapActions(useUserStore, ['fetchUser', 'clearUser']),
     handleGlobalTouchStart(e) {
-      if (!this.isMobile || !e.touches || e.touches.length !== 1) return;
+      if (!e.touches || e.touches.length !== 1) return;
       const touch = e.touches[0];
-      // 仅当从屏幕左边缘 0~35px 范围内起手，才视作系统级边缘侧滑返回手势
-      if (touch.clientX <= 35) {
+      // 触碰起点在屏幕左侧 30% 或至少 100px 范围内，均视作侧滑手势起手
+      const maxLeft = Math.max(100, (window.innerWidth || 375) * 0.3);
+      if (touch.clientX <= maxLeft) {
         this.edgeSwipeStartX = touch.clientX;
         this.edgeSwipeStartY = touch.clientY;
         this.isEdgeSwiping = true;
@@ -113,8 +114,8 @@ export default {
       const touch = e.changedTouches[0];
       const dx = touch.clientX - this.edgeSwipeStartX;
       const dy = touch.clientY - this.edgeSwipeStartY;
-      // 向右侧滑超过 45px，且水平位移显著大于垂直位移（1.5倍），判定为侧滑返回
-      if (dx > 45 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      // 向右滑动位移超过 40px，且水平距离大于垂直距离（判定为向右横滑）
+      if (dx > 40 && Math.abs(dx) > Math.abs(dy)) {
         this.handleAppBack();
       }
     },
@@ -141,12 +142,12 @@ export default {
 
       const currentPath = this.$route.path;
 
-      // 3. 顶级菜单路由集合（首页、橱窗、我的）：统一执行防误触退出
+      // 4. 顶级菜单路由集合（首页、橱窗、我的）：统一执行防误触退出
       const TOP_ROUTES = ['/', '/store', '/profile'];
       if (TOP_ROUTES.includes(currentPath)) {
         const now = Date.now();
         if (this.lastBackTime && (now - this.lastBackTime < 2000)) {
-          if (typeof window !== 'undefined' && window.Capacitor) {
+          if (Capacitor.isNativePlatform()) {
             CapApp.exitApp();
           } else {
             Message.info('已是应用最外层');
@@ -158,13 +159,13 @@ export default {
         return;
       }
 
-      // 4. 工作台页面（/admin 开头）：由于是从【我的】进来的，返回直达【我的】
+      // 5. 工作台页面（/admin 开头）：由于是从【我的】进来的，返回直达【我的】
       if (currentPath.startsWith('/admin')) {
         this.$router.push('/profile');
         return;
       }
 
-      // 5. 其他普通子页面（商品详情、文章详情、创建活动等）：返回上一页
+      // 6. 其他普通子页面（商品详情、文章详情、创建活动等）：返回上一页
       if (window.history.length > 1) {
         this.$router.back();
       } else {
