@@ -71,6 +71,9 @@
             >
               {{ order.campaign.groupStatusText || (order.campaign.groupStatus === 1 ? '拼团成功' : '拼团中') }}
             </span>
+            <span v-else-if="!order.campaign" class="group-tag-pill group-archived">
+              活动已下线
+            </span>
 
             <!-- 订单交易与提货状态徽章 -->
             <span class="order-status-pill" :class="'status-' + order.status">
@@ -80,14 +83,14 @@
         </div>
 
         <!-- B. 快团活动标题与直达快团详情入口 -->
-        <div class="campaign-title-bar" @click="goToCampaignDetail(order.campaignId)">
+        <div class="campaign-title-bar" @click="goToCampaignDetail(order)">
           <div class="title-content-box">
-            <h3 class="campaign-main-title">{{ order.campaign?.title || '社区团购活动' }}</h3>
+            <h3 class="campaign-main-title">{{ order.campaign?.title || '团购活动 (已下线)' }}</h3>
             <span class="campaign-intro-line" v-if="order.campaign?.intro">
               {{ order.campaign.intro }}
             </span>
           </div>
-          <div class="title-enter-arrow">
+          <div class="title-enter-arrow" v-if="order.campaign">
             <span class="arrow-text">快团</span>
             <icon-right class="arrow-icon" />
           </div>
@@ -245,7 +248,7 @@
             <template v-else-if="order.status === 1">
               <button 
                 class="btn-action-outline"
-                @click.stop="goToCampaignDetail(order.campaignId)"
+                @click.stop="goToCampaignDetail(order)"
               >
                 查看快团
               </button>
@@ -262,7 +265,7 @@
             <template v-else-if="order.status === 2">
               <button 
                 class="btn-action-outline"
-                @click.stop="goToCampaignDetail(order.campaignId)"
+                @click.stop="handleReorder(order)"
               >
                 再来一单
               </button>
@@ -287,7 +290,7 @@
               </a-button>
               <button 
                 class="btn-action-outline"
-                @click.stop="goToCampaignDetail(order.campaignId)"
+                @click.stop="goToCampaignDetail(order)"
               >
                 逛逛快团
               </button>
@@ -466,9 +469,20 @@ export default {
       if (groupStatus === 2) return 'group-failed';
       return 'group-active';
     },
-    goToCampaignDetail(campaignId) {
-      if (!campaignId) return;
-      this.$router.push(`/campaign/${campaignId}`);
+    goToCampaignDetail(order) {
+      if (!order?.campaign) {
+        Message.warning('该快团活动已下线或不存在');
+        return;
+      }
+      this.$router.push(`/campaign/${order.campaignId}`);
+    },
+    handleReorder(order) {
+      if (!order?.campaign || order.campaign.status === 2) {
+        Message.info('该快团已结团下线，已为您前往烘焙商城挑选美味');
+        this.$router.push('/store');
+        return;
+      }
+      this.$router.push(`/campaign/${order.campaignId}`);
     },
     openVoucher(order) {
       this.currentVoucherOrder = order;
@@ -760,6 +774,10 @@ export default {
 .group-tag-pill.group-failed {
   background: #FEE2E2;
   color: #F53F3F;
+}
+.group-tag-pill.group-archived {
+  background: #F2F3F5;
+  color: #86909C;
 }
 
 .order-status-pill {

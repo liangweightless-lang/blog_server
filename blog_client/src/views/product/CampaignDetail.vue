@@ -5,7 +5,7 @@
       <div class="header-back" @click="$router.back()">
         <icon-left style="font-size: 22px;" />
       </div>
-      <span class="header-title">{{ campaign.title || '团购详情' }}</span>
+      <span class="header-title">{{ campaign?.title || '团购详情' }}</span>
       <div class="header-share" @click="shareCampaign">
         <icon-share-alt style="font-size: 18px;" />
       </div>
@@ -13,6 +13,17 @@
 
     <div v-if="loading" style="text-align: center; padding: 80px 0;">
       <a-spin />
+    </div>
+
+    <!-- 快团已下线/已删除缺省展示 -->
+    <div v-else-if="!campaign || !campaign.id" style="text-align: center; padding: 60px 20px;">
+      <a-empty description="该快团活动已下线或不存在">
+        <template #extra>
+          <a-button type="primary" shape="round" style="margin-top: 12px;" @click="$router.push('/store')">
+            逛逛烘焙商城
+          </a-button>
+        </template>
+      </a-empty>
     </div>
 
     <template v-else>
@@ -242,7 +253,7 @@ export default {
   },
   data() {
     return {
-      campaign: {},
+      campaign: null,
       loading: false,
       cart: {},
       checkoutVisible: false,
@@ -262,12 +273,12 @@ export default {
   computed: {
     ...mapState(useUserStore, ['userInfo']),
     isEnded() {
-      if (!this.campaign.endTime) return false;
+      if (!this.campaign?.endTime) return false;
       return new Date().getTime() >= new Date(this.campaign.endTime).getTime();
     },
     totalPrice() {
       let total = 0;
-      if (!this.campaign.products) return 0;
+      if (!this.campaign?.products) return 0;
       for (const p of this.campaign.products) {
         if (this.cart[p.id]) {
           total += p.groupPrice * this.cart[p.id];
@@ -296,14 +307,14 @@ export default {
       this.loading = true;
       try {
         const res = await getCampaignById(id);
-        this.campaign = res.data.data;
-        if (this.campaign.products) {
+        this.campaign = res.data?.data || null;
+        if (this.campaign?.products) {
           this.campaign.products.forEach(p => {
             this.cart[p.id] = 0;
           });
         }
       } catch (e) {
-        Message.error('获取团购失败');
+        this.campaign = null;
       } finally {
         this.loading = false;
       }
