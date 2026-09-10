@@ -40,7 +40,7 @@ export default {
       } else if (type === 'coupons') {
         Modal.info({
           title: '专属优惠券',
-          content: '当前暂无可用优惠券。主理人将不定期发放快团专属早鸟券，敬请关注首页与最新跟团通知！',
+          content: '当前暂无可用优惠券。小柴包酱将不定期发放快团专属早鸟券，敬请关注首页与最新跟团通知！',
           okText: '知道了'
         });
       } else if (type === 'balance') {

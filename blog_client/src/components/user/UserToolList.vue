@@ -34,13 +34,13 @@
         <icon-right class="cell-right-icon" />
       </div>
 
-      <!-- 联系主理人 / 客服微信（免登录即可使用） -->
+      <!-- 联系小柴包酱 / 客服微信（免登录即可使用） -->
       <div class="tool-cell" @click="handleAction('contact', false)">
         <div class="cell-left">
           <div class="icon-wrapper bg-wechat">
             <icon-wechat class="tool-icon" />
           </div>
-          <span class="tool-name">联系主理人 / 客服微信</span>
+          <span class="tool-name">联系小柴包酱 / 客服微信</span>
         </div>
         <div class="cell-right-info">
           <span class="tool-sub-tip">专属答疑 · 售后无忧</span>
@@ -48,13 +48,13 @@
         </div>
       </div>
 
-      <!-- 主理人合作入驻（低调隐蔽，面向有合作意向的合伙人） -->
+      <!-- 小柴包酱合作入驻（低调隐蔽，面向有合作意向的合伙人） -->
       <div v-if="!user || (user.role !== 'ADMIN' && user.role !== 'CREATOR')" class="tool-cell" @click="handleAction('apply-creator', true)">
         <div class="cell-left">
           <div class="icon-wrapper bg-warm">
             <icon-star class="tool-icon" />
           </div>
-          <span class="tool-name">主理人入驻合作</span>
+          <span class="tool-name">小柴包酱入驻合作</span>
         </div>
         <div class="cell-right-info">
           <span class="tool-sub-tip">共建手作空间</span>

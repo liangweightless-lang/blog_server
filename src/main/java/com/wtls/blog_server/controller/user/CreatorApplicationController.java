@@ -21,7 +21,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/creator")
 @CrossOrigin(origins = "*")
-@Tag(name = "主理人申请与审批模块", description = "支持普通用户申请入驻主理人与超管一键审批")
+@Tag(name = "小柴包酱申请与审批模块", description = "支持普通用户申请入驻小柴包酱与超管一键审批")
 public class CreatorApplicationController {
 
     @Autowired
@@ -32,10 +32,10 @@ public class CreatorApplicationController {
 
 
     /**
-     * 普通用户提交申请成为主理人
+     * 普通用户提交申请成为小柴包酱
      */
     @PostMapping("/apply")
-    @Operation(summary = "提交主理人入驻申请")
+    @Operation(summary = "提交小柴包酱入驻申请")
     public Result<String> apply(@RequestHeader("Authorization") String authHeader,
                                 @RequestBody CreatorApplication request) {
         Long userId = JwtUtils.getUserIdFromHeader(authHeader);
@@ -45,7 +45,7 @@ public class CreatorApplicationController {
         }
 
         if ("ADMIN".equals(user.getRole()) || "CREATOR".equals(user.getRole())) {
-            return Result.error(400, "您已经是主理人或管理员，无需重复申请");
+            return Result.error(400, "您已经是小柴包酱或管理员，无需重复申请");
         }
 
         // 检查是否有审核中的申请
@@ -55,13 +55,13 @@ public class CreatorApplicationController {
         }
 
         if (request.getBrandName() == null || request.getBrandName().trim().isEmpty()) {
-            return Result.error(400, "主理人/品牌名称不能为空");
+            return Result.error(400, "小柴包酱/品牌名称不能为空");
         }
         if (request.getContactPhone() == null || request.getContactPhone().trim().isEmpty()) {
             return Result.error(400, "联系电话不能为空");
         }
         if (request.getIntro() == null || request.getIntro().trim().isEmpty()) {
-            return Result.error(400, "主理人简介说明不能为空");
+            return Result.error(400, "小柴包酱简介说明不能为空");
         }
 
         CreatorApplication app = new CreatorApplication();
@@ -81,7 +81,7 @@ public class CreatorApplicationController {
      * 查询当前用户的申请状态
      */
     @GetMapping("/my-status")
-    @Operation(summary = "查询我的主理人申请状态")
+    @Operation(summary = "查询我的小柴包酱申请状态")
     public Result<Map<String, Object>> getMyStatus(@RequestHeader("Authorization") String authHeader) {
         Long userId = JwtUtils.getUserIdFromHeader(authHeader);
         User user = userMapper.findById(userId);
@@ -101,7 +101,7 @@ public class CreatorApplicationController {
      * 管理员获取所有申请列表
      */
     @GetMapping("/admin/list")
-    @Operation(summary = "管理员获取主理人申请列表")
+    @Operation(summary = "管理员获取小柴包酱申请列表")
     public Result<List<Map<String, Object>>> getAdminList(@RequestHeader("Authorization") String authHeader) {
         JwtUtils.checkAdmin(authHeader);
         List<Map<String, Object>> list = applicationMapper.selectAllWithUserInfo();
@@ -112,7 +112,7 @@ public class CreatorApplicationController {
      * 管理员审核通过
      */
     @PostMapping("/admin/{id}/approve")
-    @Operation(summary = "管理员审核通过主理人申请")
+    @Operation(summary = "管理员审核通过小柴包酱申请")
     public Result<String> approve(@RequestHeader("Authorization") String authHeader, @PathVariable Long id) {
         JwtUtils.checkAdmin(authHeader);
         CreatorApplication app = applicationMapper.selectById(id);
@@ -130,14 +130,14 @@ public class CreatorApplicationController {
             userMapper.updateById(user);
         }
 
-        return Result.success("已通过该主理人申请，用户已成功升级为主理人角色！");
+        return Result.success("已通过该小柴包酱申请，用户已成功升级为小柴包酱角色！");
     }
 
     /**
      * 管理员驳回申请
      */
     @PostMapping("/admin/{id}/reject")
-    @Operation(summary = "管理员驳回主理人申请")
+    @Operation(summary = "管理员驳回小柴包酱申请")
     public Result<String> reject(@RequestHeader("Authorization") String authHeader,
                                  @PathVariable Long id,
                                  @RequestBody(required = false) Map<String, String> body) {
@@ -152,6 +152,6 @@ public class CreatorApplicationController {
         app.setRejectReason(reason);
         applicationMapper.updateById(app);
 
-        return Result.success("已驳回该主理人申请");
+        return Result.success("已驳回该小柴包酱申请");
     }
 }

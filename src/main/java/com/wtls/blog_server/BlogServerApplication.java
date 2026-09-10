@@ -28,7 +28,7 @@ public class BlogServerApplication {
 					admin = new User();
 					admin.setUsername("admin");
 					admin.setPassword("admin");
-					admin.setNickname("小柴包主理人");
+					admin.setNickname("小柴包酱");
 					admin.setAvatarUrl("/img/admin_avatar.png");
 					admin.setPoints(9999);
 					admin.setInviteCode("ADMIN888");

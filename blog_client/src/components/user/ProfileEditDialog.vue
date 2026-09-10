@@ -16,7 +16,7 @@
 
       <div class="sheet-header">
         <h3 class="sheet-title">编辑个人资料</h3>
-        <p class="sheet-subtitle">完善个人信息，方便主理人沟通与订单配送</p>
+        <p class="sheet-subtitle">完善个人信息，方便小柴包酱沟通与订单配送</p>
       </div>
 
       <div class="sheet-body">

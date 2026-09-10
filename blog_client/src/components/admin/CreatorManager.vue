@@ -2,8 +2,8 @@
   <div class="creator-manager">
     <div class="header-actions">
       <div class="title-wrap">
-        <h3>主理人入驻审批</h3>
-        <span class="count-tip">共收到 {{ applications.length }} 条主理人申请</span>
+        <h3>小柴包酱入驻审批</h3>
+        <span class="count-tip">共收到 {{ applications.length }} 条小柴包酱申请</span>
       </div>
       <a-button @click="fetchApplications" :loading="loading">
         <template #icon><icon-refresh /></template>刷新
@@ -40,7 +40,7 @@
           </template>
         </a-table-column>
 
-        <a-table-column title="主理人/品牌名称" data-index="brand_name" :width="160">
+        <a-table-column title="小柴包酱/品牌名称" data-index="brand_name" :width="160">
           <template #cell="{ record }">
             <span class="brand-badge">{{ record.brand_name }}</span>
           </template>
@@ -55,7 +55,7 @@
           </template>
         </a-table-column>
 
-        <a-table-column title="主理人简介" data-index="intro" :ellipsis="true" :tooltip="true" />
+        <a-table-column title="小柴包酱简介" data-index="intro" :ellipsis="true" :tooltip="true" />
 
         <a-table-column title="资质/作品" :width="100">
           <template #cell="{ record }">
@@ -80,7 +80,7 @@
         <a-table-column title="状态" :width="110">
           <template #cell="{ record }">
             <a-tag v-if="record.status === 0" color="orange">待审核</a-tag>
-            <a-tag v-else-if="record.status === 1" color="green">已通过 (主理人)</a-tag>
+            <a-tag v-else-if="record.status === 1" color="green">已通过 (小柴包酱)</a-tag>
             <a-tag v-else color="red">已驳回</a-tag>
           </template>
         </a-table-column>
@@ -131,7 +131,7 @@
         </button>
 
         <div class="sheet-header">
-          <h3 class="sheet-title">驳回主理人申请</h3>
+          <h3 class="sheet-title">驳回小柴包酱申请</h3>
           <p class="sheet-subtitle">填写驳回说明，系统将反馈给申请人修改后重新提交</p>
         </div>
 
@@ -141,7 +141,7 @@
               <label class="form-label">驳回具体原因</label>
               <a-textarea 
                 v-model="rejectReason" 
-                placeholder="例如: 主理人简介不够详细 / 缺乏手作烘焙相关背景说明，请补充后重试" 
+                placeholder="例如: 小柴包酱简介不够详细 / 缺乏手作烘焙相关背景说明，请补充后重试" 
                 :auto-size="{ minRows: 3, maxRows: 6 }"
                 class="luxury-form-textarea"
               />
@@ -197,7 +197,7 @@ export default {
         const res = await getCreatorApplications();
         this.applications = res.data.data || [];
       } catch (error) {
-        Message.error('获取主理人申请列表失败');
+        Message.error('获取小柴包酱申请列表失败');
       } finally {
         this.loading = false;
       }
@@ -209,7 +209,7 @@ export default {
     handleApprove(record) {
       Modal.confirm({
         title: '确认通过审核',
-        content: `确定通过【${record.brand_name}】的主理人申请吗？通过后该用户角色将自动升级为主理人，并开通工作台权限。`,
+        content: `确定通过【${record.brand_name}】的小柴包酱申请吗？通过后该用户角色将自动升级为小柴包酱，并开通工作台权限。`,
         okText: '确认通过',
         onOk: async () => {
           try {

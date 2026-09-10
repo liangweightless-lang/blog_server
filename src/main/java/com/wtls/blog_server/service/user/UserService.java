@@ -30,7 +30,7 @@ public class UserService {
                 user = new User();
                 user.setUsername("admin");
                 user.setPassword("admin");
-                user.setNickname("小柴包主理人");
+                user.setNickname("小柴包酱");
                 user.setAvatarUrl("/img/admin_avatar.png");
                 user.setPoints(9999);
                 user.setInviteCode("ADMIN888");

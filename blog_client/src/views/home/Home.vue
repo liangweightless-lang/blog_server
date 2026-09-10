@@ -1,7 +1,7 @@
 <template>
   <div class="home-aesthetic-root">
     <PullToRefresh @refresh="handlePullRefresh">
-      <!-- 1. 主理人轻氧杂志风卡片 (已瘦身，含出炉通知) -->
+      <!-- 1. 小柴包酱轻氧杂志风卡片 (已瘦身，含出炉通知) -->
       <ProfileHero />
       
       <!-- 2. 金刚区高定导航 (四大带货与促活入口) -->

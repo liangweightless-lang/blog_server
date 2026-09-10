@@ -92,7 +92,7 @@ public class ProductOrderController {
     }
 
     @PostMapping("/{orderId}/confirm-pay")
-    @Operation(summary = "管理员或主理人手动确认收款", description = "核对微信商家码到账后，将订单手动流转为已支付")
+    @Operation(summary = "管理员或小柴包酱手动确认收款", description = "核对微信商家码到账后，将订单手动流转为已支付")
     public Result<String> confirmPay(@RequestHeader("Authorization") String authHeader, @PathVariable String orderId) {
         JwtUtils.checkAdminOrCreator(authHeader);
         orderService.handlePaymentSuccess(orderId);

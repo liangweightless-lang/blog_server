@@ -16,12 +16,12 @@
 
       <div class="apply-header">
         <div class="badge-icon">🌟</div>
-        <h3 class="apply-title">入驻成为小柴包主理人</h3>
-        <p class="apply-subtitle">开启独立创作主理空间，自主发布商品、策划活动与管理订单</p>
+        <h3 class="apply-title">入驻成为小柴包酱</h3>
+        <p class="apply-subtitle">开启专属小柴包酱空间，自主发布商品、策划活动与管理订单</p>
       </div>
 
       <a-form :model="form" layout="vertical" class="apply-form" @submit.prevent="handleSubmit">
-        <a-form-item label="主理人 / 品牌名称" required>
+        <a-form-item label="小柴包酱 / 品牌名称" required>
           <a-input 
             v-model="form.brandName" 
             placeholder="例如: 柴柴手作工作室 / 小柴咖啡" 
@@ -48,7 +48,7 @@
           />
         </a-form-item>
 
-        <a-form-item label="主理人简介 / 主营品类" required>
+        <a-form-item label="小柴包酱简介 / 主营品类" required>
           <a-textarea 
             v-model="form.intro" 
             :auto-size="{ minRows: 3, maxRows: 5 }" 
@@ -145,19 +145,19 @@ export default {
     },
     async handleSubmit() {
       if (!this.form.brandName || !this.form.brandName.trim()) {
-        return Message.warning('请输入主理人或品牌名称');
+        return Message.warning('请输入小柴包酱或品牌名称');
       }
       if (!this.form.contactPhone || !this.form.contactPhone.trim()) {
         return Message.warning('请输入联系电话');
       }
       if (!this.form.intro || !this.form.intro.trim()) {
-        return Message.warning('请输入主理人简介与主营说明');
+        return Message.warning('请输入小柴包酱简介与主营说明');
       }
 
       this.submitting = true;
       try {
         await applyCreator(this.form);
-        Message.success('主理人申请已提交，管理员将尽快审核！');
+        Message.success('小柴包酱申请已提交，管理员将尽快审核！');
         this.visible = false;
         this.$emit('success');
       } catch (error) {

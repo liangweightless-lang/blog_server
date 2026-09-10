@@ -11,7 +11,7 @@
           <div class="name-row">
             <h2 class="user-nickname">{{ user.nickname || '未设置昵称' }}</h2>
             <span class="user-identity-tag" v-if="user.role === 'ADMIN'">超级管理员</span>
-            <span class="user-identity-tag creator" v-else-if="user.role === 'CREATOR'">认证主理人</span>
+            <span class="user-identity-tag creator" v-else-if="user.role === 'CREATOR'">认证小柴包酱</span>
           </div>
           <div class="user-account-capsule">
             <span>账号: {{ user.username }}</span>
@@ -63,14 +63,14 @@
           <icon-star class="vip-icon" />
         </div>
         <div class="vip-text">
-          <span class="vip-title">{{ user.role === 'ADMIN' ? '超级管理后台' : '小柴包主理人工作台' }}</span>
+          <span class="vip-title">{{ user.role === 'ADMIN' ? '超级管理后台' : '小柴包酱工作台' }}</span>
           <span class="vip-subtitle">{{ user.role === 'ADMIN' ? '全站权限管理、数据看板与配置中心' : '管理专属商品、快团活动与订单' }}</span>
         </div>
       </div>
       <icon-right class="vip-arrow" />
     </div>
 
-    <!-- 仅在主理人申请处于审核中或被驳回时展示状态卡片，普通状态不打扰用户 -->
+    <!-- 仅在小柴包酱申请处于审核中或被驳回时展示状态卡片，普通状态不打扰用户 -->
     <div 
       v-else-if="user && creatorStatus && creatorStatus.application && (creatorStatus.application.status === 0 || creatorStatus.application.status === 2)" 
       class="creator-apply-card" 
@@ -84,11 +84,11 @@
         </div>
         <div class="vip-text">
           <template v-if="creatorStatus.application.status === 0">
-            <span class="vip-title">主理人入驻审核中</span>
+            <span class="vip-title">小柴包酱入驻审核中</span>
             <span class="vip-subtitle">您的申请已提交，平台管理员将尽快处理</span>
           </template>
           <template v-else>
-            <span class="vip-title">主理人申请未通过</span>
+            <span class="vip-title">小柴包酱申请未通过</span>
             <span class="vip-subtitle">{{ creatorStatus.application.rejectReason || '资料不完整' }} (点击重新提交)</span>
           </template>
         </div>
@@ -313,7 +313,7 @@ export default {
   transform: scale(0.92);
 }
 
-/* 黑金超管/主理人工作台卡片 */
+/* 黑金超管/小柴包酱工作台卡片 */
 .admin-vip-card {
   margin-top: 18px;
   background: linear-gradient(135deg, #1A1D20 0%, #2A2F35 100%);

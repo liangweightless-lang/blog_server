@@ -303,7 +303,7 @@
     <AppBottomSheet
       :visible="voucherDrawerVisible"
       title="提货核销凭证"
-      subtitle="请向主理人或自提点出示此凭证以领取商品"
+      subtitle="请向小柴包酱或自提点出示此凭证以领取商品"
       confirmText="已确认提货"
       @confirm="voucherDrawerVisible = false"
       @cancel="voucherDrawerVisible = false"

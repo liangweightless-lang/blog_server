@@ -1,16 +1,16 @@
 <template>
   <AppBottomSheet
     v-model:visible="visible"
-    title="联系主理人 / 客服微信"
+    title="联系小柴包酱 / 客服微信"
     subtitle="一对一鲜烤出炉咨询 · 校园自提 · 售后无忧"
     width="420px"
   >
     <div class="concierge-modal-body">
-      <!-- 主理人专属名片 -->
+      <!-- 小柴包酱专属名片 -->
       <div class="author-badge-card">
         <img :src="config.avatarUrl || '/img/avatar.png'" class="concierge-avatar" alt="Avatar" />
         <div class="concierge-meta">
-          <h4 class="concierge-name">{{ config.authorName || '小柴包主理人' }}</h4>
+          <h4 class="concierge-name">{{ config.authorName || '小柴包酱' }}</h4>
           <span class="concierge-tag">官方认证 · 手作烘焙</span>
         </div>
       </div>
@@ -26,7 +26,7 @@
           />
           <div v-else class="empty-qr">
             <icon-wechat style="font-size: 48px; color: #07C160; opacity: 0.6;" />
-            <p class="empty-tip">主理人微信在线</p>
+            <p class="empty-tip">小柴包酱微信在线</p>
           </div>
         </div>
         <p class="qr-scan-guide">手机截屏后打开微信扫一扫，或长按识别二维码</p>
@@ -126,7 +126,7 @@ export default {
       const textToCopy = this.wechatId || 'caibread_helper';
       if (navigator?.clipboard?.writeText) {
         navigator.clipboard.writeText(textToCopy).then(() => {
-          Message.success('微信号已复制，快去微信添加主理人吧！');
+          Message.success('微信号已复制，快去微信添加小柴包酱吧！');
         }).catch(() => {
           this.fallbackCopy(textToCopy);
         });

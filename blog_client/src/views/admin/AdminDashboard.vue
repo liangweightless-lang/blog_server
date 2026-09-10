@@ -11,7 +11,7 @@
         class="admin-sider"
       >
         <div class="admin-logo">
-          <h2 v-if="!collapsed">{{ isSuperAdmin ? 'WTLS 超级控制台' : '柴柴主理人工作台' }}</h2>
+          <h2 v-if="!collapsed">{{ isSuperAdmin ? 'WTLS 超级控制台' : '小柴包酱工作台' }}</h2>
           <h2 v-else>W</h2>
         </div>
         <a-menu
@@ -43,7 +43,7 @@
           <!-- 超级管理员专属权限菜单项 -->
           <a-menu-item v-if="isSuperAdmin" key="creators">
             <template #icon><icon-star /></template>
-            主理人审核
+            小柴包酱审核
           </a-menu-item>
           <a-menu-item v-if="isSuperAdmin" key="users">
             <template #icon><icon-user-group /></template>
@@ -67,7 +67,7 @@
             </a-button>
             <span class="header-title">{{ currentTitle }}</span>
             <span class="header-identity-pill" :class="{ 'pill-super': isSuperAdmin }">
-              {{ isSuperAdmin ? '超级管理员' : '认证主理人' }}
+              {{ isSuperAdmin ? '超级管理员' : '认证小柴包酱' }}
             </span>
           </div>
           <div class="header-right">
@@ -108,7 +108,7 @@
         <div class="nav-center-title">
           <span v-if="mobileActiveModule">{{ currentTitle }}</span>
           <div v-else class="title-with-badge">
-            <span class="main-head-text">{{ isSuperAdmin ? '超级控制台' : '主理人工作台' }}</span>
+            <span class="main-head-text">{{ isSuperAdmin ? '超级控制台' : '小柴包酱工作台' }}</span>
             <span class="role-badge-tag" :class="{ 'is-admin': isSuperAdmin }">
               {{ isSuperAdmin ? 'ADMIN' : 'CREATOR' }}
             </span>
@@ -278,7 +278,7 @@
           </div>
         </div>
 
-        <!-- 分组 3：用户与主理人（平台超管专属） -->
+        <!-- 分组 3：用户与小柴包酱（平台超管专属） -->
         <div v-if="isSuperAdmin" class="app-group-section">
           <div class="group-title-row">
             <span class="group-pill-indicator bg-indicator-gold"></span>
@@ -291,7 +291,7 @@
                 <div class="icon-inner-gloss"></div>
                 <icon-star class="app-vector-symbol" />
               </div>
-              <span class="app-name">主理人审核</span>
+              <span class="app-name">小柴包酱审核</span>
             </div>
 
             <div class="app-item-card" @click="openModule('users')">
@@ -521,10 +521,10 @@ export default {
         orders: '订单管理',
         groupbuys: '单品拼团管理',
         campaigns: '社区快团管理',
-        creators: '主理人审核',
+        creators: '小柴包酱审核',
         system: '系统配置'
       };
-      return titleMap[activeKey] || (this.isSuperAdmin ? '超级管理后台' : '主理人工作台');
+      return titleMap[activeKey] || (this.isSuperAdmin ? '超级管理后台' : '小柴包酱工作台');
     }
   },
   created() {

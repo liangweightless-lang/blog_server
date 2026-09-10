@@ -1,7 +1,7 @@
 <template>
   <div class="user-center-container">
     <PullToRefresh @refresh="handlePullRefresh">
-      <!-- 主理人/个人轻奢头部卡片 -->
+      <!-- 小柴包酱/个人轻奢头部卡片 -->
       <UserHeader 
         :user="user" 
         :creator-status="creatorStatus" 
@@ -152,7 +152,7 @@
       />
     </PullToRefresh>
 
-    <!-- 联系主理人/客服微信弹窗 (标准居中抽屉) -->
+    <!-- 联系小柴包酱/客服微信弹窗 (标准居中抽屉) -->
     <ContactConciergeModal v-model:show="contactDialogVisible" />
 
     <!-- 全自动对账收银台 (彻底解决浏览器拦截弹窗问题) -->
@@ -166,7 +166,7 @@
       @success="handlePaySuccess"
     />
 
-    <!-- 主理人入驻申请弹窗 -->
+    <!-- 小柴包酱入驻申请弹窗 -->
     <CreatorApplyDialog v-model:show="applyDialogVisible" @success="handleApplySuccess" />
 
     <!-- 我的拼团弹窗 -->

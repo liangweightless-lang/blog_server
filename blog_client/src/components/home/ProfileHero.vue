@@ -2,21 +2,21 @@
   <div class="hero-editorial-section">
     <div class="hero-ambient-glow"></div>
     <div class="hero-card-inner">
-      <!-- 主理人头像与认证 -->
+      <!-- 小柴包酱头像与认证 -->
       <div class="avatar-container">
         <div class="avatar-ring">
           <img :src="homeConfig.avatarUrl || '/img/avatar.png'" class="author-avatar" alt="Avatar" />
         </div>
-        <div class="verified-badge-mini" title="认证独立主理人">
+        <div class="verified-badge-mini" title="认证独立小柴包酱">
           <span>✦</span>
         </div>
       </div>
 
-      <!-- 主理人品牌文案 -->
+      <!-- 小柴包酱品牌文案 -->
       <div class="author-meta-block">
         <div class="author-header-line">
           <h2 class="author-brand-title">{{ homeConfig.authorName || '小柴包' }}</h2>
-          <span class="editorial-tag">生活美学主理人</span>
+          <span class="editorial-tag">生活美学小柴包酱</span>
         </div>
 
         <p class="author-manifesto">
@@ -34,12 +34,12 @@
       <div class="hero-action-slot">
         <button class="concierge-btn" @click="contactModalVisible = true">
           <icon-wechat class="btn-icon" />
-          <span class="btn-text">主理人</span>
+          <span class="btn-text">小柴包酱</span>
         </button>
       </div>
     </div>
 
-    <!-- 联系主理人/客服微信全局弹窗 -->
+    <!-- 联系小柴包酱/客服微信全局弹窗 -->
     <ContactConciergeModal v-model:show="contactModalVisible" />
   </div>
 </template>

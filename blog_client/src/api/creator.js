@@ -1,21 +1,21 @@
 import request from '@/utils/request';
 
 /**
- * 提交成为主理人申请
+ * 提交成为小柴包酱申请
  */
 export function applyCreator(data) {
   return request.post('/api/creator/apply', data);
 }
 
 /**
- * 查询我的主理人申请状态
+ * 查询我的小柴包酱申请状态
  */
 export function getMyCreatorStatus() {
   return request.get('/api/creator/my-status');
 }
 
 /**
- * 管理员获取主理人申请列表
+ * 管理员获取小柴包酱申请列表
  */
 export function getCreatorApplications() {
   return request.get('/api/creator/admin/list');
