@@ -29,6 +29,12 @@ public class GroupBuyCampaign {
     private List<String> joinedAvatars; // 已参团用户的头像
     
     @TableField(exist = false)
+    private Integer groupStatus; // 0: 拼团中, 1: 拼团成功(已成团/无限制), 2: 拼团失败(已结束且人数未达标)
+    
+    @TableField(exist = false)
+    private String groupStatusText; // 如: "已成团", "拼团中(差4人)", "拼团失败(人数未达标)"
+    
+    @TableField(exist = false)
     private DeliveryLocation deliveryLocation;
     
     @TableField(exist = false)

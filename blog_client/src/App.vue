@@ -279,15 +279,24 @@ body {
     animation: floatingScaleIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
 
-  /* 对于自定义外置关闭按钮的卡片，背景设为透明，避免双重阴影 */
+  /* 对于自定义外置关闭按钮的卡片，背景设为透明，避免双重阴影并保证垂直居中与可视区锁定 */
   .arco-modal.floating-card-modal {
     background: transparent !important;
     box-shadow: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    max-height: 96dvh !important;
+    overflow: hidden !important;
+    margin: auto !important;
   }
   .arco-modal.floating-card-modal .arco-modal-body {
     overflow: visible !important;
     max-height: none !important;
     background: transparent !important;
+    padding: 0 !important;
+    width: 100% !important;
   }
 
   .arco-modal:not(.arco-modal-simple) .arco-modal-body {

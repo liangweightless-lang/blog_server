@@ -18,31 +18,60 @@
     <template v-else>
       <!-- 活动头部信息区 -->
       <div class="campaign-hero">
-        <div class="hero-badge">
-          <icon-fire /> 火热进行中
+        <div class="hero-badge" :style="campaign.groupStatus === 2 ? 'background: rgba(245, 63, 63, 0.4); border-color: rgba(255, 255, 255, 0.4);' : ''">
+          <template v-if="campaign.groupStatus === 1">
+            <icon-check-circle-fill style="color: #00B42A;" /> {{ campaign.targetNum > 0 ? (campaign.targetNum + ' 人成团已达成！') : '火热进行中' }}
+          </template>
+          <template v-else-if="campaign.groupStatus === 2">
+            <icon-close-circle-fill style="color: #F53F3F;" /> 拼团失败 (未达 {{ campaign.targetNum }} 人目标)
+          </template>
+          <template v-else>
+            <icon-fire /> {{ campaign.targetNum > 0 ? (campaign.targetNum + ' 人团 · 差 ' + (campaign.targetNum - (campaign.currentNum || 0)) + ' 人成团') : '火热进行中' }}
+          </template>
         </div>
         <h1 class="hero-title">{{ campaign.title }}</h1>
         <div class="hero-countdown">
           <icon-clock-circle style="margin-right: 6px;" />
-          <span>距结束: </span>
-          <a-countdown :value="new Date(campaign.endTime).getTime()" format="D 天 H 时 m 分 s 秒" :value-style="{color: '#FFF', fontSize: '14px', fontWeight: 'bold', marginLeft: '4px'}" />
+          <span>{{ campaign.groupStatus === 2 ? '活动状态: ' : '距结束: ' }}</span>
+          <span v-if="campaign.groupStatus === 2" style="color: #FFF; font-weight: bold; margin-left: 4px;">已结束</span>
+          <a-countdown v-else :value="new Date(campaign.endTime).getTime()" format="D 天 H 时 m 分 s 秒" :value-style="{color: '#FFF', fontSize: '14px', fontWeight: 'bold', marginLeft: '4px'}" />
         </div>
       </div>
 
-      <!-- 跟团进度 -->
+      <!-- 跟团进度 (清晰显示目标成团人数与状态) -->
       <div class="section-card" v-if="campaign.targetNum > 0 || (campaign.joinedAvatars && campaign.joinedAvatars.length > 0)">
         <div class="progress-header" v-if="campaign.targetNum > 0">
           <span>已跟团 <strong>{{ campaign.currentNum || 0 }}</strong> 人</span>
-          <span>目标 <strong>{{ campaign.targetNum }}</strong> 人</span>
+          <span>目标 <strong>{{ campaign.targetNum }}</strong> 人成团</span>
         </div>
-        <a-progress v-if="campaign.targetNum > 0" :percent="Math.min((campaign.currentNum || 0) / campaign.targetNum, 1)" size="medium" color="#FF4B2B" style="margin-bottom: 8px;" />
-        <div v-if="campaign.joinedAvatars && campaign.joinedAvatars.length > 0" class="joined-row">
+        <a-progress 
+          v-if="campaign.targetNum > 0" 
+          :percent="Math.min((campaign.currentNum || 0) / campaign.targetNum, 1)" 
+          size="medium" 
+          :color="campaign.groupStatus === 1 ? '#00B42A' : (campaign.groupStatus === 2 ? '#86909C' : '#FF4B2B')" 
+          style="margin-bottom: 8px;" 
+        />
+        
+        <!-- 成团状态提示条 -->
+        <div style="margin-top: 6px; font-size: 12px; font-weight: 600;">
+          <div v-if="campaign.groupStatus === 1" style="color: #00B42A; display: flex; align-items: center; gap: 4px;">
+            <icon-check-circle-fill /> 🎉 已成团！已达到 {{ campaign.targetNum || '' }} 人目标，成团后将按时配送发货。
+          </div>
+          <div v-else-if="campaign.groupStatus === 2" style="color: #F53F3F; display: flex; align-items: center; gap: 4px;">
+            <icon-close-circle-fill /> ❌ 活动已截止，未达 {{ campaign.targetNum }} 人成团要求，拼团失败。
+          </div>
+          <div v-else-if="campaign.targetNum > 0" style="color: #FF5A34; display: flex; align-items: center; gap: 4px;">
+            <icon-info-circle /> 还差 {{ campaign.targetNum - (campaign.currentNum || 0) }} 人即可拼团成功，喊舍友朋友一起拼！
+          </div>
+        </div>
+
+        <div v-if="campaign.joinedAvatars && campaign.joinedAvatars.length > 0" class="joined-row" style="margin-top: 10px;">
           <a-avatar-group :size="28" :max-count="5">
             <a-avatar v-for="(avatar, idx) in campaign.joinedAvatars" :key="idx">
               <img :src="avatar" />
             </a-avatar>
           </a-avatar-group>
-          <span class="joined-text">等 {{ campaign.currentNum }} 人已买</span>
+          <span class="joined-text">等 {{ campaign.currentNum }} 人已跟团</span>
         </div>
       </div>
 
@@ -98,7 +127,7 @@
           <span class="total-value">{{ totalPrice }}</span>
         </div>
         <a-button type="primary" class="checkout-btn" shape="round" size="large" @click="openCheckout" :disabled="isEnded || totalPrice <= 0">
-          {{ isEnded ? '活动已结束' : '立即跟团' }}
+          {{ isEnded ? (campaign.groupStatus === 2 ? '拼团未成功(已结束)' : '活动已截团') : '立即跟团' }}
         </a-button>
       </div>
     </template>

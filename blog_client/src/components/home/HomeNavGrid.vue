@@ -1,15 +1,17 @@
 <template>
   <div class="vector-nav-grid">
+    <!-- 1. 今日现烤 (高频爆款) -->
     <div class="nav-card" @click="$router.push('/store')">
       <div class="icon-bubble bubble-store">
-        <icon-gift class="vector-icon" />
+        <icon-bulb class="vector-icon" />
       </div>
       <div class="text-group">
-        <span class="main-label">灵感手作</span>
-        <span class="sub-label">甄选橱窗</span>
+        <span class="main-label">今日现烤</span>
+        <span class="sub-label">鲜焙出炉</span>
       </div>
     </div>
 
+    <!-- 2. 社区快团 (多人成团/省钱) -->
     <div class="nav-card" @click="handleCampaignClick">
       <div class="icon-bubble bubble-campaign">
         <icon-fire class="vector-icon" />
@@ -17,55 +19,66 @@
       </div>
       <div class="text-group">
         <span class="main-label">社区快团</span>
-        <span class="sub-label">超值成团</span>
+        <span class="sub-label">拼团立省</span>
       </div>
     </div>
 
-    <div class="nav-card" @click="handleCreatorClick">
-      <div class="icon-bubble bubble-creator">
-        <icon-star class="vector-icon" />
+    <!-- 3. 积分专区 (当钱花/免单) -->
+    <div class="nav-card" @click="$router.push('/store')">
+      <div class="icon-bubble bubble-points">
+        <icon-gift class="vector-icon" />
       </div>
       <div class="text-group">
-        <span class="main-label">主理入驻</span>
-        <span class="sub-label">创作空间</span>
+        <span class="main-label">积分专区</span>
+        <span class="sub-label">抵扣免单</span>
       </div>
     </div>
 
-    <div class="nav-card" @click="$router.push('/profile')">
+    <!-- 4. 每日签到 (无需跳走，首页一键签到) -->
+    <div class="nav-card" @click="handleDailyCheckin">
       <div class="icon-bubble bubble-rewards">
         <icon-trophy class="vector-icon" />
       </div>
       <div class="text-group">
         <span class="main-label">每日签到</span>
-        <span class="sub-label">领50积分</span>
+        <span class="sub-label">领积分抵扣</span>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import axios from '@/utils/request';
+import { Message } from '@arco-design/web-vue';
+
 export default {
   name: 'HomeNavGrid',
   methods: {
     handleCampaignClick() {
-      const campaignEl = document.querySelector('.campaign-spotlight-card');
+      const campaignEl = document.querySelector('.campaign-spotlight-card') || document.querySelector('.campaign-banner-wrapper');
       if (campaignEl) {
         campaignEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       } else {
         this.$router.push('/store');
       }
     },
-    handleCreatorClick() {
+    async handleDailyCheckin() {
       const token = localStorage.getItem('token');
       if (!token) {
         window.dispatchEvent(new CustomEvent('open-login'));
         return;
       }
-      this.$router.push('/profile');
+      try {
+        const res = await axios.post('/api/users/checkin');
+        Message.success(res.data?.message || '🎉 签到成功！积分已到账');
+      } catch (err) {
+        Message.info(err.response?.data?.message || '今天已经签过到啦，明天再来哦');
+      }
     }
   }
 };
 </script>
+
 
 <style scoped>
 .vector-nav-grid {
@@ -132,11 +145,12 @@ export default {
   color: #FF4D4F;
 }
 
-/* 主理入驻 - 香槟金 */
-.bubble-creator {
+/* 积分专区 - 香槟金 */
+.bubble-points {
   background: linear-gradient(135deg, #FFFDF0 0%, #FFF3C4 100%);
   color: #FAAD14;
 }
+
 
 /* 每日签到 - 极光青蓝 */
 .bubble-rewards {

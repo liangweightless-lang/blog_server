@@ -443,12 +443,14 @@ export default {
 </script>
 
 <style scoped>
-/* 整个浮动卡片容器 */
+/* 整个浮动卡片容器：锁定在视口内，杜绝外层纵向滚动 */
 .floating-modal-container {
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  max-height: 92dvh;
   user-select: none;
 }
 
@@ -462,7 +464,8 @@ export default {
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
   display: flex;
   flex-direction: column;
-  max-height: calc(85vh - 50px);
+  max-height: calc(88dvh - 58px);
+  min-height: 0;
 }
 
 /* 浮窗顶层固定关闭按钮 (随卡片顶层浮动，随时可见免下拉) */
@@ -821,24 +824,24 @@ export default {
   cursor: not-allowed;
   box-shadow: none;
 }
-/* 独立悬浮关闭按钮 (市面App标准：居中悬浮在白色卡片正下方外部) */
+/* 独立悬浮关闭按钮 (无论内容多少始终固定悬浮在卡片下方，免下拉) */
 .outside-close-wrapper {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 14px;
-  padding-bottom: max(10px, env(safe-area-inset-bottom, 10px));
+  margin-top: 10px;
+  flex-shrink: 0;
 }
 .outside-circle-close-btn {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   background: rgba(30, 30, 30, 0.45);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1.5px solid rgba(255, 255, 255, 0.85);
   color: #FFFFFF;
-  font-size: 18px;
+  font-size: 17px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -853,10 +856,11 @@ export default {
 
 @media (max-width: 768px) {
   .modal-card-main {
-    max-height: 82vh;
+    max-height: calc(84dvh - 54px);
   }
   .outside-close-wrapper {
-    display: none;
+    display: flex;
+    margin-top: 8px;
   }
 }
 </style>

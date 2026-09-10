@@ -20,45 +20,27 @@
         </div>
 
         <p class="author-manifesto">
-          {{ homeConfig.authorBio || '记录灵感，探索生活美学。在这里分享品牌的成长脉络。' }}
+          {{ homeConfig.authorBio || '手工慢焙，记录灵感。在这里分享甜点与生活美学。' }}
         </p>
 
-        <!-- 创作者杂志级数据指标 -->
-        <div class="editorial-stats-bar">
-          <div class="stat-cell">
-            <span class="stat-value">{{ stats.articleCount }}</span>
-            <span class="stat-caption">灵感日记</span>
-          </div>
-          <span class="stat-dot">·</span>
-          <div class="stat-cell">
-            <span class="stat-value">{{ stats.likesCount }}</span>
-            <span class="stat-caption">获赞共鸣</span>
-          </div>
-          <span class="stat-dot">·</span>
-          <div class="stat-cell">
-            <span class="stat-value">{{ stats.campaignCount }}</span>
-            <span class="stat-caption">精选快团</span>
-          </div>
+        <!-- 极简出炉配送温情提示微标签 (替换无意义虚荣指标) -->
+        <div class="fresh-bake-pill">
+          <icon-fire class="pill-fire" />
+          <span class="pill-text">今日 17:30 鲜烤出炉 · 配送至各楼栋</span>
         </div>
       </div>
 
-      <!-- 右侧微信互动微胶囊 -->
-      <div class="hero-action-slot" v-if="homeConfig.wechatQrUrl">
-        <a-popover position="bottom" trigger="hover">
-          <button class="concierge-btn">
-            <icon-wechat class="btn-icon" />
-            <span class="btn-text">主理人</span>
-          </button>
-          <template #content>
-            <div class="wechat-pop-card">
-              <div class="pop-title">扫码连接主理人</div>
-              <img :src="homeConfig.wechatQrUrl" class="pop-qr-img" />
-              <div class="pop-desc">一对一灵感交流与好物咨询</div>
-            </div>
-          </template>
-        </a-popover>
+      <!-- 右侧微信互动微胶囊 (常驻可点击，唤起高清弹窗) -->
+      <div class="hero-action-slot">
+        <button class="concierge-btn" @click="contactModalVisible = true">
+          <icon-wechat class="btn-icon" />
+          <span class="btn-text">主理人</span>
+        </button>
       </div>
     </div>
+
+    <!-- 联系主理人/客服微信全局弹窗 -->
+    <ContactConciergeModal v-model:show="contactModalVisible" />
   </div>
 </template>
 
@@ -66,12 +48,18 @@
 import { getHomeConfig } from '@/api/common';
 import axios from '@/utils/request';
 import { getCampaigns } from '@/api/campaign';
+import ContactConciergeModal from '@/components/common/ContactConciergeModal.vue';
 
 export default {
   name: 'ProfileHero',
+  components: {
+    ContactConciergeModal
+  },
   data() {
     return {
+      contactModalVisible: false,
       homeConfig: {
+
         avatarUrl: '',
         authorName: '',
         authorBio: '',
@@ -146,35 +134,35 @@ export default {
   z-index: 1;
   display: flex;
   align-items: center;
-  padding: 16px 18px;
-  border-radius: 22px;
+  padding: 12px 14px;
+  border-radius: 18px;
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.95);
-  box-shadow: 0 8px 32px rgba(17, 24, 39, 0.04), 0 2px 6px rgba(0, 0, 0, 0.01);
+  box-shadow: 0 4px 20px rgba(17, 24, 39, 0.03), 0 1px 3px rgba(0, 0, 0, 0.01);
 }
 
 .avatar-container {
   position: relative;
-  margin-right: 14px;
+  margin-right: 12px;
   flex-shrink: 0;
 }
 
 .avatar-ring {
-  padding: 2.5px;
+  padding: 2px;
   border-radius: 50%;
   background: linear-gradient(135deg, #FF9A8B 0%, #FF6A88 100%);
-  box-shadow: 0 4px 16px rgba(255, 106, 136, 0.25);
+  box-shadow: 0 2px 10px rgba(255, 106, 136, 0.2);
 }
 
 .author-avatar {
-  width: 58px;
-  height: 58px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   object-fit: cover;
   display: block;
-  border: 2px solid #FFFFFF;
+  border: 1.5px solid #FFFFFF;
 }
 
 .verified-badge-mini {
@@ -204,12 +192,12 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .author-brand-title {
   margin: 0;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 800;
   color: #1A1D20;
   letter-spacing: -0.3px;
@@ -220,50 +208,43 @@ export default {
   font-weight: 600;
   color: #FF5E3A;
   background: rgba(255, 94, 58, 0.08);
-  padding: 1.5px 6px;
-  border-radius: 8px;
+  padding: 1px 6px;
+  border-radius: 6px;
   letter-spacing: 0.2px;
 }
 
 .author-manifesto {
-  margin: 0 0 8px 0;
-  font-size: 12px;
+  margin: 0 0 4px 0;
+  font-size: 11px;
   color: #86909C;
-  line-height: 1.4;
+  line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.editorial-stats-bar {
-  display: flex;
+.fresh-bake-pill {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 11px;
+  gap: 4px;
+  background: #FFF7F5;
+  border: 1px solid rgba(255, 90, 52, 0.15);
+  padding: 2px 8px;
+  border-radius: 6px;
 }
 
-.stat-cell {
-  display: flex;
-  align-items: baseline;
-  gap: 3px;
+.pill-fire {
+  font-size: 12px;
+  color: #FF5A34;
 }
 
-.stat-value {
-  font-weight: 800;
-  color: #1D2129;
-  font-size: 13px;
+.pill-text {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #FF5A34;
 }
 
-.stat-caption {
-  color: #86909C;
-  font-size: 11px;
-}
-
-.stat-dot {
-  color: #C9CDD4;
-  font-weight: bold;
-}
 
 .hero-action-slot {
   margin-left: 10px;

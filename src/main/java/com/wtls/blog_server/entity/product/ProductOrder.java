@@ -26,4 +26,17 @@ public class ProductOrder {
     private String selectedSpec;
     private LocalDateTime createTime;
     private LocalDateTime payTime;
+
+    /**
+     * 关联扩展字段（非数据库持久化字段，由业务层动态装配）
+     */
+    @com.baomidou.mybatisplus.annotation.TableField(exist = false)
+    private String productName;
+
+    @com.baomidou.mybatisplus.annotation.TableField(exist = false)
+    private String productImage;
+
+    @com.baomidou.mybatisplus.annotation.TableField(exist = false)
+    private BigDecimal productOriginalPrice;
 }
+

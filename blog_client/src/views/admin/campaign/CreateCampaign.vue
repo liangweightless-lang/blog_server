@@ -257,6 +257,7 @@ export default {
           title: this.form.title,
           intro: this.form.intro,
           deliveryLocationId: this.form.deliveryLocationId,
+          targetNum: this.form.targetNum !== undefined && this.form.targetNum !== null ? Number(this.form.targetNum) : 0,
           startTime: this.form.startTime ? dayjs(this.form.startTime).format('YYYY-MM-DDTHH:mm:ss') : null,
           endTime: this.form.endTime ? dayjs(this.form.endTime).format('YYYY-MM-DDTHH:mm:ss') : null,
           deliveryTime: this.form.deliveryTime ? dayjs(this.form.deliveryTime).format('YYYY-MM-DDTHH:mm:ss') : null,

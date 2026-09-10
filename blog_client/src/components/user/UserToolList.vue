@@ -34,6 +34,20 @@
         <icon-right class="cell-right-icon" />
       </div>
 
+      <!-- 联系主理人 / 客服微信 -->
+      <div class="tool-cell" @click="$emit('contact')">
+        <div class="cell-left">
+          <div class="icon-wrapper bg-wechat">
+            <icon-wechat class="tool-icon" />
+          </div>
+          <span class="tool-name">联系主理人 / 客服微信</span>
+        </div>
+        <div class="cell-right-info">
+          <span class="tool-sub-tip">专属答疑 · 售后无忧</span>
+          <icon-right class="cell-right-icon" />
+        </div>
+      </div>
+
       <div v-if="user && user.role !== 'ADMIN' && user.role !== 'CREATOR'" class="tool-cell" @click="$emit('apply-creator')">
         <div class="cell-left">
           <div class="icon-wrapper bg-orange">
@@ -43,6 +57,7 @@
         </div>
         <icon-right class="cell-right-icon" />
       </div>
+
 
       <div class="tool-cell" @click="$emit('logout')">
         <div class="cell-left">
@@ -130,6 +145,7 @@ export default {
 .bg-green { background: #E8FFEA; color: #00B42A; }
 .bg-orange { background: #FFF7E8; color: #FF7D00; }
 .bg-gray { background: #F2F3F5; color: #4E5969; }
+.bg-wechat { background: #EDFBF3; color: #07C160; }
 
 .tool-name {
   font-size: 14px;
@@ -137,10 +153,22 @@ export default {
   color: #1D2129;
 }
 
+.cell-right-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tool-sub-tip {
+  font-size: 11px;
+  color: #86909C;
+}
+
 .cell-right-icon {
   color: #C9CDD4;
   font-size: 14px;
 }
+
 
 @media (max-width: 768px) {
   .luxury-tools-card {

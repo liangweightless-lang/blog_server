@@ -1,53 +1,60 @@
 <template>
   <div class="user-center-container">
-    <!-- 主理人/个人轻奢头部卡片 -->
-    <UserHeader 
-      :user="user" 
-      :creator-status="creatorStatus" 
-      @edit="showEditDialog" 
-      @apply-creator="applyDialogVisible = true" 
-    />
-    <UserStats :user="user" />
-    
-    <!-- 极简高定微胶囊 Tabs -->
-    <div class="user-tabs-section">
-      <a-tabs v-model:active-key="activeTab" @change="handleTabClick" type="line" justify>
-        <a-tab-pane key="favorites">
-          <template #title><icon-heart /> 我的收藏</template>
-          <div class="tab-content-wrapper">
-            <ArticleGrid :articles="favoriteArticles" :loading="loadingFavorites" />
-            <a-empty v-if="!loadingFavorites && favoriteArticles.length === 0" description="还没有收藏任何灵感手记，去首页发现美好吧" style="margin: 40px 0;">
-              <template #image><icon-heart style="font-size: 44px; color: #D3C1BA; opacity: 0.4;" /></template>
-            </a-empty>
-          </div>
-        </a-tab-pane>
-        
-        <a-tab-pane key="orders">
-          <template #title><icon-gift /> 我的订单</template>
-          <div class="tab-content-wrapper">
-            <OrderList :orders="orders" @detail="showOrderDetail" @pay="handleContinuePay" @refresh="fetchOrders" />
-          </div>
-        </a-tab-pane>
-        
-        <a-tab-pane key="campaignOrders">
-          <template #title><icon-fire /> 我的跟团</template>
-          <div class="tab-content-wrapper">
-            <CampaignOrderList :orders="campaignOrders" @pay="handleContinuePay" @refresh="fetchOrders" />
-          </div>
-        </a-tab-pane>
-      </a-tabs>
-    </div>
+    <PullToRefresh @refresh="handlePullRefresh">
+      <!-- 主理人/个人轻奢头部卡片 -->
+      <UserHeader 
+        :user="user" 
+        :creator-status="creatorStatus" 
+        @edit="showEditDialog" 
+        @apply-creator="applyDialogVisible = true" 
+      />
+      <UserStats :user="user" />
+      
+      <!-- 极简高定微胶囊 Tabs -->
+      <div class="user-tabs-section">
+        <a-tabs v-model:active-key="activeTab" @change="handleTabClick" type="line" justify>
+          <a-tab-pane key="favorites">
+            <template #title><icon-heart /> 我的收藏</template>
+            <div class="tab-content-wrapper">
+              <ArticleGrid :articles="favoriteArticles" :loading="loadingFavorites" />
+              <a-empty v-if="!loadingFavorites && favoriteArticles.length === 0" description="还没有收藏任何灵感手记，去首页发现美好吧" style="margin: 40px 0;">
+                <template #image><icon-heart style="font-size: 44px; color: #D3C1BA; opacity: 0.4;" /></template>
+              </a-empty>
+            </div>
+          </a-tab-pane>
+          
+          <a-tab-pane key="orders">
+            <template #title><icon-gift /> 我的订单</template>
+            <div class="tab-content-wrapper">
+              <OrderList :orders="orders" @detail="showOrderDetail" @pay="handleContinuePay" @refresh="fetchOrders" />
+            </div>
+          </a-tab-pane>
+          
+          <a-tab-pane key="campaignOrders">
+            <template #title><icon-fire /> 我的跟团</template>
+            <div class="tab-content-wrapper">
+              <CampaignOrderList :orders="campaignOrders" @pay="handleContinuePay" @refresh="fetchOrders" />
+            </div>
+          </a-tab-pane>
+        </a-tabs>
+      </div>
 
-    <UserToolList 
-      :user="user" 
-      @address="showAddressDialog" 
-      @invite="showInviteDialog" 
-      @groups="showGroupsDialog"
-      @apply-creator="applyDialogVisible = true"
-      @logout="handleLogout" 
-    />
+      <UserToolList 
+        :user="user" 
+        @address="showAddressDialog" 
+        @invite="showInviteDialog" 
+        @groups="showGroupsDialog"
+        @contact="contactDialogVisible = true"
+        @apply-creator="applyDialogVisible = true"
+        @logout="handleLogout" 
+      />
+    </PullToRefresh>
+
+    <!-- 联系主理人/客服微信弹窗 (标准居中抽屉) -->
+    <ContactConciergeModal v-model:show="contactDialogVisible" />
 
     <!-- 全自动对账收银台 (彻底解决浏览器拦截弹窗问题) -->
+
     <WechatPayQrModal 
       :show="wechatQrVisible"
       :order-id="payOrderId"
@@ -114,12 +121,15 @@ import OrderList from '@/components/user/OrderList.vue';
 import CampaignOrderList from '@/components/user/CampaignOrderList.vue';
 import CreatorApplyDialog from '@/components/user/CreatorApplyDialog.vue';
 import WechatPayQrModal from '@/components/pay/WechatPayQrModal.vue';
+import ContactConciergeModal from '@/components/common/ContactConciergeModal.vue';
+import PullToRefresh from '@/components/common/PullToRefresh.vue';
 import { mapState, mapActions } from 'pinia'
 import { useUserStore } from '@/stores/user'
 
 export default {
   name: 'UserProfile',
   components: {
+    PullToRefresh,
     UserHeader,
     UserStats,
     UserToolList,
@@ -130,7 +140,8 @@ export default {
     OrderList,
     CampaignOrderList,
     CreatorApplyDialog,
-    WechatPayQrModal
+    WechatPayQrModal,
+    ContactConciergeModal
   },
   data() {
     return {
@@ -141,6 +152,7 @@ export default {
       inviteDialogVisible: false,
       groupsDialogVisible: false,
       applyDialogVisible: false,
+      contactDialogVisible: false,
       creatorStatus: null,
       orderDetailVisible: false,
       selectedOrder: null,
@@ -181,6 +193,16 @@ export default {
   },
   methods: {
     ...mapActions(useUserStore, ['clearUser', 'fetchUser']),
+    async handlePullRefresh() {
+      await Promise.allSettled([
+        this.fetchUser(),
+        this.fetchCreatorStatus(),
+        this.fetchMyFavorites(),
+        this.fetchMyOrders(),
+        this.fetchMyCampaignOrders()
+      ]);
+      Message.success('个人中心数据已刷新');
+    },
     handleTabRefresh(e) {
       if (e.detail?.path === '/profile' || this.$route.path === '/profile') {
         this.fetchUser();

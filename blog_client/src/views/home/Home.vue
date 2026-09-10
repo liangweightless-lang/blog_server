@@ -1,18 +1,21 @@
 <template>
   <div class="home-aesthetic-root">
     <PullToRefresh @refresh="handlePullRefresh">
-      <!-- 主理人轻氧杂志风卡片 -->
+      <!-- 1. 主理人轻氧杂志风卡片 (已瘦身，含出炉通知) -->
       <ProfileHero />
       
-      <!-- 金刚区高定矢量导航 (彻底告别Emoji) -->
+      <!-- 2. 金刚区高定导航 (四大带货与促活入口) -->
       <HomeNavGrid />
 
-      <!-- 浮空微胶囊搜索区 -->
+      <!-- 3. 今日火热快团专区 (直击拼团需求) -->
+      <HomeCampaignBanner :campaigns="campaigns" />
+
+      <!-- 4. 浮空微胶囊搜索区 -->
       <div class="search-floating-wrapper">
         <SearchBar @search="handleSearch" />
       </div>
 
-      <!-- 极简吸顶分类导航栏 (纯矢量微胶囊) -->
+      <!-- 5. 极简吸顶分类导航栏 (纯矢量微胶囊) -->
       <div class="category-sticky-bar">
         <div class="category-scroll-track">
           <button 
@@ -28,7 +31,7 @@
         </div>
       </div>
 
-      <!-- 小红书双列现代流光瀑布流 -->
+      <!-- 6. 小红书双列现代流光瀑布流 -->
       <ArticleGrid :articles="filteredArticles" :campaigns="showStore ? campaigns : []" :loading="loading" />
     </PullToRefresh>
     
@@ -43,6 +46,7 @@
 import axios from '@/utils/request'
 import ProfileHero from '@/components/home/ProfileHero.vue'
 import HomeNavGrid from '@/components/home/HomeNavGrid.vue'
+import HomeCampaignBanner from '@/components/home/HomeCampaignBanner.vue'
 import ArticleGrid from '@/components/home/ArticleGrid.vue'
 import SearchBar from '@/components/common/SearchBar.vue'
 import PullToRefresh from '@/components/common/PullToRefresh.vue'
@@ -56,6 +60,7 @@ export default {
   components: {
     ProfileHero,
     HomeNavGrid,
+    HomeCampaignBanner,
     ArticleGrid,
     SearchBar,
     PullToRefresh
@@ -69,12 +74,13 @@ export default {
       activeCategory: 'all',
       categories: [
         { key: 'all', title: '探索发现', icon: 'icon-compass' },
+        { key: 'baking', title: '今日手作', icon: 'icon-bulb' },
         { key: 'lifestyle', title: '生活美学', icon: 'icon-heart' },
-        { key: 'brand', title: '独立品牌', icon: 'icon-tag' },
-        { key: 'baking', title: '手作烘焙', icon: 'icon-bulb' }
+        { key: 'brand', title: '品牌灵感', icon: 'icon-tag' }
       ]
     }
   },
+
   computed: {
     ...mapState(useUserStore, ['userInfo']),
     user() {

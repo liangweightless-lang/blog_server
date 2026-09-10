@@ -7,7 +7,7 @@
         </a-button>
 
         <!-- PC端表格 -->
-        <a-table v-if="!isMobile" :data="campaigns" :loading="loading" stripe :scroll="{ x: 600 }">
+        <a-table v-if="!isMobile" :data="campaigns" :loading="loading" stripe :scroll="{ x: 750 }">
           <template #columns>
             <a-table-column title="团购标题" data-index="title"></a-table-column>
             <a-table-column title="提货点">
@@ -15,12 +15,32 @@
                 {{ record.deliveryLocation?.name || '未知' }}
               </template>
             </a-table-column>
-            <a-table-column title="状态" :width="100">
+            <a-table-column title="成团目标/进度" :width="180">
               <template #cell="{ record }">
-                <a-tag :color="record.status === 1 ? 'green' : 'gray'">{{ record.status === 1 ? '进行中' : (record.status === 2 ? '已结束' : '未开始') }}</a-tag>
+                <div style="font-size: 13px;">
+                  <span v-if="record.targetNum > 0">
+                    <strong>{{ record.currentNum || 0 }}</strong> / {{ record.targetNum }} 人
+                  </span>
+                  <span v-else style="color: #86909C;">不设人数限制</span>
+                </div>
+                <div style="margin-top: 4px;">
+                  <a-tag 
+                    size="small"
+                    :color="record.groupStatus === 1 ? 'green' : (record.groupStatus === 2 ? 'red' : 'orange')"
+                  >
+                    {{ record.groupStatusText }}
+                  </a-tag>
+                </div>
               </template>
             </a-table-column>
-              <a-table-column title="操作" :width="280" fixed="right">
+            <a-table-column title="活动状态" :width="100">
+              <template #cell="{ record }">
+                <a-tag :color="record.status === 1 ? 'blue' : (record.status === 2 ? 'gray' : 'orange')">
+                  {{ record.status === 1 ? '进行中' : (record.status === 2 ? '已结束' : '未开始') }}
+                </a-tag>
+              </template>
+            </a-table-column>
+            <a-table-column title="操作" :width="280" fixed="right">
               <template #cell="{ record }">
                 <a-button type="text" size="small" status="success" @click="shareCampaign(record)"><icon-share-alt /> 分享</a-button>
                 <a-button type="text" size="small" @click="$router.push('/admin/campaign/edit/' + record.id)"><icon-edit /> 编辑</a-button>
@@ -37,10 +57,23 @@
             <a-card v-for="campaign in campaigns" :key="campaign.id" class="mobile-card" :bordered="false">
               <div class="m-card-header">
                 <div class="m-card-title">{{ campaign.title }}</div>
-                <a-tag :color="campaign.status === 1 ? 'green' : 'gray'" size="small">{{ campaign.status === 1 ? '进行中' : (campaign.status === 2 ? '已结束' : '未开始') }}</a-tag>
+                <a-tag :color="campaign.status === 1 ? 'blue' : (campaign.status === 2 ? 'gray' : 'orange')" size="small">
+                  {{ campaign.status === 1 ? '进行中' : (campaign.status === 2 ? '已结束' : '未开始') }}
+                </a-tag>
               </div>
               <div class="m-card-body">
                 <div class="m-info-line"><icon-location /> {{ campaign.deliveryLocation?.name || '未知提货点' }}</div>
+                <div class="m-info-line" style="margin-top: 6px; display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 13px; color: #4E5969;">
+                    成团进度: <strong>{{ campaign.currentNum || 0 }}</strong>{{ campaign.targetNum > 0 ? ' / ' + campaign.targetNum + '人' : ' 人跟团' }}
+                  </span>
+                  <a-tag 
+                    size="small"
+                    :color="campaign.groupStatus === 1 ? 'green' : (campaign.groupStatus === 2 ? 'red' : 'orange')"
+                  >
+                    {{ campaign.groupStatusText }}
+                  </a-tag>
+                </div>
               </div>
               <div class="m-card-actions">
                 <div class="m-action-btn" style="color: #00B42A;" @click="shareCampaign(campaign)"><icon-share-alt /> 分享</div>
@@ -55,9 +88,16 @@
       </a-tab-pane>
 
       <a-tab-pane key="orders" title="跟团订单" :disabled="!currentCampaign">
-        <div v-if="currentCampaign" style="margin-bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; background: #f7f8fa; padding: 10px 14px; border-radius: 10px;">
+        <div v-if="currentCampaign" style="margin-bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; background: #f7f8fa; padding: 12px 16px; border-radius: 12px;">
           <a-button @click="activeTab = 'list'" size="small"><icon-left /> 返回活动列表</a-button>
           <div style="font-weight: bold; color: #1D2129;">活动：{{ currentCampaign.title }}</div>
+          <a-tag 
+            :color="currentCampaign.groupStatus === 1 ? 'green' : (currentCampaign.groupStatus === 2 ? 'red' : 'orange')"
+            size="medium"
+            style="font-weight: bold;"
+          >
+            {{ currentCampaign.groupStatusText }} ({{ currentCampaign.currentNum || 0 }}{{ currentCampaign.targetNum > 0 ? '/' + currentCampaign.targetNum : '' }}人已付款)
+          </a-tag>
           <a-tag color="orange" v-if="currentCampaign.deliveryTime">
             <icon-clock-circle style="margin-right: 4px;" /> 预计提货/发货: {{ $formatTime(currentCampaign.deliveryTime) }}
           </a-tag>

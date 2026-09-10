@@ -11,13 +11,43 @@
       >
         <div class="order-card-header">
           <span class="order-id">跟团号: <strong style="color: #FF5A34; font-size: 14px;">#{{ order.followNumber }}</strong></span>
-          <a-tag :color="getStatusColor(order.status)" size="small" style="font-weight: bold;">
-            {{ getStatusText(order.status) }}
-          </a-tag>
+          <div style="display: flex; gap: 6px; align-items: center;">
+            <!-- 拼团达标状态徽章 -->
+            <a-tag 
+              v-if="order.campaign && order.campaign.targetNum > 0"
+              :color="order.campaign.groupStatus === 1 ? 'green' : (order.campaign.groupStatus === 2 ? 'red' : 'orange')"
+              size="small" 
+              style="font-weight: 600;"
+            >
+              {{ order.campaign.groupStatusText }}
+            </a-tag>
+            <!-- 订单支付状态 -->
+            <a-tag :color="getStatusColor(order.status)" size="small" style="font-weight: bold;">
+              {{ getStatusText(order.status) }}
+            </a-tag>
+          </div>
         </div>
         <div class="order-card-body" style="align-items: flex-start;">
           <div class="order-main-info" style="width: 100%;">
             <p class="order-pname">{{ order.campaign?.title || '团购活动' }}</p>
+
+            <!-- 成团进度实时看板 -->
+            <div 
+              v-if="order.campaign && order.campaign.targetNum > 0"
+              style="margin: 6px 0; background: #FFF7F5; padding: 6px 10px; border-radius: 8px; font-size: 12px; color: #4E5969; display: flex; justify-content: space-between; align-items: center;"
+            >
+              <span>成团目标: <strong>{{ order.campaign.targetNum }}</strong> 人团</span>
+              <span v-if="order.campaign.groupStatus === 1" style="color: #00B42A; font-weight: 600;">
+                <icon-check-circle-fill /> 拼团成功
+              </span>
+              <span v-else-if="order.campaign.groupStatus === 2" style="color: #F53F3F; font-weight: 600;">
+                <icon-close-circle-fill /> 拼团失败(未达标)
+              </span>
+              <span v-else style="color: #FF5A34; font-weight: 600;">
+                已跟团 {{ order.campaign.currentNum || 0 }}/{{ order.campaign.targetNum }}人 (差{{ order.campaign.targetNum - (order.campaign.currentNum || 0) }}人)
+              </span>
+            </div>
+
             <p class="order-spec" style="background: transparent; color: #86909c; padding: 0;">提货点: {{ order.campaign?.deliveryLocation?.name || '校内指定提货点' }}</p>
             <p class="order-delivery-time" v-if="order.campaign?.deliveryTime" style="color: #FF5A34; font-size: 12px; margin: 4px 0; display: flex; align-items: center; gap: 4px; font-weight: 500;">
               <icon-clock-circle /> 预计发货/自提: {{ $formatTime(order.campaign.deliveryTime) }}
@@ -36,29 +66,36 @@
             </div>
             <p class="order-time" style="margin-top: 8px;">{{ $formatTime(order.createTime) }}</p>
           </div>
-          <div class="order-price-info">
-            <span class="price-val">¥{{ order.totalAmount }}</span>
-            <div class="unpaid-actions" v-if="order.status === 0 || order.status === 3">
-              <a-button 
-                type="text" 
-                status="danger" 
-                size="mini" 
-                class="del-order-btn"
-                @click.stop="handleDeleteOrder(order)"
-              >
-                删除
-              </a-button>
-              <a-button 
-                v-if="order.status === 0"
-                type="primary" 
-                size="small" 
-                shape="round" 
-                class="pay-now-btn" 
-                @click.stop="$emit('pay', order)"
-              >
-                去支付
-              </a-button>
-            </div>
+        </div>
+
+        <!-- 卡片底部：实付款结算与独立操作按钮区（彻底杜绝横向挤压） -->
+        <div class="campaign-card-footer">
+          <div class="settle-price-row">
+            <span class="settle-label">实付款:</span>
+            <span class="price-symbol">¥</span>
+            <span class="price-val">{{ order.totalAmount }}</span>
+          </div>
+
+          <div class="campaign-actions-row" v-if="order.status === 0 || order.status === 3">
+            <a-button 
+              type="text" 
+              status="danger" 
+              size="small" 
+              class="del-order-btn"
+              @click.stop="handleDeleteOrder(order)"
+            >
+              {{ order.status === 0 ? '取消跟团' : '删除记录' }}
+            </a-button>
+            <a-button 
+              v-if="order.status === 0"
+              type="primary" 
+              size="small" 
+              shape="round" 
+              class="pay-now-btn" 
+              @click.stop="$emit('pay', order)"
+            >
+              立即支付
+            </a-button>
           </div>
         </div>
       </a-list-item>
@@ -93,7 +130,7 @@ export default {
       Modal.confirm({
         title: '删除跟团订单确认',
         content: order.status === 0 
-          ? '确定要删除此未支付跟团订单吗？删除后不可恢复。' 
+          ? '确定要取消此未支付跟团订单吗？删除后不可恢复。' 
           : '确定要删除此已取消跟团订单记录吗？',
         okText: '确认删除',
         cancelText: '取消',
@@ -114,10 +151,13 @@ export default {
 
 <style scoped>
 .order-card-item {
-  background: #F7F8FA;
+  background: #FFFFFF;
   border-radius: 16px;
   padding: 14px;
   margin-bottom: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
 }
 
 .order-card-header {
@@ -136,7 +176,7 @@ export default {
 
 .order-card-body {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
 }
 
 .order-pname {
@@ -152,37 +192,62 @@ export default {
   color: #C9CDD4;
 }
 
-.order-price-info {
+/* 底部结算与按钮 */
+.campaign-card-footer {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #F7F8FA;
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
-  flex-shrink: 0;
-  margin-left: 12px;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.price-val {
-  font-size: 16px;
+.settle-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+
+.settle-label {
+  font-size: 12px;
+  color: #4E5969;
+}
+
+.price-symbol {
+  font-size: 13px;
   font-weight: 800;
   color: #1D2129;
 }
 
-.unpaid-actions {
+.price-val {
+  font-size: 17px;
+  font-weight: 800;
+  color: #1D2129;
+}
+
+.campaign-actions-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .del-order-btn {
-  font-size: 11px;
-  padding: 0 4px;
+  font-size: 12px;
+  color: #86909C;
+}
+
+.del-order-btn:hover {
+  color: #F53F3F;
 }
 
 .pay-now-btn {
   background: linear-gradient(135deg, #FF5E3A 0%, #FF2A54 100%) !important;
-  border: none;
+  border: none !important;
   font-size: 12px;
   font-weight: 700;
+  padding: 0 16px;
+  height: 30px;
+  box-shadow: 0 4px 10px rgba(255, 94, 58, 0.25);
 }
 
 .list-end-tip {
