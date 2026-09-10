@@ -33,10 +33,10 @@
       </div>
 
       <!-- 微信号一键复制 -->
-      <div class="wechat-id-panel" v-if="wechatId">
+      <div class="wechat-id-panel" v-if="displayWechatId">
         <div class="wechat-id-left">
           <span class="id-label">微信号</span>
-          <strong class="id-val">{{ wechatId }}</strong>
+          <strong class="id-val">{{ displayWechatId }}</strong>
         </div>
         <button class="copy-wx-btn" @click="handleCopyWechat">
           <icon-copy /> <span>复制微信号</span>
@@ -67,6 +67,7 @@
 <script>
 import { getHomeConfig } from '@/api/common';
 import { Message } from '@arco-design/web-vue';
+import { useUserStore } from '@/stores/user';
 
 export default {
   name: 'ContactConciergeModal',
@@ -82,12 +83,16 @@ export default {
       config: {
         avatarUrl: '',
         authorName: '',
-        wechatQrUrl: ''
+        wechatQrUrl: '',
+        wechatId: ''
       },
-      wechatId: 'caibread_helper' // 默认微信号，有真实配置时优先展示
+      wechatId: ''
     };
   },
   computed: {
+    userStore() {
+      return useUserStore();
+    },
     visible: {
       get() {
         return this.show;
@@ -95,6 +100,18 @@ export default {
       set(val) {
         this.$emit('update:show', val);
       }
+    },
+    displayWechatId() {
+      if (this.config && this.config.wechatId) {
+        return this.config.wechatId;
+      }
+      if (this.wechatId) {
+        return this.wechatId;
+      }
+      if (this.userStore?.userInfo && ['ADMIN', 'CREATOR'].includes(this.userStore.userInfo.role) && this.userStore.userInfo.wechatId) {
+        return this.userStore.userInfo.wechatId;
+      }
+      return 'caibread_helper';
     }
   },
   watch: {
@@ -113,7 +130,6 @@ export default {
         const res = await getHomeConfig();
         if (res.data && res.data.data) {
           this.config = res.data.data;
-          // 若后端配置了微信号文本字段可同步解析
           if (this.config.wechatId) {
             this.wechatId = this.config.wechatId;
           }
@@ -123,10 +139,14 @@ export default {
       }
     },
     handleCopyWechat() {
-      const textToCopy = this.wechatId || 'caibread_helper';
+      const textToCopy = this.displayWechatId;
+      if (!textToCopy) {
+        Message.warning('暂未配置微信号，请扫描二维码添加好友');
+        return;
+      }
       if (navigator?.clipboard?.writeText) {
         navigator.clipboard.writeText(textToCopy).then(() => {
-          Message.success('微信号已复制，快去微信添加小柴包酱吧！');
+          Message.success(`微信号「${textToCopy}」已复制，快去微信添加小柴包酱吧！`);
         }).catch(() => {
           this.fallbackCopy(textToCopy);
         });
@@ -141,7 +161,7 @@ export default {
       input.select();
       document.execCommand('copy');
       document.body.removeChild(input);
-      Message.success('微信号已复制');
+      Message.success(`微信号「${text}」已复制`);
     }
   }
 };

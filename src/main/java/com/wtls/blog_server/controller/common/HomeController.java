@@ -33,6 +33,31 @@ public class HomeController {
         return url;
     }
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.wtls.blog_server.mapper.user.UserMapper userMapper;
+
+    /**
+     * 动态获取小柴包酱在【个人资料】中配置的微信号
+     */
+    private String resolveDynamicWechatId(Map<String, Object> map) {
+        if (map != null && map.containsKey("wechatId") && map.get("wechatId") != null) {
+            String val = String.valueOf(map.get("wechatId")).trim();
+            if (!val.isEmpty()) {
+                return val;
+            }
+        }
+        if (userMapper != null) {
+            try {
+                String profileWechat = userMapper.findFirstAdminOrCreatorWechatId();
+                if (profileWechat != null && !profileWechat.trim().isEmpty()) {
+                    return profileWechat.trim();
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return "";
+    }
+
     @GetMapping("/config")
     public Result<Map<String, Object>> getConfig() {
         Map<String, Object> config = new HashMap<>();
@@ -50,6 +75,8 @@ public class HomeController {
                 if (map.containsKey("wechatQrUrl")) {
                     map.put("wechatQrUrl", normalizeUrl(map.get("wechatQrUrl")));
                 }
+                // 动态装配个人资料中配置的客服微信号
+                map.put("wechatId", resolveDynamicWechatId(map));
                 return Result.success(map);
             } catch (IOException e) {
                 // fallback to default
@@ -62,6 +89,7 @@ public class HomeController {
         config.put("authorBio", "记录灵感，探索生活美学。在这里分享品牌的成长脉络，以及创作者的生活方式碎片。");
         config.put("tags", new String[]{"生活方式", "独立品牌", "创作手记"});
         config.put("wechatQrUrl", "");
+        config.put("wechatId", resolveDynamicWechatId(null));
         return Result.success(config);
     }
 

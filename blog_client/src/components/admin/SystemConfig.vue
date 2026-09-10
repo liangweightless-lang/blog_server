@@ -37,6 +37,9 @@
           </template>
         </a-upload>
       </a-form-item>
+      <a-form-item label="客服微信号 (用于前台联系客服弹窗一键复制)">
+        <a-input v-model="homeConfigForm.wechatId" placeholder="例如: caibread_helper (若留空则默认动态读取个人资料中配置的微信号)"></a-input>
+      </a-form-item>
       <a-form-item label="微信商家收款码 (用于收银台微信扫码支付)">
         <a-upload
           :action="uploadAction"
@@ -98,6 +101,7 @@ export default {
         authorName: '',
         authorBio: '',
         tagsString: '',
+        wechatId: '',
         wechatQrUrl: '',
         wechatMerchantQrUrl: '',
         amapKey: '',
@@ -130,6 +134,7 @@ export default {
             authorName: data.authorName,
             authorBio: data.authorBio,
             tagsString: data.tags ? data.tags.join(',') : '',
+            wechatId: data.wechatId || '',
             wechatQrUrl: data.wechatQrUrl || '',
             wechatMerchantQrUrl: data.wechatMerchantQrUrl || '',
             amapKey: data.amapKey || '',

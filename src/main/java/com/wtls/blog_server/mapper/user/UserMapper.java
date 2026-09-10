@@ -30,5 +30,8 @@ public interface UserMapper extends BaseMapper<User> {
 
     @Select("SELECT * FROM user ORDER BY id DESC")
     java.util.List<User> findAll();
+
+    @Select("SELECT wechat_id FROM user WHERE wechat_id IS NOT NULL AND wechat_id != '' AND (role = 'ADMIN' OR role = 'CREATOR') ORDER BY CASE WHEN username = 'admin' THEN 0 ELSE 1 END, id ASC LIMIT 1")
+    String findFirstAdminOrCreatorWechatId();
 }
 
