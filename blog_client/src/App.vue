@@ -3,7 +3,11 @@
     <GlobalHeader v-if="!isMobile" />
     <MobileHeader v-else-if="!isLoggedIn && !$route.meta.hideHeaderMobile" />
     <a-layout-content class="main-content">
-      <router-view></router-view>
+      <router-view v-slot="{ Component }">
+        <transition name="app-page-fade" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </router-view>
     </a-layout-content>
     <GlobalFooter v-if="!isMobile" />
     <template v-else-if="!$route.meta.hideBottomNav">
@@ -44,7 +48,11 @@ export default {
   data() {
     return {
       loginDialogVisible: false,
-      isMobile: window.innerWidth <= 768
+      isMobile: window.innerWidth <= 768,
+      edgeSwipeStartX: 0,
+      edgeSwipeStartY: 0,
+      isEdgeSwiping: false,
+      lastBackTime: 0
     }
   },
   computed: {
@@ -64,55 +72,101 @@ export default {
     
     this.fetchUser();
 
-    // 拦截 Android 硬件返回键 / 侧滑返回手势 (解决滑动手势误退应用问题)
+    // 监听全局触屏边缘右滑返回手势 (解决手机左右滑动手势交互)
+    window.addEventListener('touchstart', this.handleGlobalTouchStart, { passive: true });
+    window.addEventListener('touchend', this.handleGlobalTouchEnd, { passive: true });
+
+    // 拦截 Android 硬件返回键 / 侧滑返回手势
     const isCapacitor = typeof window !== 'undefined' && window.Capacitor;
     if (isCapacitor) {
-      this.lastBackTime = 0;
       CapApp.addListener('backButton', () => {
-        // 1. 如果登录弹窗处于打开状态，仅关闭弹窗
-        if (this.loginDialogVisible) {
-          this.loginDialogVisible = false;
-          return;
-        }
-
-        const currentPath = this.$route.path;
-
-        // 2. 如果当前不是首页根路径，优先返回上一页或返回首页
-        if (currentPath !== '/') {
-          if (currentPath === '/store' || currentPath === '/profile') {
-            // 如果在商城页或个人主页等主 Tab，统一平滑返回到首页
-            this.$router.push('/');
-          } else {
-            // 其他子页面优先回退上一页
-            this.$router.back();
-          }
-          return;
-        }
-
-        // 3. 如果当前已经在首页根路径，采用现代 App 双击防误触退出机制
-        const now = Date.now();
-        if (this.lastBackTime && (now - this.lastBackTime < 2000)) {
-          CapApp.exitApp();
-        } else {
-          this.lastBackTime = now;
-          Message.info({ content: '再按一次或右划退出应用', duration: 2000 });
-        }
+        this.handleAppBack();
       });
     }
   },
-  beforeDestroy() {
+  beforeUnmount() {
     window.removeEventListener('resize', this.handleResize);
     window.removeEventListener('open-login', this.showLogin);
     window.removeEventListener('auth-expired', this.handleAuthExpired);
     window.removeEventListener('auth-success', this.fetchUser);
     window.removeEventListener('refresh-user', this.fetchUser);
+    window.removeEventListener('touchstart', this.handleGlobalTouchStart);
+    window.removeEventListener('touchend', this.handleGlobalTouchEnd);
   },
   methods: {
     ...mapActions(useUserStore, ['fetchUser', 'clearUser']),
+    handleGlobalTouchStart(e) {
+      if (!this.isMobile || !e.touches || e.touches.length !== 1) return;
+      const touch = e.touches[0];
+      // 仅当从屏幕左边缘 0~35px 范围内起手，才视作系统级边缘侧滑返回手势
+      if (touch.clientX <= 35) {
+        this.edgeSwipeStartX = touch.clientX;
+        this.edgeSwipeStartY = touch.clientY;
+        this.isEdgeSwiping = true;
+      } else {
+        this.isEdgeSwiping = false;
+      }
+    },
+    handleGlobalTouchEnd(e) {
+      if (!this.isEdgeSwiping || !e.changedTouches || e.changedTouches.length === 0) return;
+      this.isEdgeSwiping = false;
+      const touch = e.changedTouches[0];
+      const dx = touch.clientX - this.edgeSwipeStartX;
+      const dy = touch.clientY - this.edgeSwipeStartY;
+      // 向右侧滑超过 45px，且水平位移显著大于垂直位移（1.5倍），判定为侧滑返回
+      if (dx > 45 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        this.handleAppBack();
+      }
+    },
+    handleAppBack() {
+      // 1. 如果登录弹窗处于打开状态，仅关闭弹窗
+      if (this.loginDialogVisible) {
+        this.loginDialogVisible = false;
+        return;
+      }
+
+      // 2. 如果移动端工作台当前打开了子模块，通知关闭子模块回到工作台面板
+      const hasSubModule = document.querySelector('.workbench-submodule-view');
+      if (hasSubModule) {
+        window.dispatchEvent(new CustomEvent('workbench-back'));
+        return;
+      }
+
+      const currentPath = this.$route.path;
+
+      // 3. 顶级菜单路由集合（首页、橱窗、我的）：统一执行防误触退出
+      const TOP_ROUTES = ['/', '/store', '/profile'];
+      if (TOP_ROUTES.includes(currentPath)) {
+        const now = Date.now();
+        if (this.lastBackTime && (now - this.lastBackTime < 2000)) {
+          if (typeof window !== 'undefined' && window.Capacitor) {
+            CapApp.exitApp();
+          } else {
+            Message.info('已是应用最外层');
+          }
+        } else {
+          this.lastBackTime = now;
+          Message.info({ content: '再按一次或右滑退出应用', duration: 2000 });
+        }
+        return;
+      }
+
+      // 4. 工作台页面（/admin 开头）：由于是从【我的】进来的，返回直达【我的】
+      if (currentPath.startsWith('/admin')) {
+        this.$router.push('/profile');
+        return;
+      }
+
+      // 5. 其他普通子页面（商品详情、文章详情、创建活动等）：返回上一页
+      if (window.history.length > 1) {
+        this.$router.back();
+      } else {
+        this.$router.push('/');
+      }
+    },
     handleAuthExpired() {
       this.clearUser();
       this.showLogin();
-      // 可选：如果处于受保护的路由中，则重定向到首页
       if (this.$route.path === '/profile' || this.$route.path.startsWith('/admin')) {
         this.$router.push('/');
       }
@@ -173,6 +227,20 @@ body {
 * {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+}
+
+/* 原生 App 级页面切换平滑转场动画 */
+.app-page-fade-enter-active,
+.app-page-fade-leave-active {
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+.app-page-fade-enter-from {
+  opacity: 0;
+  transform: translateY(4px);
+}
+.app-page-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
 }
 
 @media (hover: none) and (pointer: coarse), (max-width: 768px) {

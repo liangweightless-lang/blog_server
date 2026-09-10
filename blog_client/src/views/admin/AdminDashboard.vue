@@ -95,8 +95,8 @@
           <button v-if="mobileActiveModule" class="nav-back-workbench-btn" @click="mobileActiveModule = null">
             <icon-left class="back-arrow-icon" /> <span>工作台</span>
           </button>
-          <button v-else class="nav-home-btn" @click="$router.push('/')" title="返回前台">
-            <icon-home />
+          <button v-else class="nav-back-profile-btn" @click="$router.push('/profile')" title="返回我的">
+            <icon-left class="back-arrow-icon" /> <span>我的</span>
           </button>
         </div>
         
@@ -269,12 +269,19 @@ export default {
   },
   created() {
     window.addEventListener('resize', this.handleResize);
+    window.addEventListener('workbench-back', this.handleWorkbenchBack);
     this.handleResize();
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.handleResize);
+    window.removeEventListener('workbench-back', this.handleWorkbenchBack);
   },
   methods: {
+    handleWorkbenchBack() {
+      if (this.mobileActiveModule) {
+        this.mobileActiveModule = null;
+      }
+    },
     handleResize() {
       this.isMobile = window.innerWidth <= 768;
     },
@@ -414,7 +421,8 @@ export default {
   transform: scale(0.9);
 }
 
-.nav-back-workbench-btn {
+.nav-back-workbench-btn,
+.nav-back-profile-btn {
   background: #F2F3F5;
   border: none;
   font-size: 13px;
@@ -427,6 +435,11 @@ export default {
   padding: 5px 10px;
   border-radius: 14px;
   transition: all 0.2s ease;
+}
+.nav-back-workbench-btn:active,
+.nav-back-profile-btn:active {
+  transform: scale(0.92);
+  background: #E5E6EB;
 }
 .nav-back-workbench-btn:active {
   background: #E5E6EB;
