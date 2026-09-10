@@ -53,7 +53,7 @@ public class ProductController {
     @PostMapping
     @Operation(summary = "新增商品 (Admin)")
     public Result<String> create(@RequestHeader("Authorization") String authHeader, @RequestBody Product product) {
-        JwtUtils.checkAdmin(authHeader);
+        JwtUtils.checkAdminOrCreator(authHeader);
         productService.createProduct(product);
         return Result.success("Product created");
     }
@@ -61,7 +61,7 @@ public class ProductController {
     @PutMapping("/{id}")
     @Operation(summary = "更新商品信息 (Admin)")
     public Result<String> update(@RequestHeader("Authorization") String authHeader, @PathVariable Long id, @RequestBody Product product) {
-        JwtUtils.checkAdmin(authHeader);
+        JwtUtils.checkAdminOrCreator(authHeader);
         product.setId(id);
         productService.updateProduct(product);
         return Result.success("Product updated");
@@ -70,7 +70,7 @@ public class ProductController {
     @PutMapping("/{id}/status")
     @Operation(summary = "切换商品上下架状态 (Admin)")
     public Result<String> updateStatus(@RequestHeader("Authorization") String authHeader, @PathVariable Long id, @RequestParam("status") Integer status) {
-        JwtUtils.checkAdmin(authHeader);
+        JwtUtils.checkAdminOrCreator(authHeader);
         productService.updateProductStatus(id, status);
         return Result.success(status == 1 ? "商品已上架" : "商品已下架");
     }
@@ -78,7 +78,7 @@ public class ProductController {
     @DeleteMapping("/{id}")
     @Operation(summary = "删除商品 (Admin)")
     public Result<String> delete(@RequestHeader("Authorization") String authHeader, @PathVariable Long id) {
-        JwtUtils.checkAdmin(authHeader);
+        JwtUtils.checkAdminOrCreator(authHeader);
         productService.deleteProduct(id);
         return Result.success("Product deleted");
     }

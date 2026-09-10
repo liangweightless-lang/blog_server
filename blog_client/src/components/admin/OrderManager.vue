@@ -266,6 +266,10 @@ export default {
     isMobile: {
       type: Boolean,
       default: false
+    },
+    initialStatus: {
+      type: [Number, String],
+      default: null
     }
   },
   data() {
@@ -277,7 +281,7 @@ export default {
       confirmDrawerVisible: false,
       currentOrder: null,
       submitting: false,
-      activeStatus: 'ALL',
+      activeStatus: (this.initialStatus !== null && this.initialStatus !== undefined) ? this.initialStatus : 'ALL',
       searchKeyword: '',
       statusTabs: [
         { key: 'ALL', label: '全部' },
@@ -333,6 +337,13 @@ export default {
       if (this.activeStatus === 3) return '暂无已发货订单';
       if (this.activeStatus === 2) return '暂无已取消订单';
       return '暂无订单记录';
+    }
+  },
+  watch: {
+    initialStatus(newVal) {
+      if (newVal !== null && newVal !== undefined) {
+        this.activeStatus = newVal;
+      }
     }
   },
   created() {

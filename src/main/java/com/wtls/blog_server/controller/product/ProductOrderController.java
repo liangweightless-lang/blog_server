@@ -80,21 +80,21 @@ public class ProductOrderController {
 
     @GetMapping
     public Result<List<ProductOrder>> getAllOrders(@RequestHeader("Authorization") String authHeader) {
-        JwtUtils.checkAdmin(authHeader);
+        JwtUtils.checkAdminOrCreator(authHeader);
         return Result.success(orderService.getAllOrders());
     }
 
     @PostMapping("/{orderId}/ship")
     public Result<String> shipOrder(@RequestHeader("Authorization") String authHeader, @PathVariable String orderId) {
-        JwtUtils.checkAdmin(authHeader);
+        JwtUtils.checkAdminOrCreator(authHeader);
         orderService.shipOrder(orderId);
         return Result.success("Order shipped");
     }
 
     @PostMapping("/{orderId}/confirm-pay")
-    @Operation(summary = "管理员手动确认收款", description = "核对微信商家码到账后，将订单手动流转为已支付")
+    @Operation(summary = "管理员或主理人手动确认收款", description = "核对微信商家码到账后，将订单手动流转为已支付")
     public Result<String> confirmPay(@RequestHeader("Authorization") String authHeader, @PathVariable String orderId) {
-        JwtUtils.checkAdmin(authHeader);
+        JwtUtils.checkAdminOrCreator(authHeader);
         orderService.handlePaymentSuccess(orderId);
         return Result.success("订单已成功确认为已支付状态");
     }

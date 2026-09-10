@@ -64,4 +64,11 @@ public class JwtUtils {
             throw new com.wtls.blog_server.exception.UnauthorizedException("权限不足，需要管理员权限");
         }
     }
+
+    public static void checkAdminOrCreator(String authHeader) {
+        String role = getRoleFromHeader(authHeader);
+        if (!"ADMIN".equals(role) && !"CREATOR".equals(role)) {
+            throw new com.wtls.blog_server.exception.UnauthorizedException("权限不足，需要管理员或主理人权限");
+        }
+    }
 }

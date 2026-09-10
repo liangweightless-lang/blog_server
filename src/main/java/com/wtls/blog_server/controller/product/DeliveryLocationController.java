@@ -26,7 +26,7 @@ public class DeliveryLocationController {
     @GetMapping
     @Operation(summary = "获取所有提货点 (管理员用)")
     public Result<List<DeliveryLocation>> getAll(@RequestHeader(value = "Authorization", required = false) String authHeader) {
-        JwtUtils.checkAdmin(authHeader);
+        JwtUtils.checkAdminOrCreator(authHeader);
         return Result.success(service.getAllLocations());
     }
     
@@ -39,7 +39,7 @@ public class DeliveryLocationController {
     @PostMapping
     @Operation(summary = "新增提货点 (Admin)")
     public Result<String> create(@RequestHeader("Authorization") String authHeader, @RequestBody DeliveryLocation location) {
-        JwtUtils.checkAdmin(authHeader);
+        JwtUtils.checkAdminOrCreator(authHeader);
         service.createLocation(location);
         return Result.success("Location created");
     }
@@ -47,7 +47,7 @@ public class DeliveryLocationController {
     @PutMapping("/{id}")
     @Operation(summary = "更新提货点 (Admin)")
     public Result<String> update(@RequestHeader("Authorization") String authHeader, @PathVariable Long id, @RequestBody DeliveryLocation location) {
-        JwtUtils.checkAdmin(authHeader);
+        JwtUtils.checkAdminOrCreator(authHeader);
         location.setId(id);
         service.updateLocation(location);
         return Result.success("Location updated");
@@ -56,7 +56,7 @@ public class DeliveryLocationController {
     @DeleteMapping("/{id}")
     @Operation(summary = "删除提货点 (Admin)")
     public Result<String> delete(@RequestHeader("Authorization") String authHeader, @PathVariable Long id) {
-        JwtUtils.checkAdmin(authHeader);
+        JwtUtils.checkAdminOrCreator(authHeader);
         service.deleteLocation(id);
         return Result.success("Location deleted");
     }

@@ -24,7 +24,7 @@ public class GroupBuyCampaignController {
     private GroupBuyCampaignService service;
 
     private void checkAdmin(String authHeader) {
-        JwtUtils.checkAdmin(authHeader);
+        JwtUtils.checkAdminOrCreator(authHeader);
     }
 
     private Long getUserIdFromToken(String authHeader) {
