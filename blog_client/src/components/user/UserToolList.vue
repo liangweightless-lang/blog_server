@@ -48,14 +48,18 @@
         </div>
       </div>
 
+      <!-- 主理人合作入驻（低调隐蔽，面向有合作意向的合伙人） -->
       <div v-if="!user || (user.role !== 'ADMIN' && user.role !== 'CREATOR')" class="tool-cell" @click="handleAction('apply-creator', true)">
         <div class="cell-left">
-          <div class="icon-wrapper bg-orange">
+          <div class="icon-wrapper bg-warm">
             <icon-star class="tool-icon" />
           </div>
-          <span class="tool-name">申请成为小柴包主理人</span>
+          <span class="tool-name">主理人入驻合作</span>
         </div>
-        <icon-right class="cell-right-icon" />
+        <div class="cell-right-info">
+          <span class="tool-sub-tip">共建手作空间</span>
+          <icon-right class="cell-right-icon" />
+        </div>
       </div>
 
       <!-- 仅在已登录态显示退出登录 -->
@@ -153,6 +157,7 @@ export default {
 .bg-red { background: #FFECE8; color: #F53F3F; }
 .bg-green { background: #E8FFEA; color: #00B42A; }
 .bg-orange { background: #FFF7E8; color: #FF7D00; }
+.bg-warm { background: #FAF5F0; color: #8F7260; }
 .bg-gray { background: #F2F3F5; color: #4E5969; }
 .bg-wechat { background: #EDFBF3; color: #07C160; }
 

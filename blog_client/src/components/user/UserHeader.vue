@@ -70,46 +70,27 @@
       <icon-right class="vip-arrow" />
     </div>
 
-    <!-- 普通用户入驻申请/审核中 Banner -->
+    <!-- 仅在主理人申请处于审核中或被驳回时展示状态卡片，普通状态不打扰用户 -->
     <div 
-      v-else-if="user" 
+      v-else-if="user && creatorStatus && creatorStatus.application && (creatorStatus.application.status === 0 || creatorStatus.application.status === 2)" 
       class="creator-apply-card" 
-      :class="{ 'is-pending': creatorStatus && creatorStatus.application && creatorStatus.application.status === 0 }"
+      :class="{ 'is-pending': creatorStatus.application.status === 0 }"
       @click="$emit('apply-creator')"
     >
       <div class="banner-left">
         <div class="apply-icon-box">
-          <icon-clock-circle v-if="creatorStatus && creatorStatus.application && creatorStatus.application.status === 0" />
-          <icon-exclamation-circle v-else-if="creatorStatus && creatorStatus.application && creatorStatus.application.status === 2" />
-          <icon-star v-else />
+          <icon-clock-circle v-if="creatorStatus.application.status === 0" />
+          <icon-exclamation-circle v-else />
         </div>
         <div class="vip-text">
-          <template v-if="creatorStatus && creatorStatus.application && creatorStatus.application.status === 0">
+          <template v-if="creatorStatus.application.status === 0">
             <span class="vip-title">主理人入驻审核中</span>
             <span class="vip-subtitle">您的申请已提交，平台管理员将尽快处理</span>
           </template>
-          <template v-else-if="creatorStatus && creatorStatus.application && creatorStatus.application.status === 2">
+          <template v-else>
             <span class="vip-title">主理人申请未通过</span>
             <span class="vip-subtitle">{{ creatorStatus.application.rejectReason || '资料不完整' }} (点击重新提交)</span>
           </template>
-          <template v-else>
-            <span class="vip-title">申请成为小柴包主理人</span>
-            <span class="vip-subtitle">入驻开启专属空间，自主策划商品与快团</span>
-          </template>
-        </div>
-      </div>
-      <icon-right class="vip-arrow" />
-    </div>
-
-    <!-- 访客态主理人招募指引卡片 -->
-    <div v-else class="creator-apply-card guest-recruit-card" @click="handleOpenLogin">
-      <div class="banner-left">
-        <div class="apply-icon-box recruit-icon">
-          <icon-star />
-        </div>
-        <div class="vip-text">
-          <span class="vip-title">烘焙主理人招募中</span>
-          <span class="vip-subtitle">登录后申请入驻，打造属于您的专属烘焙空间</span>
         </div>
       </div>
       <icon-right class="vip-arrow" />
@@ -467,13 +448,6 @@ export default {
 .guest-login-btn:active {
   transform: scale(0.96);
   box-shadow: 0 2px 6px rgba(255, 61, 87, 0.2);
-}
-.guest-recruit-card {
-  background: linear-gradient(135deg, #FFF8F5 0%, #FFF0EB 100%);
-  border-color: #FFE2D9;
-}
-.guest-recruit-card .recruit-icon {
-  background: linear-gradient(135deg, #FF9A8B 0%, #FF6A88 100%);
 }
 
 @media (max-width: 768px) {
