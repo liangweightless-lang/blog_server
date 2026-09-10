@@ -19,28 +19,44 @@
           </span>
         </div>
         <div class="flow-nav-grid">
-          <div class="flow-item" @click="handleFlowClick('pendingPay')">
+          <div 
+            class="flow-item" 
+            :class="{ 'is-active': activeTab === 'orders' && orderFilterStatus === 'pendingPay' }"
+            @click="handleFlowClick('pendingPay')"
+          >
             <div class="flow-icon-wrap">
               <icon-clock-circle class="flow-icon" />
               <span class="flow-badge" v-if="user && pendingPayCount > 0">{{ pendingPayCount }}</span>
             </div>
             <span class="flow-label">待付款</span>
           </div>
-          <div class="flow-item" @click="handleFlowClick('pendingPickup')">
+          <div 
+            class="flow-item" 
+            :class="{ 'is-active': activeTab === 'orders' && orderFilterStatus === 'pendingPickup' }"
+            @click="handleFlowClick('pendingPickup')"
+          >
             <div class="flow-icon-wrap">
               <icon-storage class="flow-icon" />
               <span class="flow-badge" v-if="user && pendingPickupCount > 0">{{ pendingPickupCount }}</span>
             </div>
             <span class="flow-label">待提货/发货</span>
           </div>
-          <div class="flow-item" @click="handleFlowClick('campaigns')">
+          <div 
+            class="flow-item" 
+            :class="{ 'is-active': activeTab === 'campaignOrders' }"
+            @click="handleFlowClick('campaigns')"
+          >
             <div class="flow-icon-wrap">
               <icon-fire class="flow-icon" />
               <span class="flow-badge highlight" v-if="user && campaignOrders.length > 0">{{ campaignOrders.length }}</span>
             </div>
             <span class="flow-label">我的跟团</span>
           </div>
-          <div class="flow-item" @click="handleFlowClick('allOrders')">
+          <div 
+            class="flow-item" 
+            :class="{ 'is-active': activeTab === 'orders' && orderFilterStatus === 'all' }"
+            @click="handleFlowClick('allOrders')"
+          >
             <div class="flow-icon-wrap">
               <icon-ordered-list class="flow-icon" />
             </div>
@@ -67,10 +83,39 @@
           <a-tab-pane key="orders">
             <template #title>
               <icon-gift /> 我的订单
-              <span class="tab-badge" v-if="orders.length > 0">{{ orders.length }}</span>
+              <span class="tab-badge" v-if="filteredOrders.length > 0">{{ filteredOrders.length }}</span>
             </template>
             <div class="tab-content-wrapper">
-              <OrderList :orders="orders" @detail="showOrderDetail" @pay="handleContinuePay" @refresh="fetchOrders" />
+              <!-- 订单状态微胶囊横滑筛选栏 -->
+              <div class="order-filter-bar" v-if="orders && orders.length > 0">
+                <button 
+                  class="filter-pill" 
+                  :class="{ active: orderFilterStatus === 'all' }"
+                  @click="orderFilterStatus = 'all'"
+                >全部 ({{ orders.length }})</button>
+                <button 
+                  class="filter-pill" 
+                  :class="{ active: orderFilterStatus === 'pendingPay' }"
+                  @click="orderFilterStatus = 'pendingPay'"
+                >待付款 ({{ pendingPayCountNormal }})</button>
+                <button 
+                  class="filter-pill" 
+                  :class="{ active: orderFilterStatus === 'pendingPickup' }"
+                  @click="orderFilterStatus = 'pendingPickup'"
+                >待提货/发货 ({{ pendingPickupCountNormal }})</button>
+                <button 
+                  class="filter-pill" 
+                  :class="{ active: orderFilterStatus === 'completed' }"
+                  @click="orderFilterStatus = 'completed'"
+                >已完成 ({{ completedCountNormal }})</button>
+              </div>
+              <OrderList 
+                :orders="filteredOrders" 
+                :empty-text="orderFilterStatus === 'pendingPickup' ? '暂无待提货/发货订单' : (orderFilterStatus === 'pendingPay' ? '暂无待付款订单' : (orderFilterStatus === 'completed' ? '暂无已完成订单' : '暂无订单记录'))"
+                @detail="showOrderDetail" 
+                @pay="handleContinuePay" 
+                @refresh="fetchOrders" 
+              />
             </div>
           </a-tab-pane>
           
@@ -214,6 +259,7 @@ export default {
       orderDetailVisible: false,
       selectedOrder: null,
       activeTab: 'orders',
+      orderFilterStatus: 'all', // 'all', 'pendingPay', 'pendingPickup', 'completed'
       favoriteArticles: [],
       loadingFavorites: false,
       isMobile: window.innerWidth <= 768,
@@ -263,6 +309,28 @@ export default {
       const normal = (this.orders || []).filter(o => o.status === 1).length;
       const campaign = (this.campaignOrders || []).filter(o => o.orderStatus === 1).length;
       return normal + campaign;
+    },
+    filteredOrders() {
+      if (!this.orders || this.orders.length === 0) return [];
+      if (this.orderFilterStatus === 'pendingPay') {
+        return this.orders.filter(o => o.status === 0);
+      }
+      if (this.orderFilterStatus === 'pendingPickup') {
+        return this.orders.filter(o => o.status === 1);
+      }
+      if (this.orderFilterStatus === 'completed') {
+        return this.orders.filter(o => o.status === 2);
+      }
+      return this.orders;
+    },
+    pendingPayCountNormal() {
+      return (this.orders || []).filter(o => o.status === 0).length;
+    },
+    pendingPickupCountNormal() {
+      return (this.orders || []).filter(o => o.status === 1).length;
+    },
+    completedCountNormal() {
+      return (this.orders || []).filter(o => o.status === 2).length;
     }
   },
   methods: {
@@ -289,8 +357,21 @@ export default {
         this.fetchMyCampaignOrders();
       } else {
         this.activeTab = 'orders';
+        if (type === 'pendingPay') {
+          this.orderFilterStatus = 'pendingPay';
+        } else if (type === 'pendingPickup') {
+          this.orderFilterStatus = 'pendingPickup';
+        } else {
+          this.orderFilterStatus = 'all';
+        }
         this.fetchMyOrders();
       }
+      this.$nextTick(() => {
+        const tabsEl = document.querySelector('.user-tabs-section');
+        if (tabsEl) {
+          tabsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
     },
     async handlePullRefresh() {
       const token = localStorage.getItem('token');
@@ -604,6 +685,56 @@ export default {
   font-size: 12px;
   font-weight: 600;
   color: #4E5969;
+}
+
+/* 看板选中高亮态 */
+.flow-item.is-active .flow-icon-wrap {
+  background: linear-gradient(135deg, #FFF2EE 0%, #FFE5DF 100%);
+  box-shadow: 0 4px 12px rgba(255, 94, 58, 0.16);
+}
+.flow-item.is-active .flow-icon {
+  color: #FF5E3A;
+  transform: scale(1.08);
+}
+.flow-item.is-active .flow-label {
+  color: #FF5E3A;
+  font-weight: 800;
+}
+
+/* 订单筛选微胶囊横滑栏 */
+.order-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0 14px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.order-filter-bar::-webkit-scrollbar {
+  display: none;
+}
+.filter-pill {
+  flex-shrink: 0;
+  border: 1px solid #F0F2F5;
+  background: #F7F8FA;
+  color: #4E5969;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.filter-pill.active {
+  background: linear-gradient(135deg, #FF693B 0%, #FF3D57 100%);
+  color: #FFFFFF;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(255, 61, 87, 0.25);
+  transform: scale(1.02);
+}
+.filter-pill:active {
+  transform: scale(0.96);
 }
 
 .tab-badge {

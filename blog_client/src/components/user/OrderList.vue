@@ -1,6 +1,6 @@
 <template>
   <div class="order-list-component">
-    <a-empty v-if="orders.length === 0" description="暂无订单记录" style="margin: 40px 0;">
+    <a-empty v-if="orders.length === 0" :description="emptyText || '暂无订单记录'" style="margin: 40px 0;">
       <template #image><icon-gift style="font-size: 48px; color: #D3C1BA; opacity: 0.5;" /></template>
     </a-empty>
     <div v-else class="order-full-list">
@@ -162,6 +162,10 @@ export default {
     orders: {
       type: Array,
       default: () => []
+    },
+    emptyText: {
+      type: String,
+      default: '暂无订单记录'
     }
   },
   emits: ['detail', 'pay', 'refresh'],
