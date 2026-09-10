@@ -48,7 +48,7 @@
           >
             <div class="flow-icon-wrap">
               <icon-fire class="flow-icon" />
-              <span class="flow-badge highlight" v-if="user && campaignOrders.length > 0">{{ campaignOrders.length }}</span>
+              <span class="flow-badge highlight" v-if="user && activeCampaignCount > 0">{{ activeCampaignCount }}</span>
             </div>
             <span class="flow-label">我的跟团</span>
           </div>
@@ -122,7 +122,7 @@
           <a-tab-pane key="campaignOrders">
             <template #title>
               <icon-fire /> 我的跟团
-              <span class="tab-badge" v-if="campaignOrders.length > 0">{{ campaignOrders.length }}</span>
+              <span class="tab-badge" v-if="activeCampaignCount > 0">{{ activeCampaignCount }}</span>
             </template>
             <div class="tab-content-wrapper">
               <CampaignOrderList :orders="campaignOrders" @pay="handleContinuePay" @refresh="fetchOrders" />
@@ -302,13 +302,17 @@ export default {
     },
     pendingPayCount() {
       const normal = (this.orders || []).filter(o => o.status === 0).length;
-      const campaign = (this.campaignOrders || []).filter(o => o.orderStatus === 0).length;
+      const campaign = (this.campaignOrders || []).filter(o => o.status === 0).length;
       return normal + campaign;
     },
     pendingPickupCount() {
       const normal = (this.orders || []).filter(o => o.status === 1).length;
-      const campaign = (this.campaignOrders || []).filter(o => o.orderStatus === 1).length;
+      const campaign = (this.campaignOrders || []).filter(o => o.status === 1).length;
       return normal + campaign;
+    },
+    activeCampaignCount() {
+      // 仅统计进行中的跟团订单：待付款(0) 和 待提货/备料中(1)；已提货(2)和已取消(3)红点自动消失
+      return (this.campaignOrders || []).filter(o => o.status === 0 || o.status === 1).length;
     },
     filteredOrders() {
       if (!this.orders || this.orders.length === 0) return [];
