@@ -34,6 +34,27 @@
         </button>
       </div>
     </div>
+
+    <!-- 未登录/访客态卡片 -->
+    <div class="header-content guest-content" v-else>
+      <div class="user-info-main">
+        <div class="avatar-ring-box guest-avatar-box">
+          <img src="/img/avatar.png" class="user-avatar-big" alt="访客头像" />
+        </div>
+        <div class="user-text-info">
+          <div class="name-row">
+            <h2 class="user-nickname">欢迎来到小柴包</h2>
+          </div>
+          <span class="guest-desc">登录后开启美好手作与拼团生活</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="guest-login-btn" @click="handleOpenLogin">
+          <span>登录 / 注册</span>
+          <icon-right />
+        </button>
+      </div>
+    </div>
     
     <!-- Admin / Creator VIP Banner (黑金奢感卡片) -->
     <div v-if="user && (user.role === 'ADMIN' || user.role === 'CREATOR')" class="admin-vip-card" @click="$router.push('/admin')">
@@ -79,6 +100,20 @@
       </div>
       <icon-right class="vip-arrow" />
     </div>
+
+    <!-- 访客态主理人招募指引卡片 -->
+    <div v-else class="creator-apply-card guest-recruit-card" @click="handleOpenLogin">
+      <div class="banner-left">
+        <div class="apply-icon-box recruit-icon">
+          <icon-star />
+        </div>
+        <div class="vip-text">
+          <span class="vip-title">烘焙主理人招募中</span>
+          <span class="vip-subtitle">登录后申请入驻，打造属于您的专属烘焙空间</span>
+        </div>
+      </div>
+      <icon-right class="vip-arrow" />
+    </div>
   </div>
 </template>
 
@@ -110,6 +145,9 @@ export default {
     }
   },
   methods: {
+    handleOpenLogin() {
+      window.dispatchEvent(new CustomEvent('open-login'));
+    },
     handleCheckin() {
       if (this.isCheckedIn) return;
       if (this.checkinTimer) clearTimeout(this.checkinTimer);
@@ -399,6 +437,43 @@ export default {
 }
 .creator-apply-card .vip-arrow {
   color: #86909C;
+}
+
+/* 访客态高定微光卡片 */
+.guest-avatar-box {
+  background: linear-gradient(135deg, #F2F3F5 0%, #E5E6EB 100%);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+}
+.guest-desc {
+  font-size: 12px;
+  color: #86909C;
+  font-weight: 500;
+}
+.guest-login-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #FF693B 0%, #FF3D57 100%);
+  color: #FFFFFF;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(255, 61, 87, 0.28);
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.guest-login-btn:active {
+  transform: scale(0.96);
+  box-shadow: 0 2px 6px rgba(255, 61, 87, 0.2);
+}
+.guest-recruit-card {
+  background: linear-gradient(135deg, #FFF8F5 0%, #FFF0EB 100%);
+  border-color: #FFE2D9;
+}
+.guest-recruit-card .recruit-icon {
+  background: linear-gradient(135deg, #FF9A8B 0%, #FF6A88 100%);
 }
 
 @media (max-width: 768px) {

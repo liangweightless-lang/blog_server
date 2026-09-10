@@ -4,7 +4,7 @@
       <span class="tools-title">常用服务</span>
     </div>
     <div class="tools-list">
-      <div class="tool-cell" @click="$emit('address')">
+      <div class="tool-cell" @click="handleAction('address', true)">
         <div class="cell-left">
           <div class="icon-wrapper bg-blue">
             <icon-location class="tool-icon" />
@@ -14,7 +14,7 @@
         <icon-right class="cell-right-icon" />
       </div>
 
-      <div class="tool-cell" @click="$emit('invite')">
+      <div class="tool-cell" @click="handleAction('invite', true)">
         <div class="cell-left">
           <div class="icon-wrapper bg-red">
             <icon-gift class="tool-icon" />
@@ -24,7 +24,7 @@
         <icon-right class="cell-right-icon" />
       </div>
 
-      <div class="tool-cell" @click="$emit('groups')">
+      <div class="tool-cell" @click="handleAction('groups', true)">
         <div class="cell-left">
           <div class="icon-wrapper bg-green">
             <icon-user-group class="tool-icon" />
@@ -34,8 +34,8 @@
         <icon-right class="cell-right-icon" />
       </div>
 
-      <!-- 联系主理人 / 客服微信 -->
-      <div class="tool-cell" @click="$emit('contact')">
+      <!-- 联系主理人 / 客服微信（免登录即可使用） -->
+      <div class="tool-cell" @click="handleAction('contact', false)">
         <div class="cell-left">
           <div class="icon-wrapper bg-wechat">
             <icon-wechat class="tool-icon" />
@@ -48,7 +48,7 @@
         </div>
       </div>
 
-      <div v-if="user && user.role !== 'ADMIN' && user.role !== 'CREATOR'" class="tool-cell" @click="$emit('apply-creator')">
+      <div v-if="!user || (user.role !== 'ADMIN' && user.role !== 'CREATOR')" class="tool-cell" @click="handleAction('apply-creator', true)">
         <div class="cell-left">
           <div class="icon-wrapper bg-orange">
             <icon-star class="tool-icon" />
@@ -58,8 +58,8 @@
         <icon-right class="cell-right-icon" />
       </div>
 
-
-      <div class="tool-cell" @click="$emit('logout')">
+      <!-- 仅在已登录态显示退出登录 -->
+      <div v-if="user" class="tool-cell" @click="$emit('logout')">
         <div class="cell-left">
           <div class="icon-wrapper bg-gray">
             <icon-poweroff class="tool-icon" />
@@ -77,6 +77,15 @@ export default {
   name: 'UserToolList',
   props: {
     user: Object
+  },
+  methods: {
+    handleAction(event, requireAuth = true) {
+      if (requireAuth && !this.user) {
+        window.dispatchEvent(new CustomEvent('open-login'));
+        return;
+      }
+      this.$emit(event);
+    }
   }
 }
 </script>

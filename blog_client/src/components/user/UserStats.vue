@@ -1,16 +1,16 @@
 <template>
   <div class="stats-bar-wrapper">
     <div class="stats-bar-card">
-      <div class="stats-item">
-        <span class="stats-val">{{ user ? user.points : 0 }}</span>
+      <div class="stats-item" @click="handleItemClick('points')">
+        <span class="stats-val">{{ user ? user.points : '--' }}</span>
         <span class="stats-label">我的积分</span>
       </div>
-      <div class="stats-item">
-        <span class="stats-val">0</span>
+      <div class="stats-item" @click="handleItemClick('coupons')">
+        <span class="stats-val">{{ user ? 0 : '--' }}</span>
         <span class="stats-label">优惠券</span>
       </div>
-      <div class="stats-item">
-        <span class="stats-val">¥0.00</span>
+      <div class="stats-item" @click="handleItemClick('balance')">
+        <span class="stats-val">{{ user ? '¥0.00' : '--' }}</span>
         <span class="stats-label">账户余额</span>
       </div>
     </div>
@@ -18,10 +18,39 @@
 </template>
 
 <script>
+import { Modal } from '@arco-design/web-vue';
+
 export default {
   name: 'UserStats',
   props: {
     user: Object
+  },
+  methods: {
+    handleItemClick(type) {
+      if (!this.user) {
+        window.dispatchEvent(new CustomEvent('open-login'));
+        return;
+      }
+      if (type === 'points') {
+        Modal.info({
+          title: '我的积分与权益',
+          content: `您当前拥有 ${this.user.points || 0} 积分。每 10 积分在结算自营现烤商品时可立减 ¥1.00；每天签到、邀请好友或完成拼团均可获取积分。`,
+          okText: '知道了'
+        });
+      } else if (type === 'coupons') {
+        Modal.info({
+          title: '专属优惠券',
+          content: '当前暂无可用优惠券。主理人将不定期发放快团专属早鸟券，敬请关注首页与最新跟团通知！',
+          okText: '知道了'
+        });
+      } else if (type === 'balance') {
+        Modal.info({
+          title: '账户余额',
+          content: '当前账户现金余额为 ¥0.00。小柴包烘焙支持微信扫码与直接结账，无需预充值。',
+          okText: '知道了'
+        });
+      }
+    }
   }
 }
 </script>

@@ -64,7 +64,7 @@ const routes = [
     path: '/profile',
     name: 'UserProfile',
     component: () => import('../views/user/UserProfile.vue'),
-    meta: { hideHeaderMobile: true, requiresAuth: true }
+    meta: { hideHeaderMobile: true }
   }
 ]
 

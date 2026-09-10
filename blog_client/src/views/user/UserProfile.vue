@@ -10,30 +10,87 @@
       />
       <UserStats :user="user" />
       
+      <!-- 订单状态流向微看板 -->
+      <div class="order-flow-card">
+        <div class="flow-header">
+          <span class="flow-title">我的交易</span>
+          <span class="flow-all-link" @click="handleFlowClick('allOrders')">
+            全部订单 <icon-right />
+          </span>
+        </div>
+        <div class="flow-nav-grid">
+          <div class="flow-item" @click="handleFlowClick('pendingPay')">
+            <div class="flow-icon-wrap">
+              <icon-clock-circle class="flow-icon" />
+              <span class="flow-badge" v-if="user && pendingPayCount > 0">{{ pendingPayCount }}</span>
+            </div>
+            <span class="flow-label">待付款</span>
+          </div>
+          <div class="flow-item" @click="handleFlowClick('pendingPickup')">
+            <div class="flow-icon-wrap">
+              <icon-storage class="flow-icon" />
+              <span class="flow-badge" v-if="user && pendingPickupCount > 0">{{ pendingPickupCount }}</span>
+            </div>
+            <span class="flow-label">待提货/发货</span>
+          </div>
+          <div class="flow-item" @click="handleFlowClick('campaigns')">
+            <div class="flow-icon-wrap">
+              <icon-fire class="flow-icon" />
+              <span class="flow-badge highlight" v-if="user && campaignOrders.length > 0">{{ campaignOrders.length }}</span>
+            </div>
+            <span class="flow-label">我的跟团</span>
+          </div>
+          <div class="flow-item" @click="handleFlowClick('allOrders')">
+            <div class="flow-icon-wrap">
+              <icon-ordered-list class="flow-icon" />
+            </div>
+            <span class="flow-label">历史订单</span>
+          </div>
+        </div>
+      </div>
+
       <!-- 极简高定微胶囊 Tabs -->
       <div class="user-tabs-section">
-        <a-tabs v-model:active-key="activeTab" @change="handleTabClick" type="line" justify>
-          <a-tab-pane key="favorites">
-            <template #title><icon-heart /> 我的收藏</template>
-            <div class="tab-content-wrapper">
-              <ArticleGrid :articles="favoriteArticles" :loading="loadingFavorites" />
-              <a-empty v-if="!loadingFavorites && favoriteArticles.length === 0" description="还没有收藏任何灵感手记，去首页发现美好吧" style="margin: 40px 0;">
-                <template #image><icon-heart style="font-size: 44px; color: #D3C1BA; opacity: 0.4;" /></template>
-              </a-empty>
-            </div>
-          </a-tab-pane>
-          
+        <!-- 未登录访客态占位引导 -->
+        <div v-if="!user" class="guest-tab-placeholder">
+          <div class="guest-tab-icon-wrap">
+            <icon-gift class="guest-tab-icon" />
+          </div>
+          <h3 class="guest-tab-title">登录后查看我的订单与跟团</h3>
+          <p class="guest-tab-desc">随时查看自营现烤出炉、拼团进度与提货码</p>
+          <button class="guest-tab-btn" @click="handleOpenLogin">
+            立即登录 / 注册
+          </button>
+        </div>
+
+        <a-tabs v-else v-model:active-key="activeTab" @change="handleTabClick" type="line" justify>
           <a-tab-pane key="orders">
-            <template #title><icon-gift /> 我的订单</template>
+            <template #title>
+              <icon-gift /> 我的订单
+              <span class="tab-badge" v-if="orders.length > 0">{{ orders.length }}</span>
+            </template>
             <div class="tab-content-wrapper">
               <OrderList :orders="orders" @detail="showOrderDetail" @pay="handleContinuePay" @refresh="fetchOrders" />
             </div>
           </a-tab-pane>
           
           <a-tab-pane key="campaignOrders">
-            <template #title><icon-fire /> 我的跟团</template>
+            <template #title>
+              <icon-fire /> 我的跟团
+              <span class="tab-badge" v-if="campaignOrders.length > 0">{{ campaignOrders.length }}</span>
+            </template>
             <div class="tab-content-wrapper">
               <CampaignOrderList :orders="campaignOrders" @pay="handleContinuePay" @refresh="fetchOrders" />
+            </div>
+          </a-tab-pane>
+
+          <a-tab-pane key="favorites">
+            <template #title><icon-heart /> 灵感收藏</template>
+            <div class="tab-content-wrapper">
+              <ArticleGrid :articles="favoriteArticles" :loading="loadingFavorites" />
+              <a-empty v-if="!loadingFavorites && favoriteArticles.length === 0" description="还没有收藏任何灵感手记，去首页发现美好吧" style="margin: 40px 0;">
+                <template #image><icon-heart style="font-size: 44px; color: #D3C1BA; opacity: 0.4;" /></template>
+              </a-empty>
             </div>
           </a-tab-pane>
         </a-tabs>
@@ -156,7 +213,7 @@ export default {
       creatorStatus: null,
       orderDetailVisible: false,
       selectedOrder: null,
-      activeTab: 'favorites',
+      activeTab: 'orders',
       favoriteArticles: [],
       loadingFavorites: false,
       isMobile: window.innerWidth <= 768,
@@ -170,17 +227,24 @@ export default {
     if (this.$route.query.tab) {
       this.activeTab = this.$route.query.tab;
     }
-    this.loadUserAndForm();
-    this.fetchMyFavorites();
-    this.fetchMyOrders();
-    this.fetchMyCampaignOrders();
-    this.fetchCreatorStatus();
+    const token = localStorage.getItem('token');
+    if (token) {
+      this.loadUserAndForm();
+      this.fetchMyOrders();
+      this.fetchMyCampaignOrders();
+      this.fetchCreatorStatus();
+      if (this.activeTab === 'favorites') {
+        this.fetchMyFavorites();
+      }
+    }
     window.addEventListener('resize', this.handleResize);
     window.addEventListener('tab-refresh', this.handleTabRefresh);
+    window.addEventListener('auth-success', this.handleAuthSuccess);
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.handleResize);
     window.removeEventListener('tab-refresh', this.handleTabRefresh);
+    window.removeEventListener('auth-success', this.handleAuthSuccess);
   },
   computed: {
     ...mapState(useUserStore, ['userInfo']),
@@ -188,12 +252,52 @@ export default {
       return this.userInfo;
     },
     pendingOrdersCount() {
-      return this.orders.filter(o => o.status === 0).length;
+      return (this.orders || []).filter(o => o.status === 0).length;
+    },
+    pendingPayCount() {
+      const normal = (this.orders || []).filter(o => o.status === 0).length;
+      const campaign = (this.campaignOrders || []).filter(o => o.orderStatus === 0).length;
+      return normal + campaign;
+    },
+    pendingPickupCount() {
+      const normal = (this.orders || []).filter(o => o.status === 1).length;
+      const campaign = (this.campaignOrders || []).filter(o => o.orderStatus === 1).length;
+      return normal + campaign;
     }
   },
   methods: {
     ...mapActions(useUserStore, ['clearUser', 'fetchUser']),
+    handleOpenLogin() {
+      window.dispatchEvent(new CustomEvent('open-login'));
+    },
+    handleAuthSuccess() {
+      this.loadUserAndForm();
+      this.fetchCreatorStatus();
+      this.fetchMyOrders();
+      this.fetchMyCampaignOrders();
+      if (this.activeTab === 'favorites') {
+        this.fetchMyFavorites();
+      }
+    },
+    handleFlowClick(type) {
+      if (!this.user) {
+        this.handleOpenLogin();
+        return;
+      }
+      if (type === 'campaigns') {
+        this.activeTab = 'campaignOrders';
+        this.fetchMyCampaignOrders();
+      } else {
+        this.activeTab = 'orders';
+        this.fetchMyOrders();
+      }
+    },
     async handlePullRefresh() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        Message.info('当前为访客模式，登录后查看个人订单与资产');
+        return;
+      }
       await Promise.allSettled([
         this.fetchUser(),
         this.fetchCreatorStatus(),
@@ -204,6 +308,8 @@ export default {
       Message.success('个人中心数据已刷新');
     },
     handleTabRefresh(e) {
+      const token = localStorage.getItem('token');
+      if (!token) return;
       if (e.detail?.path === '/profile' || this.$route.path === '/profile') {
         this.fetchUser();
         this.fetchMyFavorites();
@@ -396,6 +502,178 @@ export default {
   min-height: 200px;
 }
 
+/* 订单状态流向微看板 */
+.order-flow-card {
+  background: #FFFFFF;
+  border-radius: 20px;
+  padding: 16px 18px;
+  margin-top: 14px;
+  box-shadow: 0 4px 24px rgba(17, 24, 39, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.02);
+}
+
+.flow-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.flow-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1A1D20;
+  letter-spacing: -0.2px;
+}
+
+.flow-all-link {
+  font-size: 12px;
+  color: #86909C;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.flow-all-link:hover {
+  color: #FF5E3A;
+}
+
+.flow-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.flow-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 8px 4px;
+  border-radius: 12px;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.flow-item:active {
+  transform: scale(0.94);
+  background: #F7F8FA;
+}
+
+.flow-icon-wrap {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: #F7F8FA;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flow-icon {
+  font-size: 20px;
+  color: #272E3B;
+}
+
+.flow-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #FF5E3A;
+  color: #FFFFFF;
+  font-size: 10px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #FFFFFF;
+}
+
+.flow-badge.highlight {
+  background: #FF2A6D;
+}
+
+.flow-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4E5969;
+}
+
+.tab-badge {
+  display: inline-block;
+  background: rgba(255, 94, 58, 0.1);
+  color: #FF5E3A;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-left: 4px;
+}
+
+/* 访客态微胶囊占位卡片 */
+.guest-tab-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.guest-tab-icon-wrap {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FFF0ED 0%, #FFE4DD 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.guest-tab-icon {
+  font-size: 28px;
+  color: #FF5E3A;
+}
+
+.guest-tab-title {
+  margin: 0 0 6px 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: #1D2129;
+}
+
+.guest-tab-desc {
+  margin: 0 0 18px 0;
+  font-size: 12px;
+  color: #86909C;
+  line-height: 1.4;
+}
+
+.guest-tab-btn {
+  background: linear-gradient(135deg, #FF693B 0%, #FF3D57 100%);
+  color: #FFFFFF;
+  border: none;
+  padding: 9px 22px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(255, 61, 87, 0.28);
+  transition: all 0.2s ease;
+}
+
+.guest-tab-btn:active {
+  transform: scale(0.96);
+}
+
 .invite-dialog-content {
   text-align: center;
   padding: 10px 0;
@@ -427,6 +705,19 @@ export default {
 @media (max-width: 768px) {
   .user-center-container {
     padding: 6px 12px 100px;
+  }
+  .order-flow-card {
+    padding: 14px 12px;
+    border-radius: 16px;
+    margin-top: 10px;
+  }
+  .flow-icon-wrap {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+  }
+  .flow-icon {
+    font-size: 18px;
   }
   .user-tabs-section {
     padding: 6px 10px;

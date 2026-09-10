@@ -22,7 +22,7 @@
     <div 
       class="nav-item" 
       :class="{ active: $route.path === '/profile' }" 
-      @click="handleProfileClick"
+      @click="navTo('/profile')"
     >
       <icon-user class="nav-icon" />
       <span class="nav-label">我的</span>
@@ -47,14 +47,6 @@ export default {
         return;
       }
       this.$router.push(path);
-    },
-    handleProfileClick() {
-      const token = localStorage.getItem('token');
-      if (token) {
-        this.navTo('/profile');
-      } else {
-        window.dispatchEvent(new CustomEvent('open-login'));
-      }
     }
   }
 }
