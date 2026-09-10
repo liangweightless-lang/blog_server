@@ -159,15 +159,12 @@
             </div>
           </div>
 
-          <!-- 待提货专属提示与核销码快速入口 -->
-          <div class="pickup-code-tip-banner" v-if="order.status === 1" @click="openVoucher(order)">
+          <!-- 待提货状态提示 -->
+          <div class="pickup-code-tip-banner" v-if="order.status === 1">
             <div class="tip-left">
               <icon-check-circle-fill class="tip-banner-icon" />
-              <span>已付款·凭跟团号 <strong>#{{ order.followNumber }}</strong> 提货</span>
+              <span>已付款 · 送达自提点后将电话联系您</span>
             </div>
-            <button class="show-code-btn" @click.stop="openVoucher(order)">
-              <icon-scan /> <span>出示提货码</span>
-            </button>
           </div>
         </div>
 
@@ -211,21 +208,19 @@
             <span>订单: {{ String(order.id).substring(0, 16) }}...</span>
             <icon-copy class="meta-copy-icon" />
           </div>
-          <span class="order-create-time">{{ $formatTime(order.createTime) }}</span>
+          <span class="order-time-meta">{{ $formatTime(order.createTime) }}</span>
         </div>
 
-        <!-- G. 卡片底部：实付款结算与全场景操作按钮 -->
-        <div class="card-action-footer">
-          <div class="settle-price-wrap">
-            <span class="settle-qty-count">共 {{ calcTotalQuantity(order.items) }} 件</span>
-            <span class="settle-label">实付:</span>
-            <span class="settle-currency">¥</span>
-            <span class="settle-amount">{{ order.totalAmount }}</span>
+        <!-- G. 订单底部金额结算与业务操作栏 -->
+        <div class="card-footer-action-bar">
+          <div class="footer-price-col">
+            <span class="price-label">实付款:</span>
+            <span class="price-currency">¥</span>
+            <span class="price-bold">{{ order.totalAmount }}</span>
           </div>
 
-          <!-- 独立场景操作按钮组 -->
-          <div class="action-btn-group">
-            <!-- 场景 1：待付款 (0) -->
+          <div class="footer-buttons-group">
+            <!-- 场景 1：待支付 (0) -->
             <template v-if="order.status === 0">
               <a-button 
                 type="text" 
@@ -252,13 +247,6 @@
               >
                 查看快团
               </button>
-              <button 
-                class="btn-action-voucher"
-                @click.stop="openVoucher(order)"
-              >
-                <icon-scan class="voucher-icon" />
-                <span>提货凭证</span>
-              </button>
             </template>
 
             <!-- 场景 3：已提货完成 (2) -->
@@ -268,12 +256,6 @@
                 @click.stop="handleReorder(order)"
               >
                 再来一单
-              </button>
-              <button 
-                class="btn-action-secondary"
-                @click.stop="openVoucher(order)"
-              >
-                查看详情
               </button>
             </template>
 
@@ -301,88 +283,12 @@
 
       <p class="list-end-divider">已展示全部 {{ filteredOrders.length }} 条跟团记录</p>
     </div>
-
-    <!-- 4. 专属电子提货凭证微抽屉 (AppBottomSheet) -->
-    <AppBottomSheet
-      :visible="voucherDrawerVisible"
-      title="提货核销凭证"
-      subtitle="请向小柴包酱或自提点出示此凭证以领取商品"
-      confirmText="已确认提货"
-      @confirm="voucherDrawerVisible = false"
-      @cancel="voucherDrawerVisible = false"
-    >
-      <div class="voucher-modal-content" v-if="currentVoucherOrder">
-        <!-- 提货核心大号跟团号展示 -->
-        <div class="voucher-highlight-card">
-          <span class="voucher-card-badge">快团自提码</span>
-          <div class="voucher-code-main">
-            <span class="voucher-prefix">跟团号</span>
-            <span class="voucher-large-number">#{{ currentVoucherOrder.followNumber }}</span>
-          </div>
-          <div class="voucher-barcode-simulation">
-            <div class="barcode-lines"></div>
-            <div class="barcode-number" @click="handleCopy(currentVoucherOrder.id, '订单单号')">
-              <span>单号: {{ currentVoucherOrder.id }}</span>
-              <icon-copy class="barcode-copy-icon" />
-            </div>
-          </div>
-          <div class="voucher-status-stamp" :class="'stamp-' + currentVoucherOrder.status">
-            {{ getStatusText(currentVoucherOrder.status) }}
-          </div>
-        </div>
-
-        <!-- 履约与自提点指引 -->
-        <div class="voucher-info-group">
-          <div class="voucher-info-item">
-            <span class="v-label"><icon-location /> 提货地点:</span>
-            <span class="v-val highlight-loc">{{ currentVoucherOrder.campaign?.deliveryLocation?.name || '指定提货点' }}</span>
-          </div>
-          <div class="voucher-info-item" v-if="currentVoucherOrder.campaign?.deliveryLocation?.address">
-            <span class="v-label">详细地址:</span>
-            <span class="v-val">{{ currentVoucherOrder.campaign.deliveryLocation.address }}</span>
-          </div>
-          <div class="voucher-info-item" v-if="currentVoucherOrder.campaign?.deliveryTime">
-            <span class="v-label"><icon-clock-circle /> 预计提货:</span>
-            <span class="v-val highlight-time">{{ $formatTime(currentVoucherOrder.campaign.deliveryTime) }}</span>
-          </div>
-          <div class="voucher-info-item" v-if="currentVoucherOrder.contactPhone">
-            <span class="v-label"><icon-phone /> 提货预留:</span>
-            <span class="v-val">{{ currentVoucherOrder.contactPhone }} ({{ currentVoucherOrder.contactName || '顾客' }})</span>
-          </div>
-          <div class="voucher-info-item" v-if="currentVoucherOrder.remark">
-            <span class="v-label">订单备注:</span>
-            <span class="v-val remark-text">{{ currentVoucherOrder.remark }}</span>
-          </div>
-        </div>
-
-        <!-- 核销商品清单 -->
-        <div class="voucher-items-summary">
-          <h4 class="v-items-title">跟团商品明细 (共 {{ calcTotalQuantity(currentVoucherOrder.items) }} 件)</h4>
-          <div class="v-items-list">
-            <div 
-              v-for="item in currentVoucherOrder.items" 
-              :key="item.id" 
-              class="v-item-row"
-            >
-              <span class="v-item-name">{{ item.productName }}</span>
-              <span class="v-item-specs" v-if="item.specs">({{ item.specs }})</span>
-              <span class="v-item-qty">× {{ item.quantity }}</span>
-              <span class="v-item-price">¥{{ ((item.price || 0) * (item.quantity || 1)).toFixed(2) }}</span>
-            </div>
-          </div>
-          <div class="v-total-row">
-            <span>实付款:</span>
-            <span class="v-total-price">¥{{ currentVoucherOrder.totalAmount }}</span>
-          </div>
-        </div>
-      </div>
-    </AppBottomSheet>
   </div>
 </template>
 
 <script>
 import { deleteUnpaidCampaignOrder } from '@/api/campaign';
-import { Message, Modal } from '@arco-design/web-vue';
+import { Message } from '@arco-design/web-vue';
 
 export default {
   name: 'CampaignOrderList',
@@ -402,9 +308,7 @@ export default {
         { key: 'pendingPickup', label: '待提货' },
         { key: 'completed', label: '已完成' },
         { key: 'cancelled', label: '已取消' }
-      ],
-      voucherDrawerVisible: false,
-      currentVoucherOrder: null
+      ]
     }
   },
   computed: {
@@ -483,10 +387,6 @@ export default {
         return;
       }
       this.$router.push(`/campaign/${order.campaignId}`);
-    },
-    openVoucher(order) {
-      this.currentVoucherOrder = order;
-      this.voucherDrawerVisible = true;
     },
     handleCopy(text, name = '单号') {
       if (!text) return;
@@ -1297,217 +1197,5 @@ export default {
   font-size: 11px;
   color: #C9CDD4;
   margin: 20px 0 10px;
-}
-
-/* ================= 4. 电子提货核销凭证抽屉专属样式 ================= */
-.voucher-modal-content {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding-top: 4px;
-}
-
-.voucher-highlight-card {
-  position: relative;
-  background: linear-gradient(135deg, #1A1D24 0%, #11141A 100%);
-  border-radius: 18px;
-  padding: 20px 18px 16px;
-  color: #FFFFFF;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
-  overflow: hidden;
-}
-
-.voucher-card-badge {
-  font-size: 11px;
-  font-weight: 700;
-  color: #FBBF24;
-  background: rgba(245, 158, 11, 0.2);
-  padding: 2px 10px;
-  border-radius: 12px;
-  margin-bottom: 10px;
-}
-
-.voucher-code-main {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-}
-.voucher-prefix {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.7);
-  font-weight: 600;
-}
-.voucher-large-number {
-  font-size: 40px;
-  font-weight: 900;
-  color: #FBBF24;
-  letter-spacing: 1px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-  line-height: 1;
-}
-
-.voucher-barcode-simulation {
-  margin-top: 14px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-}
-
-.barcode-lines {
-  width: 80%;
-  height: 38px;
-  background: repeating-linear-gradient(
-    90deg,
-    #FFFFFF 0,
-    #FFFFFF 2px,
-    transparent 2px,
-    transparent 5px,
-    #FFFFFF 5px,
-    #FFFFFF 9px,
-    transparent 9px,
-    transparent 11px
-  );
-  opacity: 0.85;
-  border-radius: 2px;
-}
-
-.barcode-number {
-  margin-top: 6px;
-  font-size: 11px;
-  font-family: monospace;
-  color: rgba(255, 255, 255, 0.6);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
-}
-.barcode-copy-icon {
-  font-size: 11px;
-}
-
-.voucher-status-stamp {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  font-size: 10px;
-  font-weight: 800;
-  padding: 2px 8px;
-  border-radius: 6px;
-  border: 1px solid currentColor;
-}
-.voucher-status-stamp.stamp-1 {
-  color: #10B981;
-  background: rgba(16, 185, 129, 0.15);
-}
-.voucher-status-stamp.stamp-2 {
-  color: #9CA3AF;
-  background: rgba(156, 163, 175, 0.15);
-}
-.voucher-status-stamp.stamp-0 {
-  color: #F59E0B;
-  background: rgba(245, 158, 11, 0.15);
-}
-
-.voucher-info-group {
-  background: #FAF8F7;
-  border-radius: 14px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.voucher-info-item {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  font-size: 13px;
-}
-.v-label {
-  color: #86909C;
-  font-size: 12px;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.v-val {
-  color: #1D2129;
-  font-weight: 600;
-  flex: 1;
-}
-.v-val.highlight-loc {
-  color: #165DFF;
-  font-weight: 800;
-}
-.v-val.highlight-time {
-  color: #D97706;
-  font-weight: 700;
-}
-.v-val.remark-text {
-  color: #D46B08;
-  font-size: 12px;
-}
-
-.voucher-items-summary {
-  border: 1px solid #F2F3F5;
-  border-radius: 14px;
-  padding: 14px;
-}
-.v-items-title {
-  margin: 0 0 10px 0;
-  font-size: 13px;
-  font-weight: 700;
-  color: #1D2129;
-}
-.v-items-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.v-item-row {
-  display: flex;
-  align-items: center;
-  font-size: 12px;
-  color: #4E5969;
-}
-.v-item-name {
-  flex: 1;
-  color: #1D2129;
-  font-weight: 600;
-}
-.v-item-specs {
-  color: #86909C;
-  margin-right: 6px;
-}
-.v-item-qty {
-  color: #86909C;
-  margin-right: 12px;
-}
-.v-item-price {
-  font-weight: 700;
-  color: #1D2129;
-}
-
-.v-total-row {
-  margin-top: 10px;
-  padding-top: 8px;
-  border-top: 1px dashed #E5E6EB;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 13px;
-  font-weight: 700;
-  color: #1D2129;
-}
-.v-total-price {
-  font-size: 17px;
-  font-weight: 900;
-  color: #FF5A34;
 }
 </style>

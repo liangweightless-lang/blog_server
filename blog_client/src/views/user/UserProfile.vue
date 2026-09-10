@@ -301,14 +301,10 @@ export default {
       return (this.orders || []).filter(o => o.status === 0).length;
     },
     pendingPayCount() {
-      const normal = (this.orders || []).filter(o => o.status === 0).length;
-      const campaign = (this.campaignOrders || []).filter(o => o.status === 0).length;
-      return normal + campaign;
+      return (this.orders || []).filter(o => o.status === 0).length;
     },
     pendingPickupCount() {
-      const normal = (this.orders || []).filter(o => o.status === 1).length;
-      const campaign = (this.campaignOrders || []).filter(o => o.status === 1).length;
-      return normal + campaign;
+      return (this.orders || []).filter(o => o.status === 1).length;
     },
     activeCampaignCount() {
       // 仅统计进行中的跟团订单：待付款(0) 和 待提货/备料中(1)；已提货(2)和已取消(3)红点自动消失
@@ -323,7 +319,7 @@ export default {
         return this.orders.filter(o => o.status === 1);
       }
       if (this.orderFilterStatus === 'completed') {
-        return this.orders.filter(o => o.status === 2);
+        return this.orders.filter(o => o.status === 3);
       }
       return this.orders;
     },
@@ -334,7 +330,7 @@ export default {
       return (this.orders || []).filter(o => o.status === 1).length;
     },
     completedCountNormal() {
-      return (this.orders || []).filter(o => o.status === 2).length;
+      return (this.orders || []).filter(o => o.status === 3).length;
     }
   },
   methods: {
