@@ -125,7 +125,14 @@ export default {
         return;
       }
 
-      // 2. 如果移动端工作台当前打开了子模块，通知关闭子模块回到工作台面板
+      // 2. 检查是否有打开的可见弹窗或抽屉，优先关闭弹窗避免误触切路由
+      const openModalCloseBtn = document.querySelector('.arco-modal-container:not([style*="display: none"]) .arco-modal-close-btn, .arco-drawer-container:not([style*="display: none"]) .arco-drawer-close-btn');
+      if (openModalCloseBtn) {
+        openModalCloseBtn.click();
+        return;
+      }
+
+      // 3. 如果移动端工作台当前打开了子模块，通知关闭子模块回到工作台面板
       const hasSubModule = document.querySelector('.workbench-submodule-view');
       if (hasSubModule) {
         window.dispatchEvent(new CustomEvent('workbench-back'));

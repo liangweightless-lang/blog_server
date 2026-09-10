@@ -367,6 +367,10 @@ export default {
     showGroupsDialog() {
       this.groupsDialogVisible = true;
     },
+    fetchOrders() {
+      this.fetchMyOrders();
+      this.fetchMyCampaignOrders();
+    },
     handleLogout() {
       this.clearUser();
       this.$router.push('/');
@@ -375,10 +379,6 @@ export default {
     async loadUserAndForm() {
       if (!this.user) {
         await this.fetchUser();
-      }
-      if (!this.user) {
-        this.$router.push('/');
-        return;
       }
     },
     async fetchMyOrders() {
