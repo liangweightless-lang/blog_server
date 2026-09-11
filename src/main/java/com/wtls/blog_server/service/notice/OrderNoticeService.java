@@ -34,6 +34,9 @@ public class OrderNoticeService {
     @Value("${pushplus.token:}")
     private String token;
 
+    @Value("${pushplus.topic:}")
+    private String topic;
+
     private static final String PUSHPLUS_URL = "http://www.pushplus.plus/send";
 
     /**
@@ -148,6 +151,9 @@ public class OrderNoticeService {
         body.set("title", title);
         body.set("content", contentHtml);
         body.set("template", "html");
+        if (StrUtil.isNotBlank(topic)) {
+            body.set("topic", topic.trim());
+        }
 
         try {
             HttpResponse resp = HttpRequest.post(PUSHPLUS_URL)
