@@ -13,6 +13,7 @@ import com.wtls.blog_server.exception.BusinessException;
 import com.wtls.blog_server.mapper.product.ProductMapper;
 import com.wtls.blog_server.mapper.product.ProductOrderMapper;
 import com.wtls.blog_server.mapper.user.UserMapper;
+import com.wtls.blog_server.service.notice.OrderNoticeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +39,9 @@ public class ProductOrderService {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private OrderNoticeService orderNoticeService;
 
     /**
      * 创建商品订单（支持单买/拼团、规格、件数、积分抵扣、配送费计算）
@@ -171,7 +175,13 @@ public class ProductOrderService {
             userMapper.addPoints(buyer.getInvitedBy(), 100);
         }
 
-        return orderMapper.selectById(orderId);
+        ProductOrder updatedOrder = orderMapper.selectById(orderId);
+
+        // 4. 异步推送微信订单提醒给店长/团长
+        Product product = productMapper.selectById(order.getProductId());
+        orderNoticeService.sendProductOrderNotice(updatedOrder, product);
+
+        return updatedOrder;
     }
 
     /**

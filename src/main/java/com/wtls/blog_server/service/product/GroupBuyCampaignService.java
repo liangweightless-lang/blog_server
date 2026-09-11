@@ -19,6 +19,7 @@ import com.wtls.blog_server.mapper.product.DeliveryLocationMapper;
 import com.wtls.blog_server.mapper.product.GroupBuyCampaignMapper;
 import com.wtls.blog_server.mapper.product.ProductMapper;
 import com.wtls.blog_server.mapper.user.UserMapper;
+import com.wtls.blog_server.service.notice.OrderNoticeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,6 +57,9 @@ public class GroupBuyCampaignService {
     
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private OrderNoticeService orderNoticeService;
 
     /**
      * 查询所有团购活动列表（按创建时间倒序），并补全自提点、活动商品与成团人数详情
@@ -374,6 +378,11 @@ public class GroupBuyCampaignService {
                 }
             }
         }
+
+        // 3. 异步推送微信跟团提醒给店长/团长
+        GroupBuyCampaign campaign = campaignMapper.selectById(order.getCampaignId());
+        orderNoticeService.sendCampaignOrderNotice(order, campaign, items);
+
         return order;
     }
     
