@@ -247,6 +247,16 @@ public class GroupBuyCampaignService {
      */
     @Transactional
     public void deleteCampaign(Long id) {
+        // 校验：若活动下尚有待提货(1)或待支付(0)的有效订单，严禁删除活动（彻底防止死锁孤儿订单）
+        QueryWrapper<CampaignOrder> orderCheckQuery = new QueryWrapper<>();
+        orderCheckQuery.eq("campaign_id", id).in("status", 0, 1);
+        long pendingOrdersCount = orderMapper.selectCount(orderCheckQuery);
+        if (pendingOrdersCount > 0) {
+            throw new com.wtls.blog_server.exception.BusinessException(
+                "该活动下尚有 " + pendingOrdersCount + " 笔待提货或待支付订单，无法直接删除！请先核销或关闭订单，或将活动标记为【已结束】。"
+            );
+        }
+
         // 1. 删除关联商品记录
         QueryWrapper<CampaignProduct> delQuery = new QueryWrapper<>();
         delQuery.eq("campaign_id", id);

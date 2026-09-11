@@ -43,18 +43,23 @@
         class="order-card-item" 
         @click="$emit('detail', order)"
       >
-        <!-- 1. 卡片头部：单号复制 + 下单时间 + 状态标签 -->
+        <!-- 1. 卡片头部：分层清晰履约行 (方案 A: 跟团号高亮聚焦 + 状态，下行单号与时间) -->
         <div class="order-card-header">
-          <div class="order-id-wrap" @click.stop="handleCopy(order.id, '订单号')" title="点击复制订单号">
-            <span class="order-id">单号: {{ String(order.id).substring(0, 14) }}...</span>
-            <icon-copy class="copy-icon" />
-          </div>
-          <div class="header-right-tags">
-            <span class="follow-no-tag" v-if="order.followNumber">跟团号 #{{ order.followNumber }}</span>
-            <span class="order-date-text">{{ $formatTime(order.createTime) }}</span>
+          <div class="header-primary-row">
+            <div class="follow-no-wrap">
+              <span class="follow-no-pill" v-if="order.followNumber">跟团号 #{{ order.followNumber }}</span>
+              <span class="campaign-type-capsule">快团订单</span>
+            </div>
             <a-tag :color="getOrderStatusColor(order.status)" size="small" class="status-tag">
               {{ getOrderStatusText(order.status) }}
             </a-tag>
+          </div>
+          <div class="header-sub-row">
+            <div class="order-id-wrap" @click.stop="handleCopy(order.id, '订单号')" title="点击复制订单号">
+              <span class="order-id">单号: {{ String(order.id).substring(0, 14) }}...</span>
+              <icon-copy class="copy-icon" />
+            </div>
+            <span class="order-date-text">{{ $formatTime(order.createTime) }}</span>
           </div>
         </div>
 
@@ -438,14 +443,51 @@ export default {
   transform: scale(0.992);
 }
 
-/* A. 卡片头部 */
+/* A. 卡片头部 (方案 A: 分层清晰) */
 .order-card-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 8px;
   margin-bottom: 12px;
   padding-bottom: 10px;
   border-bottom: 1px solid #F2F3F5;
+}
+
+.header-primary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.follow-no-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.follow-no-pill {
+  font-size: 13px;
+  font-weight: 800;
+  color: #FF5A34;
+  background: #FFF2ED;
+  padding: 2px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.2px;
+}
+
+.campaign-type-capsule {
+  font-size: 10px;
+  color: #86909C;
+  background: #F7F8FA;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.header-sub-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .order-id-wrap {
@@ -453,7 +495,7 @@ export default {
   align-items: center;
   gap: 4px;
   color: #86909C;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .order-id-wrap:hover .copy-icon {
@@ -461,29 +503,14 @@ export default {
 }
 
 .copy-icon {
-  font-size: 13px;
+  font-size: 12px;
   color: #C9CDD4;
   cursor: pointer;
 }
 
-.header-right-tags {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.follow-no-tag {
-  font-size: 11px;
-  font-weight: 700;
-  color: #FF5A34;
-  background: #FFF2ED;
-  padding: 1px 6px;
-  border-radius: 4px;
-}
-
 .order-date-text {
   font-size: 11px;
-  color: #C9CDD4;
+  color: #86909C;
 }
 
 .status-tag {

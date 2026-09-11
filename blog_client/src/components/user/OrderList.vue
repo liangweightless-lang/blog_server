@@ -260,6 +260,8 @@ export default {
   gap: 4px;
   color: #86909C;
   font-size: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .order-id-wrap:hover .copy-icon {
@@ -276,11 +278,14 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .order-date-text {
   font-size: 11px;
   color: #C9CDD4;
+  white-space: nowrap;
 }
 
 .status-tag {
