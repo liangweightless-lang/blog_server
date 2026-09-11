@@ -326,7 +326,7 @@ body {
   }
 
   /* 【市面手机主流规范】全站移动端卡片弹窗一律统一为：左右有间距、四周24px全圆角、悬浮卡片 */
-  .arco-modal:not(.arco-modal-simple),
+  .arco-modal:not(.arco-modal-simple):not(.product-buy-sheet-modal),
   .checkout-modal,
   .creator-modal-mobile,
   .group-dialog,
@@ -355,6 +355,33 @@ body {
     animation: floatingScaleIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
 
+  /* 【市面电商规范】购买与结算底部抽屉 (Bottom Sheet) 移动端贴底滑出 */
+  .arco-modal.product-buy-sheet-modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 20px 20px 0 0 !important;
+    background: #FFFFFF !important;
+    box-shadow: 0 -8px 36px rgba(0, 0, 0, 0.18) !important;
+    max-height: 86dvh !important;
+    overflow: hidden !important;
+    animation: slideUpBottomSheet 0.3s cubic-bezier(0.25, 1, 0.5, 1) !important;
+  }
+  .arco-modal.product-buy-sheet-modal .arco-modal-body {
+    width: 100% !important;
+    padding: 0 !important;
+    max-height: 86dvh !important;
+    overflow: hidden !important;
+    border-radius: 20px 20px 0 0 !important;
+    background: #FFFFFF !important;
+  }
+
   /* 对于自定义外置关闭按钮的卡片，背景设为透明，避免双重阴影并保证垂直居中与可视区锁定 */
   .arco-modal.floating-card-modal {
     background: transparent !important;
@@ -375,7 +402,7 @@ body {
     width: 100% !important;
   }
 
-  .arco-modal:not(.arco-modal-simple) .arco-modal-body {
+  .arco-modal:not(.arco-modal-simple):not(.product-buy-sheet-modal) .arco-modal-body {
     width: 100% !important;
     border-radius: 24px !important;
     overflow-y: auto !important;
@@ -457,7 +484,7 @@ body {
   }
 
   /* 【核心交互】移动端 Arco 默认业务弹窗关闭按钮统一转换为：居中悬浮在白色卡片正下方外部的圆形关闭按钮 */
-  .arco-modal:not(.floating-card-modal):not(.arco-modal-simple) .arco-modal-close-btn,
+  .arco-modal:not(.floating-card-modal):not(.arco-modal-simple):not(.product-buy-sheet-modal) .arco-modal-close-btn,
   .sheet-circle-close {
     display: flex !important;
     position: absolute !important;
@@ -496,8 +523,9 @@ body {
     background: transparent !important;
   }
 
-  /* 当已存在专门的 outside-close-wrapper 时，隐藏冗余的关闭按钮 */
-  .floating-card-modal .arco-modal-close-btn {
+  /* 当已存在专门的 outside-close-wrapper 或内部专属关闭按钮时，隐藏冗余的默认关闭按钮 */
+  .floating-card-modal .arco-modal-close-btn,
+  .product-buy-sheet-modal .arco-modal-close-btn {
     display: none !important;
   }
 
