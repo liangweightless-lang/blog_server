@@ -29,7 +29,7 @@ services:
       - COS_REGION=${COS_REGION:-ap-guangzhou}
       - COS_BUCKET_NAME=${COS_BUCKET_NAME:-caibread-1323711478}
       - PUSHPLUS_TOKEN=${PUSHPLUS_TOKEN:-7dab0b762b9f42ce8e536bf7ed81ebd3}
-      - PUSHPLUS_TOPIC=${PUSHPLUS_TOPIC:-}
+      - PUSHPLUS_TOPIC=${PUSHPLUS_TOPIC:-caibread}
     ports:
       - "8081:8081"
     volumes:
