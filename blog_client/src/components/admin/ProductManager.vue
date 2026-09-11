@@ -98,6 +98,16 @@
             <span v-else>{{ record.stock === -1 ? '不限' : record.stock }}</span>
           </template>
         </a-table-column>
+        <a-table-column title="置顶" :width="85">
+          <template #cell="{ record }">
+            <a-switch 
+              size="small" 
+              :model-value="record.isTop === 1" 
+              checked-color="#ff7d00"
+              @change="(val) => handleToggleTop(record, val)"
+            />
+          </template>
+        </a-table-column>
         <a-table-column title="状态" :width="90">
           <template #cell="{ record }">
             <a-tag :color="record.status === 0 ? 'gray' : 'green'" size="small">
@@ -143,6 +153,7 @@
                 </span>
               </div>
               <div class="prod-tags-row">
+                <span class="micro-tag top-tag" v-if="prod.isTop === 1">★ 置顶推荐</span>
                 <span class="micro-tag cat-tag">{{ getCategoryName(prod.categoryId) }}</span>
                 <span class="micro-tag type-tag">{{ prod.isDigital ? '数字商品' : '实物' }}</span>
                 <span class="micro-tag fee-tag" v-if="prod.deliveryFee && prod.deliveryFee > 0">运费¥{{ prod.deliveryFee }}</span>
@@ -160,6 +171,13 @@
 
           <!-- 底部专属操作行 -->
           <div class="prod-card-bottom-actions">
+            <button 
+              class="action-capsule-btn" 
+              :class="prod.isTop === 1 ? 'btn-untop' : 'btn-top'"
+              @click="handleToggleTop(prod, prod.isTop !== 1)"
+            >
+              <icon-star /> <span>{{ prod.isTop === 1 ? '取消置顶' : '置顶推荐' }}</span>
+            </button>
             <button class="action-capsule-btn btn-edit" @click="openEditProductDialog(prod)">
               <icon-edit /> <span>编辑</span>
             </button>
@@ -294,6 +312,14 @@
               </div>
               <a-switch v-model="productForm.isDigital" />
             </div>
+
+            <div class="custom-form-item digital-switch-row">
+              <div class="switch-text">
+                <span class="switch-title">置顶推荐</span>
+                <span class="switch-desc">置顶商品将在前台橱窗列表最前列展示</span>
+              </div>
+              <a-switch v-model="productForm.isTop" :checked-value="1" :unchecked-value="0" checked-color="#ff7d00" />
+            </div>
           </div>
 
           <!-- 2. 规格配置面板 -->
@@ -352,7 +378,7 @@
 </template>
 
 <script>
-import { getProducts, updateProduct, saveProduct, deleteProduct, updateProductStatus } from '@/api/product';
+import { getProducts, updateProduct, saveProduct, deleteProduct, updateProductStatus, updateProductTop } from '@/api/product';
 import { getProductCategories } from '@/api/productCategory';
 import { getUploadUrl, getUploadHeaders } from '@/api/common';
 import CategoryManagerDialog from './CategoryManagerDialog.vue';
@@ -488,6 +514,17 @@ export default {
         Message.error(e.response?.data?.message || '状态切换失败');
       }
     },
+    async handleToggleTop(prod, val) {
+      const targetTop = (val === true || val === 1) ? 1 : 0;
+      try {
+        await updateProductTop(prod.id, targetTop);
+        prod.isTop = targetTop;
+        Message.success(targetTop === 1 ? '已将该商品置顶推荐' : '已取消置顶推荐');
+        this.fetchProducts();
+      } catch (e) {
+        Message.error(e.response?.data?.message || '置顶切换失败');
+      }
+    },
     openCreateProductDialog() {
       this.isEditing = false;
       this.currentTab = 'basic';
@@ -497,6 +534,7 @@ export default {
         description: '',
         price: 0,
         deliveryFee: 0,
+        isTop: 0,
         image: '',
         isDigital: true,
         status: 1,
@@ -520,6 +558,7 @@ export default {
       this.productForm = {
         ...prod,
         deliveryFee: prod.deliveryFee !== undefined ? prod.deliveryFee : 0,
+        isTop: prod.isTop !== undefined ? prod.isTop : 0,
         status: prod.status !== undefined ? prod.status : 1,
         specsList: specs.map(s => ({ ...s, inputVisible: false, inputValue: '' }))
       };
@@ -1038,6 +1077,22 @@ export default {
   background: #E8FFEA;
   border: 1px solid #AFF0B5;
   color: #00B42A;
+}
+.top-tag {
+  background: #FFF7E8;
+  color: #FF7D00;
+  border: 1px solid #FFE4BA;
+  font-weight: 600;
+}
+.btn-top {
+  background: #FFF7E8;
+  border: 1px solid #FFE4BA;
+  color: #FF7D00;
+}
+.btn-untop {
+  background: #F2F3F5;
+  border: 1px solid #E5E6EB;
+  color: #86909C;
 }
 .btn-delete {
   background: #FFF0F0;

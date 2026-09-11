@@ -20,6 +20,7 @@ public class Product {
     @com.baomidou.mybatisplus.annotation.TableField(exist = false)
     private String categoryName;
     private BigDecimal deliveryFee; // 配送费
+    private Integer isTop; // 0: 否, 1: 是(置顶推荐)
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 }

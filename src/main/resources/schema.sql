@@ -38,7 +38,8 @@ CREATE TABLE IF NOT EXISTS `product` (
   `price` decimal(10,2) NOT NULL COMMENT '价格',
   `group_price` decimal(10,2) DEFAULT NULL COMMENT '拼团价格',
   `image` varchar(255) NOT NULL COMMENT '封面图片URL',
-  `is_digital` tinyint(1) NOT NULL DEFAULT '1' COMMENT '是否为数字商品(1:是, 0:否)',
+  `delivery_fee` decimal(10,2) DEFAULT '0.00' COMMENT '配送费/运费',
+  `is_top` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否置顶(0:否, 1:是)',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`)

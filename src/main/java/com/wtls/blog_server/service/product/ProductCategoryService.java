@@ -30,9 +30,7 @@ public class ProductCategoryService {
     public void createCategory(ProductCategory category) {
         category.setCreateTime(LocalDateTime.now());
         category.setUpdateTime(LocalDateTime.now());
-        if (category.getSortOrder() == null) {
-            category.setSortOrder(0);
-        }
+        category.setSortOrder(cn.hutool.core.util.ObjUtil.defaultIfNull(category.getSortOrder(), 0));
         categoryMapper.insert(category);
     }
 

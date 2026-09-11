@@ -48,6 +48,16 @@ export function updateProductStatus(id, status) {
 }
 
 /**
+ * 更新商品置顶推荐状态 (管理端)
+ * @param {string|number} id - 商品 ID
+ * @param {number} isTop - 置顶状态 (1: 置顶, 0: 普通)
+ * @returns {Promise}
+ */
+export function updateProductTop(id, isTop) {
+  return request.put(`/api/products/${id}/top`, null, { params: { isTop } });
+}
+
+/**
  * 删除商品 (管理端)
  * @param {string|number} id - 商品 ID
  * @returns {Promise}

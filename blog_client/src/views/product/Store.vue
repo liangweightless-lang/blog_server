@@ -60,54 +60,91 @@
 
     <!-- 普通单品区 -->
     <div class="product-grid" style="margin-top: 32px;">
-      <h2 class="section-title" style="color: #1D2129; margin-bottom: 16px;"><icon-apps /> 发现好物 <span style="font-size: 13px; color: #86909C; font-weight: normal; margin-left: 8px;">单品自由选购</span></h2>
-      <a-grid :cols="{ xs: 2, sm: 2, md: 3 }" :colGap="12" :rowGap="24">
-      <a-grid-item v-for="product in products" :key="product.id" class="product-col">
-        <a-card class="product-card" hoverable :bordered="false" :body-style="{ padding: '0px' }" :class="{ 'is-out-of-stock': product.stock === 0 }">
-          <div class="product-image-wrapper" @click="$router.push(`/product/${product.id}`)">
-            <img :src="$formatImageUrl(product.image)" class="product-image" :class="{ 'out-of-stock-img': product.stock === 0 }" :alt="product.name" />
-            <div class="product-badge out-of-stock-badge" v-if="product.stock === 0">已售罄</div>
-            <div class="product-badge" v-else-if="product.isDigital">品牌甄选</div>
-          </div>
-          <div class="product-info">
-            <div class="product-clickable" @click="$router.push(`/product/${product.id}`)">
-              <h3 class="product-name">{{ product.name }}</h3>
-              <p class="product-desc">{{ product.description }}</p>
+      <div class="product-header-bar">
+        <h2 class="section-title" style="color: #1D2129; margin-bottom: 0;">
+          <icon-apps /> 发现好物 
+          <span style="font-size: 13px; color: #86909C; font-weight: normal; margin-left: 8px;">单品自由选购</span>
+        </h2>
+
+        <!-- 极简轻量排序筛选条 (KISS) -->
+        <div class="sort-capsule-group">
+          <button 
+            v-for="opt in sortOptions" 
+            :key="opt.value"
+            class="sort-pill-btn" 
+            :class="{ active: currentSort === opt.value }"
+            @click="changeSort(opt.value)"
+          >
+            {{ opt.label }}
+          </button>
+        </div>
+      </div>
+
+      <a-grid :cols="{ xs: 2, sm: 2, md: 3 }" :colGap="12" :rowGap="24" style="margin-top: 16px;">
+        <a-grid-item v-for="product in displayedProducts" :key="product.id" class="product-col">
+          <a-card class="product-card" hoverable :bordered="false" :body-style="{ padding: '0px' }" :class="{ 'is-out-of-stock': product.stock === 0 }">
+            <div class="product-image-wrapper" @click="$router.push(`/product/${product.id}`)">
+              <img 
+                :src="$formatImageUrl(product.image)" 
+                class="product-image" 
+                :class="{ 'out-of-stock-img': product.stock === 0 }" 
+                :alt="product.name" 
+                loading="lazy"
+                decoding="async"
+              />
+              <div class="product-badge out-of-stock-badge" v-if="product.stock === 0">已售罄</div>
+              <div class="product-badge top-badge" v-else-if="product.isTop === 1">置顶推荐</div>
+              <div class="product-badge" v-else-if="product.isDigital">品牌甄选</div>
             </div>
-            <div class="product-shipping-tag" style="margin-bottom: 6px;">
-              <span v-if="product.deliveryFee && product.deliveryFee > 0" style="font-size: 11px; color: #86909C;">运费 ¥{{ product.deliveryFee }}</span>
-              <span v-else style="font-size: 11px; color: #00B42A;">免配送费</span>
-            </div>
-            <div class="product-bottom">
-              <span class="product-price">¥{{ product.price }}</span>
-              <div class="button-group">
-                <a-button v-if="product.stock !== 0" type="text" style="color: #E6A23C; font-size: 12px; padding: 0 4px;" @click="handleRedeem(product)">1000积分兑换</a-button>
-                <a-button 
-                  v-if="product.stock === 0" 
-                  disabled 
-                  size="small" 
-                  shape="round" 
-                  class="buy-btn btn-out-of-stock"
-                >
-                  暂无库存
-                </a-button>
-                <a-button 
-                  v-else 
-                  type="primary" 
-                  size="small" 
-                  shape="round" 
-                  class="buy-btn" 
-                  @click="handleBuy(product)"
-                >
-                  立即购买
-                </a-button>
-                <a-button v-if="isMonday && product.stock !== 0" type="primary" status="warning" size="small" shape="round" class="group-btn" @click="handleStartGroup(product)">发起拼团</a-button>
+            <div class="product-info">
+              <div class="product-clickable" @click="$router.push(`/product/${product.id}`)">
+                <h3 class="product-name">{{ product.name }}</h3>
+                <p class="product-desc">{{ product.description }}</p>
+              </div>
+              <div class="product-shipping-tag" style="margin-bottom: 6px;">
+                <span v-if="product.deliveryFee && product.deliveryFee > 0" style="font-size: 11px; color: #86909C;">运费 ¥{{ product.deliveryFee }}</span>
+                <span v-else style="font-size: 11px; color: #00B42A;">免配送费</span>
+              </div>
+              <div class="product-bottom">
+                <span class="product-price">¥{{ product.price }}</span>
+                <div class="button-group">
+                  <a-button v-if="product.stock !== 0" type="text" style="color: #E6A23C; font-size: 12px; padding: 0 4px;" @click="handleRedeem(product)">1000积分兑换</a-button>
+                  <a-button 
+                    v-if="product.stock === 0" 
+                    disabled 
+                    size="small" 
+                    shape="round" 
+                    class="buy-btn btn-out-of-stock"
+                  >
+                    暂无库存
+                  </a-button>
+                  <a-button 
+                    v-else 
+                    type="primary" 
+                    size="small" 
+                    shape="round" 
+                    class="buy-btn" 
+                    @click="handleBuy(product)"
+                  >
+                    立即购买
+                  </a-button>
+                  <a-button v-if="isMonday && product.stock !== 0" type="primary" status="warning" size="small" shape="round" class="group-btn" @click="handleStartGroup(product)">发起拼团</a-button>
+                </div>
               </div>
             </div>
-          </div>
-        </a-card>
-      </a-grid-item>
-    </a-grid>
+          </a-card>
+        </a-grid-item>
+      </a-grid>
+
+      <!-- 触底哨兵与滚动加载反馈 -->
+      <div ref="sentinel" class="scroll-sentinel">
+        <div v-if="loadingMore" class="loading-more-tip">
+          <a-spin dot size="small" /> <span style="margin-left: 8px;">正在加载更多好物...</span>
+        </div>
+        <div v-else-if="!hasMore && sortedProducts.length > pageSize" class="no-more-tip">
+          — 已展示全部单品好物 —
+        </div>
+      </div>
     </div>
     </PullToRefresh>
 
@@ -161,13 +198,54 @@ export default {
       activeGroups: [],
       campaigns: [], // 社区快团数据
       isMonday: new Date().getDay() === 1,
-      isMobile: window.innerWidth <= 768
+      isMobile: window.innerWidth <= 768,
+      currentSort: 'default',
+      sortOptions: [
+        { label: '综合推荐', value: 'default' },
+        { label: '价格由低到高', value: 'price_asc' },
+        { label: '价格由高到低', value: 'price_desc' },
+        { label: '最新上架', value: 'latest' }
+      ],
+      pageSize: 8,
+      visibleCount: 8,
+      loadingMore: false,
+      observer: null
     }
   },
   computed: {
     ...mapState(useUserStore, ['userInfo']),
     isAdmin() {
       return this.userInfo && this.userInfo.role === 'ADMIN';
+    },
+    sortedProducts() {
+      let list = [...this.products];
+      list.sort((a, b) => {
+        // 1. 缺货/售罄统一排在最后
+        const aOut = (a.stock === 0) ? 1 : 0;
+        const bOut = (b.stock === 0) ? 1 : 0;
+        if (aOut !== bOut) return aOut - bOut;
+
+        // 2. 置顶优先 (isTop === 1 优先展示)
+        const aTop = (a.isTop === 1) ? 1 : 0;
+        const bTop = (b.isTop === 1) ? 1 : 0;
+        if (aTop !== bTop) return bTop - aTop;
+
+        // 3. 用户选择的具体排序
+        if (this.currentSort === 'price_asc') {
+          return (Number(a.price) || 0) - (Number(b.price) || 0);
+        } else if (this.currentSort === 'price_desc') {
+          return (Number(b.price) || 0) - (Number(a.price) || 0);
+        } else {
+          return (b.id || 0) - (a.id || 0);
+        }
+      });
+      return list;
+    },
+    displayedProducts() {
+      return this.sortedProducts.slice(0, this.visibleCount);
+    },
+    hasMore() {
+      return this.visibleCount < this.sortedProducts.length;
     }
   },
   created() {
@@ -185,12 +263,43 @@ export default {
   },
   mounted() {
     window.addEventListener('tab-refresh', this.handleTabRefresh);
+    this.initObserver();
   },
   beforeUnmount() {
     window.removeEventListener('tab-refresh', this.handleTabRefresh);
+    if (this.observer) {
+      this.observer.disconnect();
+      this.observer = null;
+    }
   },
   methods: {
     ...mapActions(useUserStore, ['updatePoints']),
+    changeSort(type) {
+      this.currentSort = type;
+      this.visibleCount = this.pageSize;
+    },
+    initObserver() {
+      if (typeof window !== 'undefined' && 'IntersectionObserver' in window) {
+        this.observer = new IntersectionObserver((entries) => {
+          if (entries[0].isIntersecting && this.hasMore && !this.loadingMore) {
+            this.loadMore();
+          }
+        }, { rootMargin: '160px' });
+        this.$nextTick(() => {
+          if (this.$refs.sentinel) {
+            this.observer.observe(this.$refs.sentinel);
+          }
+        });
+      }
+    },
+    loadMore() {
+      if (!this.hasMore || this.loadingMore) return;
+      this.loadingMore = true;
+      setTimeout(() => {
+        this.visibleCount += this.pageSize;
+        this.loadingMore = false;
+      }, 150);
+    },
     handleTabRefresh(e) {
       if (e.detail?.path === '/store' || this.$route.path === '/store') {
         this.refreshAll();
@@ -270,14 +379,8 @@ export default {
     async fetchProducts() {
       try {
         const res = await getProducts({ status: 1 });
-        let list = res.data.data || [];
-        // 前端防御性排序：有库存的优先置顶 (stock !== 0 排在 stock === 0 前面)
-        list.sort((a, b) => {
-          const aOut = (a.stock === 0) ? 1 : 0;
-          const bOut = (b.stock === 0) ? 1 : 0;
-          return aOut - bOut;
-        });
-        this.products = list;
+        this.products = res.data.data || [];
+        this.visibleCount = this.pageSize;
       } catch (error) {
         Message.error('获取商品列表失败');
       }
@@ -429,6 +532,70 @@ export default {
   font-weight: bold;
 }
 
+.top-badge {
+  background: linear-gradient(135deg, #FF7D00 0%, #F53F3F 100%) !important;
+  box-shadow: 0 4px 12px rgba(255, 125, 0, 0.35) !important;
+  letter-spacing: 0.5px;
+}
+
+.product-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.sort-capsule-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #F2F3F5;
+  padding: 3px;
+  border-radius: 18px;
+}
+
+.sort-pill-btn {
+  border: none;
+  background: transparent;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #4E5969;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  outline: none;
+  white-space: nowrap;
+}
+
+.sort-pill-btn.active {
+  background: #FFFFFF;
+  color: #FF5722;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.scroll-sentinel {
+  padding: 24px 0 16px;
+  text-align: center;
+}
+
+.loading-more-tip {
+  color: #86909C;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.no-more-tip {
+  color: #C9CDD4;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
 .group-btn {
   background: linear-gradient(135deg, #F5A623 0%, #F57C00 100%);
   border: none;
@@ -455,6 +622,13 @@ export default {
     flex-direction: column;
     align-items: flex-end;
     gap: 8px;
+  }
+  .product-header-bar {
+    margin-bottom: 10px;
+  }
+  .sort-pill-btn {
+    padding: 3px 8px;
+    font-size: 11px;
   }
 }
 

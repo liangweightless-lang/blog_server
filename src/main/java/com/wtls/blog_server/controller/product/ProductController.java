@@ -75,6 +75,14 @@ public class ProductController {
         return Result.success(status == 1 ? "商品已上架" : "商品已下架");
     }
 
+    @PutMapping("/{id}/top")
+    @Operation(summary = "切换商品置顶状态 (Admin)")
+    public Result<String> updateTop(@RequestHeader("Authorization") String authHeader, @PathVariable Long id, @RequestParam("isTop") Integer isTop) {
+        JwtUtils.checkAdminOrCreator(authHeader);
+        productService.updateProductTop(id, isTop);
+        return Result.success(isTop == 1 ? "商品已置顶推荐" : "已取消置顶");
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "删除商品 (Admin)")
     public Result<String> delete(@RequestHeader("Authorization") String authHeader, @PathVariable Long id) {

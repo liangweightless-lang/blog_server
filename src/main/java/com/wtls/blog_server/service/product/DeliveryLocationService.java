@@ -30,9 +30,7 @@ public class DeliveryLocationService {
     public void createLocation(DeliveryLocation location) {
         location.setCreateTime(LocalDateTime.now());
         location.setUpdateTime(LocalDateTime.now());
-        if (location.getStatus() == null) {
-            location.setStatus(1);
-        }
+        location.setStatus(cn.hutool.core.util.ObjUtil.defaultIfNull(location.getStatus(), 1));
         mapper.insert(location);
     }
 

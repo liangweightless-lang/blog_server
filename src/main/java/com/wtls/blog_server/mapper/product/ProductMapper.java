@@ -15,7 +15,7 @@ public interface ProductMapper extends BaseMapper<Product> {
             "<where>" +
             "  <if test='status != null'> p.status = #{status} </if>" +
             "</where> " +
-            "ORDER BY (CASE WHEN p.stock = 0 THEN 1 ELSE 0 END) ASC, p.id DESC" +
+            "ORDER BY (CASE WHEN p.stock = 0 THEN 1 ELSE 0 END) ASC, p.is_top DESC, p.id DESC" +
             "</script>")
     List<Product> findAll(@Param("status") Integer status);
 
@@ -27,5 +27,8 @@ public interface ProductMapper extends BaseMapper<Product> {
 
     @Update("UPDATE product SET status = #{status} WHERE id = #{id}")
     int updateStatus(@Param("id") Long id, @Param("status") Integer status);
+
+    @Update("UPDATE product SET is_top = #{isTop} WHERE id = #{id}")
+    int updateTop(@Param("id") Long id, @Param("isTop") Integer isTop);
 }
 
