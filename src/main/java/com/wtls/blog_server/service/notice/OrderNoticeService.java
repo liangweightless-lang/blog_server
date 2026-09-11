@@ -37,6 +37,9 @@ public class OrderNoticeService {
     @Value("${pushplus.topic:}")
     private String topic;
 
+    @Value("${wechat.webhook:}")
+    private String wechatWebhook;
+
     private static final String PUSHPLUS_URL = "http://www.pushplus.plus/send";
 
     /**
@@ -76,6 +79,25 @@ public class OrderNoticeService {
                 html.append("</div>");
 
                 doSend(title, html.toString());
+
+                // 同时支持企微群机器人 Webhook
+                StringBuilder md = new StringBuilder();
+                md.append("### 🛒 收到新商城订单\n");
+                md.append("> **订单号**：").append(order.getId()).append("\n");
+                md.append("> **商品名称**：").append(product != null ? product.getName() : "商品").append("\n");
+                if (StrUtil.isNotBlank(order.getSelectedSpec())) {
+                    md.append("> **规格**：").append(order.getSelectedSpec()).append("\n");
+                }
+                md.append("> **购买件数**：× ").append(order.getQuantity() != null ? order.getQuantity() : 1).append("\n");
+                md.append("> **实付金额**：<font color=\"warning\">¥ ").append(order.getAmount()).append("</font>\n");
+                md.append("> **送达/提货**：<font color=\"info\">").append(StrUtil.blankToDefault(order.getShippingAddress(), "未填写")).append("</font>\n");
+                md.append("> **顾客联系**：").append(StrUtil.blankToDefault(order.getContactPhone(), "未填写")).append("\n");
+                if (StrUtil.isNotBlank(order.getRemark())) {
+                    md.append("> **买家备注**：").append(order.getRemark()).append("\n");
+                }
+                md.append("> **下单时间**：").append(DateUtil.formatDateTime(new Date()));
+                doSendWechatWebhook(md.toString());
+
             } catch (Exception e) {
                 log.error("发送普通商城订单微信通知异常, orderId={}", order.getId(), e);
             }
@@ -86,8 +108,7 @@ public class OrderNoticeService {
      * 发送快团订单支付通知
      */
     public void sendCampaignOrderNotice(CampaignOrder order, GroupBuyCampaign campaign, List<CampaignOrderItem> items) {
-        if (!enabled || StrUtil.isBlank(token)) {
-            log.info("PushPlus 微信通知未启用或未配置 token，跳过快团订单 {} 的微信推送", order.getId());
+        if (!enabled && StrUtil.isBlank(wechatWebhook)) {
             return;
         }
 
@@ -108,15 +129,19 @@ public class OrderNoticeService {
                 html.append("<tr><td style='padding:6px 0;color:#888;'>快团活动：</td><td style='font-weight:600;'>").append(campaignTitle).append("</td></tr>");
                 
                 // 商品明细
+                StringBuilder itemSummaryHtml = new StringBuilder();
+                StringBuilder itemSummaryMd = new StringBuilder();
                 if (CollUtil.isNotEmpty(items)) {
-                    StringBuilder itemSummary = new StringBuilder();
                     for (CampaignOrderItem it : items) {
-                        if (itemSummary.length() > 0) itemSummary.append("<br/>");
-                        itemSummary.append("• ").append(it.getProductName())
+                        if (itemSummaryHtml.length() > 0) itemSummaryHtml.append("<br/>");
+                        itemSummaryHtml.append("• ").append(it.getProductName())
                                    .append(StrUtil.isNotBlank(it.getSpecs()) ? " (" + it.getSpecs() + ")" : "")
                                    .append(" × ").append(it.getQuantity());
+
+                        if (itemSummaryMd.length() > 0) itemSummaryMd.append("、");
+                        itemSummaryMd.append(it.getProductName()).append("×").append(it.getQuantity());
                     }
-                    html.append("<tr><td style='padding:6px 0;color:#888;vertical-align:top;'>商品条目：</td><td style='color:#1D2129;font-weight:600;'>").append(itemSummary).append("</td></tr>");
+                    html.append("<tr><td style='padding:6px 0;color:#888;vertical-align:top;'>商品条目：</td><td style='color:#1D2129;font-weight:600;'>").append(itemSummaryHtml).append("</td></tr>");
                 }
 
                 html.append("<tr><td style='padding:6px 0;color:#888;'>实付金额：</td><td style='color:#FF5A34;font-size:16px;font-weight:bold;'>¥ ").append(order.getTotalAmount()).append("</td></tr>");
@@ -136,6 +161,24 @@ public class OrderNoticeService {
                 html.append("</div>");
 
                 doSend(title, html.toString());
+
+                // 同时支持企微群机器人 Webhook
+                StringBuilder md = new StringBuilder();
+                md.append("### 🔥 收到新跟团订单 <font color=\"warning\">").append(followNo).append("</font>\n");
+                md.append("> **快团活动**：").append(campaignTitle).append("\n");
+                if (itemSummaryMd.length() > 0) {
+                    md.append("> **商品明细**：").append(itemSummaryMd).append("\n");
+                }
+                md.append("> **实付金额**：<font color=\"warning\">¥ ").append(order.getTotalAmount()).append("</font>\n");
+                md.append("> **提货地点**：<font color=\"info\">").append(pickupLocation).append("</font>\n");
+                md.append("> **顾客联系**：").append(StrUtil.blankToDefault(order.getContactPhone(), "未填写"))
+                  .append(" (").append(StrUtil.blankToDefault(order.getContactName(), "顾客")).append(")\n");
+                if (StrUtil.isNotBlank(order.getRemark())) {
+                    md.append("> **买家备注**：").append(order.getRemark()).append("\n");
+                }
+                md.append("> **下单时间**：").append(DateUtil.formatDateTime(new Date()));
+                doSendWechatWebhook(md.toString());
+
             } catch (Exception e) {
                 log.error("发送快团订单微信通知异常, orderId={}", order.getId(), e);
             }
@@ -143,9 +186,13 @@ public class OrderNoticeService {
     }
 
     /**
-     * 底层发送逻辑
+     * PushPlus 发送逻辑
      */
     private void doSend(String title, String contentHtml) {
+        if (!enabled || StrUtil.isBlank(token)) {
+            return;
+        }
+
         JSONObject body = new JSONObject();
         body.set("token", token.trim());
         body.set("title", title);
@@ -169,4 +216,33 @@ public class OrderNoticeService {
             log.error("PushPlus 请求网络超时或异常: {}", e.getMessage());
         }
     }
+
+    /**
+     * 企业微信群机器人 Webhook 推送
+     */
+    private void doSendWechatWebhook(String markdownContent) {
+        if (StrUtil.isBlank(wechatWebhook)) {
+            return;
+        }
+
+        try {
+            JSONObject md = new JSONObject();
+            md.set("content", markdownContent);
+            JSONObject body = new JSONObject();
+            body.set("msgtype", "markdown");
+            body.set("markdown", md);
+            HttpResponse resp = HttpRequest.post(wechatWebhook.trim())
+                    .body(body.toString())
+                    .timeout(5000)
+                    .execute();
+            if (resp.isOk()) {
+                log.info("企业微信群机器人推送成功");
+            } else {
+                log.warn("企业微信群机器人推送返回: {}", resp.body());
+            }
+        } catch (Exception e) {
+            log.error("企业微信群机器人推送网络异常: {}", e.getMessage());
+        }
+    }
 }
+
