@@ -15,7 +15,11 @@
       <!-- 状态区 -->
       <div class="status-header">
         <div class="status-icon-box" :style="{ background: getStatusBg(order.status) }">
-          <component :is="getStatusIcon(order.status)" class="status-icon" :style="{ color: getStatusColor(order.status) }" />
+          <icon-safe v-if="order.status === 0" class="status-icon" :style="{ color: getStatusColor(order.status) }" />
+          <icon-check-circle-fill v-else-if="order.status === 1" class="status-icon" :style="{ color: getStatusColor(order.status) }" />
+          <icon-close-circle-fill v-else-if="order.status === 2" class="status-icon" :style="{ color: getStatusColor(order.status) }" />
+          <icon-send v-else-if="order.status === 3" class="status-icon" :style="{ color: getStatusColor(order.status) }" />
+          <icon-info-circle-fill v-else class="status-icon" :style="{ color: getStatusColor(order.status) }" />
         </div>
         <div class="status-text">
           <h3>{{ getStatusText(order.status) }}</h3>
