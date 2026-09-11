@@ -125,7 +125,12 @@
               <span class="tab-badge" v-if="activeCampaignCount > 0">{{ activeCampaignCount }}</span>
             </template>
             <div class="tab-content-wrapper">
-              <CampaignOrderList :orders="campaignOrders" @pay="handleContinuePay" @refresh="fetchOrders" />
+              <CampaignOrderList 
+                :orders="campaignOrders" 
+                @detail="showCampaignOrderDetail"
+                @pay="handleContinuePay" 
+                @refresh="fetchOrders" 
+              />
             </div>
           </a-tab-pane>
 
@@ -202,6 +207,14 @@
       @pay="handleContinuePay" 
       @refresh="fetchOrders"
     />
+
+    <!-- 跟团订单详情弹窗（对齐标准设计） -->
+    <CampaignOrderDetailDialog 
+      v-model:show="campaignOrderDetailVisible" 
+      :order="selectedCampaignOrder" 
+      @pay="handleContinuePay" 
+      @refresh="fetchOrders"
+    />
   </div>
 </template>
 
@@ -219,6 +232,7 @@ import ArticleGrid from '@/components/home/ArticleGrid.vue';
 import ProfileEditDialog from '@/components/user/ProfileEditDialog.vue';
 import MyGroupsDialog from '@/components/user/MyGroupsDialog.vue';
 import OrderDetailDialog from '@/components/user/OrderDetailDialog.vue';
+import CampaignOrderDetailDialog from '@/components/user/CampaignOrderDetailDialog.vue';
 import OrderList from '@/components/user/OrderList.vue';
 import CampaignOrderList from '@/components/user/CampaignOrderList.vue';
 import CreatorApplyDialog from '@/components/user/CreatorApplyDialog.vue';
@@ -239,6 +253,7 @@ export default {
     ProfileEditDialog,
     MyGroupsDialog,
     OrderDetailDialog,
+    CampaignOrderDetailDialog,
     OrderList,
     CampaignOrderList,
     CreatorApplyDialog,
@@ -258,6 +273,8 @@ export default {
       creatorStatus: null,
       orderDetailVisible: false,
       selectedOrder: null,
+      campaignOrderDetailVisible: false,
+      selectedCampaignOrder: null,
       activeTab: 'orders',
       orderFilterStatus: 'all', // 'all', 'pendingPay', 'pendingPickup', 'completed'
       favoriteArticles: [],
@@ -499,6 +516,10 @@ export default {
     showOrderDetail(order) {
       this.selectedOrder = order;
       this.orderDetailVisible = true;
+    },
+    showCampaignOrderDetail(order) {
+      this.selectedCampaignOrder = order;
+      this.campaignOrderDetailVisible = true;
     },
     async handleContinuePay(order) {
       if (!this.user) return Message.warning('请先登录');
