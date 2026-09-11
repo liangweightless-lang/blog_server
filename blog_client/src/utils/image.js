@@ -30,19 +30,22 @@ export function formatImageUrl(url) {
     return '';
   }
 
-  // 1. 如果已是完整的网络链接或 base64，直接返回
+  // 1. 如果是旧本地域名的 uploads 静态资源，直接切到腾讯云 COS 高速分发
+  if (url.includes('caibread.com/uploads/')) {
+    return url.replace(/https?:\/\/[^/]+\/uploads\//, 'https://caibread-1323711478.cos.ap-guangzhou.myqcloud.com/uploads/');
+  }
+
+  // 2. 如果已是其他完整的外部网络链接或 base64，直接返回
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:image')) {
     return url;
   }
 
-  // 2. 处理 /uploads/ 或 uploads/ 相对路径
+  // 3. 处理 /uploads/ 或 uploads/ 相对路径，直接使用腾讯云 COS 域名
   if (url.includes('/uploads/') || url.startsWith('uploads/')) {
-    // 规范化路径部分为 /uploads/xxx
     const uploadIndex = url.indexOf('/uploads/');
     const relativePath = uploadIndex !== -1 ? url.substring(uploadIndex) : (url.startsWith('/') ? url : `/${url}`);
 
-    const base = getApiBaseUrl();
-    return `${base}${relativePath}`;
+    return `https://caibread-1323711478.cos.ap-guangzhou.myqcloud.com${relativePath}`;
   }
 
   return url;
