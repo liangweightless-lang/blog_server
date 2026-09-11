@@ -30,7 +30,7 @@ services:
       - COS_BUCKET_NAME=${COS_BUCKET_NAME:-caibread-1323711478}
       - PUSHPLUS_TOKEN=${PUSHPLUS_TOKEN:-7dab0b762b9f42ce8e536bf7ed81ebd3}
       - PUSHPLUS_TOPIC=${PUSHPLUS_TOPIC:-caibread}
-      - WECHAT_WEBHOOK=${WECHAT_WEBHOOK:-https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=f0126046-7f4b-4933-870f-843085ef54b4}
+      - WECHAT_WEBHOOK=${WECHAT_WEBHOOK:-https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=96390bf4-0973-4208-9bf0-56a8d873395a}
     ports:
       - "8081:8081"
     volumes:
