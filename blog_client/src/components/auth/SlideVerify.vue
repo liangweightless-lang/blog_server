@@ -3,6 +3,12 @@
     class="slide-verify-container" 
     ref="containerRef"
     :class="{ 'is-success': isSuccess, 'is-sliding': isSliding }"
+    @click.stop
+    @mousedown.stop
+    @mouseup.stop
+    @touchstart.stop
+    @touchmove.stop
+    @touchend.stop
   >
     <!-- 背景进度填充条 -->
     <div 
@@ -28,8 +34,8 @@
         transform: `translateX(${currentX}px)`,
         transition: isSliding ? 'none' : 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)'
       }"
-      @mousedown.prevent="onDragStart"
-      @touchstart.prevent="onTouchStart"
+      @mousedown.stop.prevent="onDragStart"
+      @touchstart.stop.prevent="onTouchStart"
     >
       <icon-check v-if="isSuccess" class="handle-icon icon-success" />
       <icon-double-right v-else class="handle-icon" />
@@ -83,6 +89,7 @@ export default {
 
     // 鼠标事件
     onDragStart(e) {
+      if (e) e.stopPropagation();
       if (this.isSuccess || this.loadingTicket) return;
       this.calcMaxSlideWidth();
       this.isSliding = true;
@@ -102,7 +109,8 @@ export default {
         this.currentX = moveX;
       }
     },
-    onDragEnd() {
+    onDragEnd(e) {
+      if (e) e.stopPropagation();
       if (!this.isSliding) return;
       this.isSliding = false;
       this.removeGlobalMouseEvents();
@@ -115,6 +123,7 @@ export default {
 
     // 触屏移动端事件
     onTouchStart(e) {
+      if (e) e.stopPropagation();
       if (this.isSuccess || this.loadingTicket) return;
       this.calcMaxSlideWidth();
       this.isSliding = true;
@@ -126,7 +135,7 @@ export default {
     },
     onTouchMove(e) {
       if (!this.isSliding) return;
-      e.preventDefault(); // 阻止手机端拖动时的页面跟随滚动
+      if (e) e.preventDefault(); // 阻止手机端拖动时的页面跟随滚动
       const moveX = e.touches[0].clientX - this.startX;
       if (moveX < 0) {
         this.currentX = 0;
@@ -136,7 +145,8 @@ export default {
         this.currentX = moveX;
       }
     },
-    onTouchEnd() {
+    onTouchEnd(e) {
+      if (e) e.stopPropagation();
       if (!this.isSliding) return;
       this.isSliding = false;
       this.removeGlobalTouchEvents();

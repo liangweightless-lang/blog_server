@@ -97,6 +97,11 @@ export default {
     ...mapActions(useUserStore, ['fetchUser', 'clearUser']),
     handleGlobalTouchStart(e) {
       if (!e.touches || e.touches.length !== 1) return;
+      // 如果触摸目标在滑动验证组件内部，严禁触发全局侧滑返回手势
+      if (e.target && e.target.closest && e.target.closest('.slide-verify-container')) {
+        this.isEdgeSwiping = false;
+        return;
+      }
       const touch = e.touches[0];
       // 触碰起点在屏幕左侧 30% 或至少 100px 范围内，均视作侧滑手势起手
       const maxLeft = Math.max(100, (window.innerWidth || 375) * 0.3);
@@ -110,6 +115,10 @@ export default {
     },
     handleGlobalTouchEnd(e) {
       if (!this.isEdgeSwiping || !e.changedTouches || e.changedTouches.length === 0) return;
+      if (e.target && e.target.closest && e.target.closest('.slide-verify-container')) {
+        this.isEdgeSwiping = false;
+        return;
+      }
       this.isEdgeSwiping = false;
       const touch = e.changedTouches[0];
       const dx = touch.clientX - this.edgeSwipeStartX;
