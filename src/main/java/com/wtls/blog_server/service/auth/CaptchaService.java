@@ -42,6 +42,22 @@ public class CaptchaService {
     }
 
     /**
+     * 生成滑块验证通过凭证并存入缓存 (5分钟有效)
+     */
+    public Map<String, String> generateSlideTicket() {
+        String captchaKey = UUID.randomUUID().toString().replace("-", "");
+        String captchaCode = UUID.randomUUID().toString().substring(0, 8);
+        
+        // 存入缓存，供注册接口核销
+        captchaCache.put(captchaKey, captchaCode);
+
+        Map<String, String> result = new HashMap<>();
+        result.put("captchaKey", captchaKey);
+        result.put("captchaCode", captchaCode);
+        return result;
+    }
+
+    /**
      * 校验验证码
      * @param captchaKey   前端传来的 key
      * @param captchaCode  前端传来的 输入验证码

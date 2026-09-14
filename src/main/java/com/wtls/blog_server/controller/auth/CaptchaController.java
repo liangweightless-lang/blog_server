@@ -5,6 +5,7 @@ import com.wtls.blog_server.service.auth.CaptchaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -26,5 +27,11 @@ public class CaptchaController {
     @Operation(summary = "获取图形验证码", description = "返回一个 Base64 格式的图形验证码和 key，有效时间 5 分钟")
     public Result<Map<String, String>> getCaptcha() {
         return Result.success(captchaService.generateCaptcha());
+    }
+
+    @PostMapping("/slide-verify")
+    @Operation(summary = "滑块行为验证", description = "前端拖动滑块验证成功后调用，签发一次性验证凭证")
+    public Result<Map<String, String>> slideVerify() {
+        return Result.success(captchaService.generateSlideTicket());
     }
 }

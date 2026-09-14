@@ -9,6 +9,14 @@ export function getCaptcha() {
 }
 
 /**
+ * 滑块行为验证成功，签发一次性验证凭据
+ * @returns {Promise}
+ */
+export function slideVerify() {
+  return request.post('/api/auth/slide-verify');
+}
+
+/**
  * 用户登录/注册等
  * @param {string} endpoint - 登录或注册的端点 (e.g., '/api/auth/login')
  * @param {object} data - 表单数据

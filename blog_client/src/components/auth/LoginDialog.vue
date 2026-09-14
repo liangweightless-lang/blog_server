@@ -95,24 +95,14 @@
               </button>
             </div>
 
-            <!-- 注册专属：图形验证码 -->
+            <!-- 注册专属：滑动验证 (极简免输入) -->
             <Transition name="fade-slide">
-              <div v-if="activeTab === 'register'" class="input-group captcha-group">
-                <input 
-                  v-model.trim="registerForm.captchaCode"
-                  type="text"
-                  maxlength="6"
-                  placeholder="请输入图形验证码"
-                  class="custom-input captcha-input"
-                  @keyup.enter="handleAction"
+              <div v-if="activeTab === 'register'" class="slide-verify-wrapper">
+                <SlideVerify 
+                  ref="slideVerifyRef" 
+                  @success="onSlideSuccess" 
+                  @reset="onSlideReset" 
                 />
-                <div class="captcha-box" @click="fetchCaptcha" title="点击刷新验证码">
-                  <img v-if="captchaImage" :src="captchaImage" alt="图形验证码" class="captcha-img" />
-                  <div v-else class="captcha-loading">
-                    <icon-refresh :spin="true" />
-                  </div>
-                  <span class="refresh-hint">刷新</span>
-                </div>
               </div>
             </Transition>
 
@@ -175,11 +165,15 @@
 </template>
 
 <script>
-import { getCaptcha, authAction } from '@/api/user';
+import { authAction } from '@/api/user';
 import { Message, Modal } from '@arco-design/web-vue';
+import SlideVerify from '@/components/auth/SlideVerify.vue';
 
 export default {
   name: 'LoginDialog',
+  components: {
+    SlideVerify
+  },
   props: {
     show: {
       type: Boolean,
@@ -206,7 +200,6 @@ export default {
         captchaCode: '',
         inviteCode: ''
       },
-      captchaImage: '',
       isMobile: window.innerWidth <= 768
     }
   },
@@ -244,8 +237,10 @@ export default {
     open() {
       this.visible = true;
       this.closing = false;
-      if (this.activeTab === 'register' && !this.captchaImage) {
-        this.fetchCaptcha();
+      if (this.activeTab === 'register') {
+        this.$nextTick(() => {
+          this.$refs.slideVerifyRef?.reset();
+        });
       }
     },
     close() {
@@ -262,20 +257,19 @@ export default {
     switchTab(tab) {
       this.activeTab = tab;
       this.showPassword = false;
-      if (tab === 'register' && !this.captchaImage) {
-        this.fetchCaptcha();
+      if (tab === 'register') {
+        this.$nextTick(() => {
+          this.$refs.slideVerifyRef?.reset();
+        });
       }
     },
-    async fetchCaptcha() {
-      try {
-        const res = await getCaptcha();
-        if (res.data && res.data.data) {
-          this.registerForm.captchaKey = res.data.data.captchaKey;
-          this.captchaImage = res.data.data.captchaImage;
-        }
-      } catch (error) {
-        console.error('获取验证码失败', error);
-      }
+    onSlideSuccess(ticket) {
+      this.registerForm.captchaKey = ticket.captchaKey || '';
+      this.registerForm.captchaCode = ticket.captchaCode || '';
+    },
+    onSlideReset() {
+      this.registerForm.captchaKey = '';
+      this.registerForm.captchaCode = '';
     },
     isPhoneNumber(val) {
       if (!val) return false;
@@ -294,8 +288,8 @@ export default {
         return Message.error('请输入正确的11位手机号');
       }
 
-      if (!isLogin && !form.captchaCode) {
-        return Message.warning('请输入图形验证码');
+      if (!isLogin && (!form.captchaCode || !form.captchaKey)) {
+        return Message.warning('请按住滑块向右拖动完成安全验证');
       }
 
       if (!this.agreeAgreement) {
@@ -320,7 +314,9 @@ export default {
       } catch (error) {
         Message.error(error.response?.data?.message || (isLogin ? '登录失败，请检查账号或密码' : '注册失败'));
         if (!isLogin) {
-          this.fetchCaptcha(); // 注册失败自动刷新验证码
+          this.$refs.slideVerifyRef?.reset();
+          this.registerForm.captchaKey = '';
+          this.registerForm.captchaCode = '';
         }
       } finally {
         this.loading = false;
@@ -540,38 +536,10 @@ export default {
   color: #4E5969;
 }
 
-/* 验证码特殊样式 */
-.captcha-group {
-  padding-right: 6px;
-}
-
-.captcha-box {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  height: 34px;
-  padding: 0 8px;
-  background: #FFFFFF;
-  border: 1px solid #E5E6EB;
-  border-radius: 8px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.captcha-img {
-  height: 28px;
-  width: auto;
-  border-radius: 4px;
-}
-
-.captcha-loading {
-  font-size: 14px;
-  color: #FF5330;
-}
-
-.refresh-hint {
-  font-size: 11px;
-  color: #86909C;
+/* 滑动验证外层容器 */
+.slide-verify-wrapper {
+  margin-bottom: 14px;
+  width: 100%;
 }
 
 /* 协议同意行 (美团 / 小红书规范) */
