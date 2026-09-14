@@ -125,4 +125,12 @@ public class GroupBuyCampaignController {
         service.handlePaymentSuccess(orderId);
         return Result.success("团购订单已成功确认为已支付状态");
     }
+
+    @PostMapping("/orders/{orderId}/notify-paid")
+    @Operation(summary = "用户确认完成付款", description = "用户在前端点击已完成付款后，主动通知管理员核对并手动核销")
+    public Result<String> notifyPaid(@RequestHeader("Authorization") String authHeader, @PathVariable String orderId) {
+        Long userId = getUserIdFromToken(authHeader);
+        service.notifyUserPaid(userId, orderId);
+        return Result.success("已通知管理员核对收款");
+    }
 }

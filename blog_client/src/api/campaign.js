@@ -85,3 +85,9 @@ export function deleteUnpaidCampaignOrder(orderId) {
     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
   });
 }
+
+export function notifyCampaignOrderPaid(orderId) {
+  return request.post(`/api/campaigns/orders/${orderId}/notify-paid`, {}, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+  });
+}

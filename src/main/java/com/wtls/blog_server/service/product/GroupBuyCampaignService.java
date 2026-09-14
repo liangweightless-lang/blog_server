@@ -439,5 +439,45 @@ public class GroupBuyCampaignService {
         // 2. 删除主订单
         orderMapper.deleteById(orderId);
     }
+
+    private static final java.util.concurrent.ConcurrentHashMap<String, Long> LAST_NOTIFY_TIME_MAP = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * 用户前端确认已完成付款，主动触发企业微信通知管理员进行核实与核销
+     *
+     * @param userId  当前登录用户ID
+     * @param orderId 跟团订单ID
+     */
+    public void notifyUserPaid(Long userId, String orderId) {
+        CampaignOrder order = orderMapper.selectById(orderId);
+        if (ObjUtil.isNull(order)) {
+            throw new BusinessException("跟团订单不存在");
+        }
+        if (!ObjUtil.equals(order.getUserId(), userId)) {
+            throw new BusinessException("无权操作他人的订单");
+        }
+
+        // 已经核销(2)或已取消(3)不再触发通知
+        if (ObjUtil.equals(order.getStatus(), 2) || ObjUtil.equals(order.getStatus(), 3)) {
+            return;
+        }
+
+        // 防刷防抖：30秒内同一订单只触发一次推送
+        long now = System.currentTimeMillis();
+        Long lastTime = LAST_NOTIFY_TIME_MAP.get(orderId);
+        if (lastTime != null && (now - lastTime) < 30000) {
+            return;
+        }
+        LAST_NOTIFY_TIME_MAP.put(orderId, now);
+
+        // 获取活动与商品明细
+        GroupBuyCampaign campaign = campaignMapper.selectById(order.getCampaignId());
+        QueryWrapper<CampaignOrderItem> itemQuery = new QueryWrapper<>();
+        itemQuery.eq("order_id", orderId);
+        List<CampaignOrderItem> items = orderItemMapper.selectList(itemQuery);
+
+        // 触发推送，isUserPaidConfirmation = true 标明待手动核销
+        orderNoticeService.sendCampaignOrderNotice(order, campaign, items, true);
+    }
 }
 

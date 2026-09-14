@@ -330,7 +330,7 @@
 </template>
 
 <script>
-import { getCampaignById, createCampaignOrder } from '@/api/campaign';
+import { getCampaignById, createCampaignOrder, notifyCampaignOrderPaid } from '@/api/campaign';
 import { createAlipay, createWechatPay, createXunhupay } from '@/api/order';
 import { Message, Modal } from '@arco-design/web-vue';
 import dayjs from 'dayjs';
@@ -557,7 +557,10 @@ export default {
         onOk: () => {
           this.paymentConfirmVisible = false;
           this.wechatQrVisible = false;
-          Message.success('支付成功，跟团订单已刷新');
+          if (this.currentOrderId) {
+            notifyCampaignOrderPaid(this.currentOrderId).catch(() => {});
+          }
+          Message.success('已通知店长核对收款，订单状态即将更新');
           this.$router.push('/profile');
         }
       });

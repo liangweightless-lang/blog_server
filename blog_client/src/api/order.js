@@ -125,3 +125,12 @@ export function confirmOrderPay(orderId) {
 export function deleteUnpaidOrder(orderId) {
   return request.delete(`/api/orders/${orderId}`);
 }
+
+/**
+ * 用户主动通知管理员核对收款并核销/发货
+ * @param {number|string} orderId - 订单ID
+ * @returns {Promise}
+ */
+export function notifyProductOrderPaid(orderId) {
+  return request.post(`/api/orders/${orderId}/notify-paid`);
+}

@@ -106,4 +106,12 @@ public class ProductOrderController {
         orderService.cancelUnpaidOrder(userId, orderId);
         return Result.success("订单已成功取消/删除");
     }
+
+    @PostMapping("/{orderId}/notify-paid")
+    @Operation(summary = "用户确认完成付款", description = "用户在前端点击已完成付款后，主动通知管理员核对并核销/发货")
+    public Result<String> notifyPaid(@RequestHeader("Authorization") String authHeader, @PathVariable String orderId) {
+        Long userId = JwtUtils.getUserIdFromHeader(authHeader);
+        orderService.notifyUserPaid(userId, orderId);
+        return Result.success("已通知管理员核对收款");
+    }
 }

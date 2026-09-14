@@ -227,7 +227,7 @@
 </template>
 
 <script>
-import { createOrder, createAlipay, createWechatPay, createXunhupay } from '@/api/order';
+import { createOrder, createAlipay, createWechatPay, createXunhupay, notifyProductOrderPaid } from '@/api/order';
 import { Message, Modal } from '@arco-design/web-vue';
 import { mapState, mapActions } from 'pinia';
 import { useUserStore } from '@/stores/user';
@@ -426,7 +426,10 @@ export default {
           this.paymentConfirmVisible = false;
           this.wechatQrVisible = false;
           this.visible = false;
-          Message.success('支付成功，正在前往个人中心');
+          if (this.currentOrderId) {
+            notifyProductOrderPaid(this.currentOrderId).catch(() => {});
+          }
+          Message.success('已通知店长核对收款，正在前往个人中心');
           this.$router.push('/profile');
         }
       });

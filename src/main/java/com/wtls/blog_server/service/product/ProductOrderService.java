@@ -327,5 +327,39 @@ public class ProductOrderService {
         }
         orderMapper.deleteById(orderId);
     }
+
+    private static final java.util.concurrent.ConcurrentHashMap<String, Long> LAST_NOTIFY_TIME_MAP = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * 用户前端确认已完成付款，主动触发企业微信通知管理员进行核实与发货/核销
+     *
+     * @param userId  当前登录用户ID
+     * @param orderId 订单编号
+     */
+    public void notifyUserPaid(Long userId, String orderId) {
+        ProductOrder order = orderMapper.selectById(orderId);
+        if (ObjUtil.isNull(order)) {
+            throw new BusinessException("订单不存在");
+        }
+        if (!ObjUtil.equals(order.getUserId(), userId)) {
+            throw new BusinessException("只能操作属于自己的订单");
+        }
+
+        // 已完成或已取消不再触发
+        if (ObjUtil.equals(order.getStatus(), 2) || ObjUtil.equals(order.getStatus(), 3)) {
+            return;
+        }
+
+        // 防刷防抖：30秒内同一订单只触发一次推送
+        long now = System.currentTimeMillis();
+        Long lastTime = LAST_NOTIFY_TIME_MAP.get(orderId);
+        if (lastTime != null && (now - lastTime) < 30000) {
+            return;
+        }
+        LAST_NOTIFY_TIME_MAP.put(orderId, now);
+
+        Product product = productMapper.selectById(order.getProductId());
+        orderNoticeService.sendProductOrderNotice(order, product, true);
+    }
 }
 

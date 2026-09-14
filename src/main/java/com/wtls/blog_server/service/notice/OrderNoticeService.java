@@ -40,14 +40,32 @@ public class OrderNoticeService {
     @Value("${wechat.webhook:}")
     private String wechatWebhook;
 
+    @Value("${app.base-url:https://caibread.com}")
+    private String baseUrl;
+
+    @Value("${app.admin-url:https://caibread.com/admin}")
+    private String adminUrl;
+
     private static final String PUSHPLUS_URL = "http://www.pushplus.plus/send";
+
+    private String toFullImageUrl(String img) {
+        if (StrUtil.isBlank(img)) return "";
+        if (img.startsWith("http://") || img.startsWith("https://")) return img;
+        return (StrUtil.isNotBlank(baseUrl) ? baseUrl.trim() : "https://caibread.com") + (img.startsWith("/") ? "" : "/") + img;
+    }
 
     /**
      * 发送普通商城订单支付通知
      */
     public void sendProductOrderNotice(ProductOrder order, Product product) {
-        if (!enabled || StrUtil.isBlank(token)) {
-            log.info("PushPlus 微信通知未启用或未配置 token，跳过普通订单 {} 的微信推送", order.getId());
+        sendProductOrderNotice(order, product, false);
+    }
+
+    /**
+     * 发送普通商城订单支付通知 (支持标明待核销/已确认)
+     */
+    public void sendProductOrderNotice(ProductOrder order, Product product, boolean isUserPaidConfirmation) {
+        if (!enabled && StrUtil.isBlank(wechatWebhook)) {
             return;
         }
 
@@ -82,7 +100,12 @@ public class OrderNoticeService {
 
                 // 同时支持企微群机器人 Webhook
                 StringBuilder md = new StringBuilder();
-                md.append("### 🛒 收到新商城订单\n");
+                if (isUserPaidConfirmation) {
+                    md.append("### 🔔 收到商城订单待核销/发货\n");
+                    md.append("> **状态**：<font color=\"warning\">顾客已确认付款，待核对并处理</font>\n");
+                } else {
+                    md.append("### 🛒 收到新商城订单\n");
+                }
                 md.append("> **订单号**：").append(order.getId()).append("\n");
                 md.append("> **商品名称**：").append(product != null ? product.getName() : "商品").append("\n");
                 if (StrUtil.isNotBlank(order.getSelectedSpec())) {
@@ -95,7 +118,12 @@ public class OrderNoticeService {
                 if (StrUtil.isNotBlank(order.getRemark())) {
                     md.append("> **买家备注**：").append(order.getRemark()).append("\n");
                 }
-                md.append("> **下单时间**：").append(DateUtil.formatDateTime(new Date()));
+                String prodImg = product != null ? toFullImageUrl(product.getImage()) : "";
+                if (StrUtil.isNotBlank(prodImg)) {
+                    md.append("> **商品图片**：[🖼️ 点击查看商品大图](").append(prodImg).append(")\n");
+                }
+                md.append("> **下单时间**：").append(DateUtil.formatDateTime(new Date())).append("\n");
+                md.append("\n[👉 点击前往后台管理查看与核销](").append(StrUtil.blankToDefault(adminUrl, "https://caibread.com/admin")).append(")\n");
                 doSendWechatWebhook(md.toString());
 
             } catch (Exception e) {
@@ -108,6 +136,13 @@ public class OrderNoticeService {
      * 发送快团订单支付通知
      */
     public void sendCampaignOrderNotice(CampaignOrder order, GroupBuyCampaign campaign, List<CampaignOrderItem> items) {
+        sendCampaignOrderNotice(order, campaign, items, false);
+    }
+
+    /**
+     * 发送快团订单支付通知 (支持标明待核销/已确认)
+     */
+    public void sendCampaignOrderNotice(CampaignOrder order, GroupBuyCampaign campaign, List<CampaignOrderItem> items, boolean isUserPaidConfirmation) {
         if (!enabled && StrUtil.isBlank(wechatWebhook)) {
             return;
         }
@@ -116,14 +151,15 @@ public class OrderNoticeService {
             try {
                 String campaignTitle = campaign != null ? campaign.getTitle() : "快团活动";
                 String followNo = order.getFollowNumber() != null ? "#" + order.getFollowNumber() : "";
-                String title = String.format("🔥【新跟团单 %s】¥%s - %s", 
+                String title = String.format("%s【新跟团单 %s】¥%s - %s", 
+                        isUserPaidConfirmation ? "🔔待核销" : "🔥已支付",
                         followNo, 
                         order.getTotalAmount(), 
                         campaignTitle);
 
                 StringBuilder html = new StringBuilder();
                 html.append("<div style='font-family:-apple-system,BlinkMacSystemFont,sans-serif;padding:12px;color:#333;'>");
-                html.append("<h2 style='color:#FF5A34;margin-top:0;'>🎉 收到新跟团订单 ").append(followNo).append("</h2>");
+                html.append("<h2 style='color:#FF5A34;margin-top:0;'>").append(isUserPaidConfirmation ? "🔔 收到跟团订单待核销 " : "🎉 收到新跟团订单 ").append(followNo).append("</h2>");
                 html.append("<table style='width:100%;border-collapse:collapse;font-size:14px;'>");
                 html.append("<tr><td style='padding:6px 0;color:#888;width:80px;'>跟团序号：</td><td style='color:#FF5A34;font-size:18px;font-weight:800;'>").append(followNo).append("</td></tr>");
                 html.append("<tr><td style='padding:6px 0;color:#888;'>快团活动：</td><td style='font-weight:600;'>").append(campaignTitle).append("</td></tr>");
@@ -131,6 +167,7 @@ public class OrderNoticeService {
                 // 商品明细
                 StringBuilder itemSummaryHtml = new StringBuilder();
                 StringBuilder itemSummaryMd = new StringBuilder();
+                String firstProductImg = "";
                 if (CollUtil.isNotEmpty(items)) {
                     for (CampaignOrderItem it : items) {
                         if (itemSummaryHtml.length() > 0) itemSummaryHtml.append("<br/>");
@@ -140,6 +177,10 @@ public class OrderNoticeService {
 
                         if (itemSummaryMd.length() > 0) itemSummaryMd.append("、");
                         itemSummaryMd.append(it.getProductName()).append("×").append(it.getQuantity());
+
+                        if (StrUtil.isBlank(firstProductImg) && StrUtil.isNotBlank(it.getProductImage())) {
+                            firstProductImg = it.getProductImage();
+                        }
                     }
                     html.append("<tr><td style='padding:6px 0;color:#888;vertical-align:top;'>商品条目：</td><td style='color:#1D2129;font-weight:600;'>").append(itemSummaryHtml).append("</td></tr>");
                 }
@@ -162,21 +203,37 @@ public class OrderNoticeService {
 
                 doSend(title, html.toString());
 
-                // 同时支持企微群机器人 Webhook
+                // 同时支持企微群机器人 Webhook (支持链接和图片预览)
                 StringBuilder md = new StringBuilder();
-                md.append("### 🔥 收到新跟团订单 <font color=\"warning\">").append(followNo).append("</font>\n");
+                if (isUserPaidConfirmation) {
+                    md.append("### 🔔 收到跟团订单待核销 <font color=\"warning\">").append(followNo).append("</font>\n");
+                    md.append("> **状态**：<font color=\"warning\">顾客已确认付款，待管理员手动核对并核销</font>\n");
+                } else {
+                    md.append("### 🔥 收到新跟团订单 <font color=\"warning\">").append(followNo).append("</font>\n");
+                    md.append("> **状态**：<font color=\"info\">已支付，待核销提货</font>\n");
+                }
                 md.append("> **快团活动**：").append(campaignTitle).append("\n");
                 if (itemSummaryMd.length() > 0) {
                     md.append("> **商品明细**：").append(itemSummaryMd).append("\n");
                 }
                 md.append("> **实付金额**：<font color=\"warning\">¥ ").append(order.getTotalAmount()).append("</font>\n");
                 md.append("> **提货地点**：<font color=\"info\">").append(pickupLocation).append("</font>\n");
+                if (campaign != null && campaign.getDeliveryTime() != null) {
+                    md.append("> **提货时间**：").append(DateUtil.format(campaign.getDeliveryTime(), "MM月dd日 HH:mm")).append("\n");
+                }
                 md.append("> **顾客联系**：").append(StrUtil.blankToDefault(order.getContactPhone(), "未填写"))
                   .append(" (").append(StrUtil.blankToDefault(order.getContactName(), "顾客")).append(")\n");
                 if (StrUtil.isNotBlank(order.getRemark())) {
                     md.append("> **买家备注**：").append(order.getRemark()).append("\n");
                 }
-                md.append("> **下单时间**：").append(DateUtil.formatDateTime(new Date()));
+                
+                String targetImg = StrUtil.isNotBlank(firstProductImg) ? firstProductImg : (campaign != null ? campaign.getImage() : "");
+                String fullImgUrl = toFullImageUrl(targetImg);
+                if (StrUtil.isNotBlank(fullImgUrl)) {
+                    md.append("> **商品预览**：[🖼️ 点击查看商品图片](").append(fullImgUrl).append(")\n");
+                }
+                md.append("> **下单时间**：").append(DateUtil.formatDateTime(new Date())).append("\n");
+                md.append("\n[👉 点击前往后台管理进行核销](").append(StrUtil.blankToDefault(adminUrl, "https://caibread.com/admin")).append(")\n");
                 doSendWechatWebhook(md.toString());
 
             } catch (Exception e) {

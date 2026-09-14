@@ -150,7 +150,8 @@
 </template>
 
 <script>
-import { checkWechatPayStatus, checkXunhupayStatus, createXunhupay } from '@/api/order';
+import { checkWechatPayStatus, checkXunhupayStatus, createXunhupay, notifyProductOrderPaid } from '@/api/order';
+import { notifyCampaignOrderPaid } from '@/api/campaign';
 import { getHomeConfig } from '@/api/common';
 import { Message, Modal } from '@arco-design/web-vue';
 import QRCode from 'qrcode';
@@ -311,6 +312,11 @@ export default {
           style: { backgroundColor: '#FF7E67', borderColor: '#FF7E67' }
         },
         onOk: async () => {
+          if (this.orderId) {
+            notifyCampaignOrderPaid(this.orderId).catch(() => {
+              notifyProductOrderPaid(this.orderId).catch(() => {});
+            });
+          }
           await this.doManualCheck();
         }
       });
@@ -329,7 +335,7 @@ export default {
         if (isPaid) {
           this.handleSuccess();
         } else {
-          Message.info('正在等待到账通知，若已扣款请稍等1-2秒即可自动更新');
+          Message.info('已通知管理员核对款项，若已扣款请稍候即可由管理员手动核销');
         }
       } catch (e) {
         Message.error('查询异常，请稍后重试');
