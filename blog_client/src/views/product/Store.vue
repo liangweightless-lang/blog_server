@@ -43,8 +43,13 @@
               
               <div class="campaign-products-preview" v-if="campaign.products && campaign.products.length > 0">
                 <div class="preview-imgs">
-                  <img v-for="cp in campaign.products.slice(0, 4)" :key="cp.id" :src="$formatImageUrl(cp.product?.image)" class="preview-img" />
-                  <div v-if="campaign.products.length > 4" class="preview-more">+{{ campaign.products.length - 4 }}</div>
+                  <template v-if="campaign.products.length <= 4">
+                    <img v-for="cp in campaign.products" :key="cp.id" :src="$formatImageUrl(cp.product?.image)" class="preview-img" />
+                  </template>
+                  <template v-else>
+                    <img v-for="cp in campaign.products.slice(0, 3)" :key="cp.id" :src="$formatImageUrl(cp.product?.image)" class="preview-img" />
+                    <div class="preview-more">+{{ campaign.products.length - 3 }}</div>
+                  </template>
                 </div>
                 <div class="preview-text">
                   <span class="price-start">¥{{ getMinPrice(campaign) }}<span class="price-suffix">起</span></span>
@@ -173,7 +178,7 @@
 import { getActiveGroups, getProducts } from '@/api/product';
 import { getCampaigns } from '@/api/campaign';
 import { redeemOrder } from '@/api/order';
-import { Message } from '@arco-design/web-vue';
+import { Message, Modal } from '@arco-design/web-vue';
 import ProductBuyModal from '@/components/product/ProductBuyModal.vue';
 import GroupActionModal from '@/components/product/GroupActionModal.vue';
 import PullToRefresh from '@/components/common/PullToRefresh.vue';
@@ -361,20 +366,31 @@ export default {
         this.fetchActiveGroups();
       }
     },
-    async handleRedeem(product) {
+    handleRedeem(product) {
       if (!this.userInfo) {
         return Message.warning('请先登录再兑换');
       }
-      try {
-        await redeemOrder({ 
-          productId: product.id,
-          address: '积分直接兑换，暂无收货地址' // Added to bypass @NotBlank validation
-        });
-        Message.success('兑换成功！商品已归入您的账户。');
-        this.updatePoints(1000);
-      } catch (error) {
-        Message.error(error.response?.data?.message || '兑换失败');
-      }
+      Modal.confirm({
+        title: '确认兑换商品？',
+        content: `确定消耗 1000 积分兑换商品「${product.name}」吗？确认后将直接扣除积分。`,
+        okText: '确认兑换',
+        cancelText: '取消',
+        okButtonProps: {
+          style: { backgroundColor: '#E6A23C', borderColor: '#E6A23C' }
+        },
+        onOk: async () => {
+          try {
+            await redeemOrder({ 
+              productId: product.id,
+              address: '积分直接兑换，暂无收货地址' // Added to bypass @NotBlank validation
+            });
+            Message.success('兑换成功！商品已归入您的账户。');
+            this.updatePoints(1000);
+          } catch (error) {
+            Message.error(error.response?.data?.message || '兑换失败');
+          }
+        }
+      });
     },
     async fetchProducts() {
       try {
@@ -630,6 +646,25 @@ export default {
     padding: 3px 8px;
     font-size: 11px;
   }
+  .group-buy-section {
+    padding: 16px 12px;
+    border-radius: 18px;
+    margin-bottom: 20px;
+  }
+  .campaign-card :deep(.arco-card-body) {
+    padding: 16px !important;
+  }
+  .preview-imgs {
+    gap: 6px;
+  }
+  .preview-img, .preview-more {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+  }
+  .price-start {
+    font-size: 17px;
+  }
 }
 
 /* 拼团样式 */
@@ -817,42 +852,53 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
+  width: 100%;
 }
 .preview-imgs {
   display: flex;
-  gap: 12px;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 .preview-img {
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
   object-fit: cover;
   border: 1px solid #E5E6EB;
+  flex-shrink: 0;
 }
 .preview-more {
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
   background: #F7F8FA;
   color: #86909C;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: bold;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1px dashed #C9CDD4;
+  flex-shrink: 0;
 }
 .preview-text {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   justify-content: center;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 .price-start {
   color: #FF4B2B;
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 800;
   line-height: 1.2;
+  white-space: nowrap;
 }
 .price-suffix {
   font-size: 12px;
@@ -863,6 +909,7 @@ export default {
   font-size: 12px;
   color: #86909C;
   margin-top: 2px;
+  white-space: nowrap;
 }
 
 .joined-avatars {

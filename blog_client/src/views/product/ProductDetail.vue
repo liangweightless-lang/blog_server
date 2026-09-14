@@ -110,7 +110,7 @@
 <script>
 import { getProductDetail } from '@/api/product';
 import { redeemOrder } from '@/api/order';
-import { Message } from '@arco-design/web-vue';
+import { Message, Modal } from '@arco-design/web-vue';
 import ProductBuyModal from '@/components/product/ProductBuyModal.vue';
 import GroupActionModal from '@/components/product/GroupActionModal.vue';
 import { mapActions } from 'pinia';
@@ -172,20 +172,31 @@ export default {
     handleGroupSuccess() {
       Message.success('拼团发起成功！');
     },
-    async handleRedeem() {
+    handleRedeem() {
       if (!localStorage.getItem('token')) {
         return Message.warning('请先登录再兑换');
       }
-      try {
-        await redeemOrder({
-          productId: this.product.id,
-          address: '积分直接兑换，暂无收货地址'
-        });
-        Message.success('兑换成功！');
-        this.updatePoints(1000);
-      } catch (error) {
-        Message.error(error.response?.data?.message || '兑换失败');
-      }
+      Modal.confirm({
+        title: '确认兑换商品？',
+        content: `确定消耗 1000 积分兑换商品「${this.product.name}」吗？确认后将直接扣除积分。`,
+        okText: '确认兑换',
+        cancelText: '取消',
+        okButtonProps: {
+          style: { backgroundColor: '#E6A23C', borderColor: '#E6A23C' }
+        },
+        onOk: async () => {
+          try {
+            await redeemOrder({
+              productId: this.product.id,
+              address: '积分直接兑换，暂无收货地址'
+            });
+            Message.success('兑换成功！');
+            this.updatePoints(1000);
+          } catch (error) {
+            Message.error(error.response?.data?.message || '兑换失败');
+          }
+        }
+      });
     }
   }
 }

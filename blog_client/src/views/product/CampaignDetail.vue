@@ -698,6 +698,8 @@ export default {
   color: #4E5969;
   line-height: 1.8;
   margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .products-card {
