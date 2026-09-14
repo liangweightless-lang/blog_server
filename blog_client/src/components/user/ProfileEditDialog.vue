@@ -39,6 +39,25 @@
             </template>
           </a-upload>
           <span class="avatar-hint">点击更换专属头像</span>
+          <div class="preset-avatar-row">
+            <span class="preset-label">官方萌柴头像：</span>
+            <div 
+              class="preset-avatar-item" 
+              :class="{ active: profileForm.avatarUrl === '/img/avatar.png' }"
+              @click="profileForm.avatarUrl = '/img/avatar.png'"
+              title="烘焙小厨师柴犬"
+            >
+              <img src="/img/avatar.png" alt="烘焙小厨师" />
+            </div>
+            <div 
+              class="preset-avatar-item" 
+              :class="{ active: profileForm.avatarUrl === '/img/default_avatar.png' }"
+              @click="profileForm.avatarUrl = '/img/default_avatar.png'"
+              title="萌柴大头贴"
+            >
+              <img src="/img/default_avatar.png" alt="萌柴大头贴" />
+            </div>
+          </div>
         </div>
 
         <div class="custom-form-group">
@@ -301,6 +320,50 @@ export default {
   font-size: 11px;
   color: #86909C;
   margin-top: 8px;
+}
+
+.preset-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 6px 12px;
+  background: #F7F8FA;
+  border-radius: 20px;
+}
+
+.preset-label {
+  font-size: 12px;
+  color: #4E5969;
+  font-weight: 500;
+}
+
+.preset-avatar-item {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.preset-avatar-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.preset-avatar-item:hover {
+  transform: scale(1.12);
+}
+
+.preset-avatar-item.active {
+  border-color: #FF5A34;
+  box-shadow: 0 0 0 2px rgba(255, 90, 52, 0.3);
+  transform: scale(1.08);
 }
 
 .custom-form-group {
