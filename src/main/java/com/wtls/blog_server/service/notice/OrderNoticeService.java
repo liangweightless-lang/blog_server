@@ -227,7 +227,7 @@ public class OrderNoticeService {
                     md.append("> **买家备注**：").append(order.getRemark()).append("\n");
                 }
                 
-                String targetImg = StrUtil.isNotBlank(firstProductImg) ? firstProductImg : (campaign != null ? campaign.getImage() : "");
+                String targetImg = StrUtil.isNotBlank(firstProductImg) ? firstProductImg : "";
                 String fullImgUrl = toFullImageUrl(targetImg);
                 if (StrUtil.isNotBlank(fullImgUrl)) {
                     md.append("> **商品预览**：[🖼️ 点击查看商品图片](").append(fullImgUrl).append(")\n");
