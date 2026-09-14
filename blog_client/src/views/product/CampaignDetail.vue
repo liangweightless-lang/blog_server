@@ -115,20 +115,112 @@
       <!-- 商品选购列表 -->
       <div class="section-card products-card">
         <h3 class="card-title"><icon-apps /> 选购商品</h3>
-        <div v-for="item in campaign.products" :key="item.id" class="product-item">
-          <img :src="item.product?.image" class="product-img" />
+        <div 
+          v-for="item in campaign.products" 
+          :key="item.id" 
+          class="product-item"
+          @click="openProductDetail(item)"
+        >
+          <div class="product-img-wrap">
+            <img :src="$formatImageUrl ? $formatImageUrl(item.product?.image) : item.product?.image" class="product-img" />
+            <div class="img-preview-tag">
+              <icon-zoom-in /> 详情
+            </div>
+          </div>
           <div class="product-info">
             <div class="product-name">{{ item.product?.name }}</div>
+            <div class="product-brief" v-if="item.product?.description">{{ item.product.description }}</div>
             <div class="product-price-row">
               <span class="product-price">¥{{ item.groupPrice }}</span>
+              <span class="product-origin-price" v-if="item.product?.price && item.product.price > item.groupPrice">¥{{ item.product.price }}</span>
               <span class="product-stock">{{ item.stockLimit === -1 ? '不限量' : `剩余${item.stockLimit}件` }}</span>
             </div>
-            <div class="product-qty">
+            <div class="product-qty" @click.stop>
               <a-input-number v-model="cart[item.id]" :min="0" :max="item.stockLimit === -1 ? 99 : item.stockLimit" mode="button" size="small" style="width: 110px;" />
             </div>
           </div>
         </div>
       </div>
+
+      <!-- 商品详情与大图弹窗 -->
+      <a-modal v-model:visible="detailModalVisible" :footer="false" :header="false" modal-class="product-detail-modal" unmount-on-close>
+        <div class="product-detail-sheet" v-if="activeProductItem">
+          <button class="sheet-circle-close" @click="detailModalVisible = false" aria-label="关闭">
+            <icon-close />
+          </button>
+          
+          <!-- 大图展示区 -->
+          <div class="sheet-image-hero">
+            <a-image
+              :src="$formatImageUrl ? $formatImageUrl(activeProductItem.product?.image) : activeProductItem.product?.image"
+              class="sheet-big-img"
+              :preview-props="{ escToClose: true }"
+              fit="cover"
+            />
+            <div class="sheet-image-tip">
+              <icon-fullscreen /> 点击查看全屏大图
+            </div>
+          </div>
+
+          <!-- 详细信息主体 -->
+          <div class="sheet-detail-body">
+            <div class="sheet-price-banner">
+              <div class="price-main">
+                <span class="price-symbol">¥</span>
+                <span class="price-val">{{ activeProductItem.groupPrice }}</span>
+                <span class="price-origin" v-if="activeProductItem.product?.price && activeProductItem.product.price > activeProductItem.groupPrice">
+                  原价 ¥{{ activeProductItem.product.price }}
+                </span>
+                <span class="price-save-badge" v-if="activeProductItem.product?.price && activeProductItem.product.price > activeProductItem.groupPrice">
+                  拼团省 ¥{{ (activeProductItem.product.price - activeProductItem.groupPrice).toFixed(2) }}
+                </span>
+              </div>
+              <div class="stock-pill">
+                {{ activeProductItem.stockLimit === -1 ? '不限量' : `剩余 ${activeProductItem.stockLimit} 件` }}
+              </div>
+            </div>
+
+            <h2 class="sheet-product-name">{{ activeProductItem.product?.name }}</h2>
+
+            <!-- 详细介绍与说明 -->
+            <div class="sheet-desc-box">
+              <div class="sheet-section-head">
+                <icon-info-circle /> 商品详情与介绍
+              </div>
+              <div class="sheet-desc-text" v-if="activeProductItem.product?.description">
+                {{ activeProductItem.product.description }}
+              </div>
+              <div class="sheet-desc-empty" v-else>
+                团长暂未填写详细文字介绍，品质严选，请放心跟团。
+              </div>
+            </div>
+          </div>
+
+          <!-- 底部加购与数量联动操作栏 -->
+          <div class="sheet-action-bar">
+            <div class="sheet-action-stepper">
+              <span class="action-stepper-label">选购数量</span>
+              <a-input-number 
+                v-model="cart[activeProductItem.id]" 
+                :min="0" 
+                :max="activeProductItem.stockLimit === -1 ? 99 : activeProductItem.stockLimit" 
+                mode="button" 
+                size="medium" 
+                style="width: 125px;" 
+              />
+            </div>
+            <a-button 
+              type="primary" 
+              shape="round" 
+              size="large"
+              class="sheet-action-btn" 
+              @click="detailModalVisible = false"
+            >
+              {{ (cart[activeProductItem.id] || 0) > 0 ? `已选 ${cart[activeProductItem.id]} 件 · 确定` : '确定' }}
+            </a-button>
+          </div>
+        </div>
+      </a-modal>
 
       <!-- 底部结账栏 -->
       <div class="bottom-bar">
@@ -257,6 +349,8 @@ export default {
       loading: false,
       cart: {},
       checkoutVisible: false,
+      detailModalVisible: false,
+      activeProductItem: null,
       submitting: false,
       paymentConfirmVisible: false,
       wechatQrVisible: false,
@@ -298,6 +392,11 @@ export default {
     this.fetchData();
   },
   methods: {
+    openProductDetail(item) {
+      if (!item) return;
+      this.activeProductItem = item;
+      this.detailModalVisible = true;
+    },
     formatTime(t) {
       return t ? dayjs(t).format('MM月DD日 HH:mm') : '-';
     },
@@ -726,21 +825,56 @@ export default {
   margin-bottom: 12px;
   border: 1px solid rgba(0,0,0,0.03);
   transition: all 0.2s ease;
+  cursor: pointer;
 }
 .product-item:last-child {
   margin-bottom: 0;
 }
+.product-item:hover {
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+}
 .product-item:active {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.95);
   transform: scale(0.99);
 }
-.product-img {
+.product-img-wrap {
+  position: relative;
   width: 88px;
   height: 88px;
   border-radius: 14px;
-  object-fit: cover;
+  overflow: hidden;
   flex-shrink: 0;
   box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  background: #F2F3F5;
+}
+.product-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+.product-item:hover .product-img {
+  transform: scale(1.06);
+}
+.img-preview-tag {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.52);
+  color: #FFFFFF;
+  font-size: 10px;
+  padding: 2px 0;
+  text-align: center;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-weight: 500;
 }
 .product-info {
   flex: 1;
@@ -759,6 +893,15 @@ export default {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+.product-brief {
+  font-size: 12px;
+  color: #86909C;
+  margin-top: 3px;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .product-price-row {
   display: flex;
   align-items: baseline;
@@ -769,6 +912,11 @@ export default {
   color: #FF4B2B;
   font-size: 18px;
   font-weight: 800;
+}
+.product-origin-price {
+  font-size: 12px;
+  color: #C9CDD4;
+  text-decoration: line-through;
 }
 .product-stock {
   font-size: 12px;
@@ -853,6 +1001,194 @@ export default {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
+
+:deep(.product-detail-modal) {
+  border-radius: 24px;
+  overflow: hidden;
+  background: #FFFFFF;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.16);
+  padding: 0 !important;
+  max-width: 520px;
+}
+:deep(.product-detail-modal .arco-modal-body) {
+  padding: 0 !important;
+}
+.product-detail-sheet {
+  position: relative;
+  background: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
+}
+.product-detail-sheet .sheet-circle-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.45);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.product-detail-sheet .sheet-circle-close:hover {
+  background: rgba(0, 0, 0, 0.6);
+}
+.product-detail-sheet .sheet-circle-close:active {
+  transform: scale(0.92);
+}
+.sheet-image-hero {
+  position: relative;
+  width: 100%;
+  height: 260px;
+  background: #F2F3F5;
+  overflow: hidden;
+}
+.sheet-big-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+:deep(.sheet-big-img img) {
+  width: 100%;
+  height: 260px;
+  object-fit: cover;
+}
+.sheet-image-tip {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #FFFFFF;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+}
+.sheet-detail-body {
+  padding: 18px 20px 14px;
+  overflow-y: auto;
+  flex: 1;
+}
+.sheet-price-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.price-main {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+.price-symbol {
+  font-size: 16px;
+  font-weight: 800;
+  color: #FF4B2B;
+}
+.price-val {
+  font-size: 28px;
+  font-weight: 800;
+  color: #FF4B2B;
+  line-height: 1;
+}
+.price-origin {
+  font-size: 13px;
+  color: #86909C;
+  text-decoration: line-through;
+  margin-left: 6px;
+}
+.price-save-badge {
+  background: linear-gradient(135deg, #FFECE8 0%, #FFF2E8 100%);
+  color: #F53F3F;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: 6px;
+  border: 1px solid rgba(245, 63, 63, 0.2);
+}
+.stock-pill {
+  font-size: 12px;
+  color: #4E5969;
+  background: #F2F3F5;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+.sheet-product-name {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1D2129;
+  line-height: 1.4;
+  margin: 0 0 14px 0;
+}
+.sheet-desc-box {
+  background: #F7F8FA;
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.03);
+}
+.sheet-section-head {
+  font-size: 13px;
+  font-weight: 700;
+  color: #4E5969;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.sheet-section-head svg {
+  color: #FF4B2B;
+}
+.sheet-desc-text {
+  font-size: 14px;
+  color: #1D2129;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.sheet-desc-empty {
+  font-size: 13px;
+  color: #86909C;
+  line-height: 1.6;
+}
+.sheet-action-bar {
+  padding: 12px 20px;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  background: #FFFFFF;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.sheet-action-stepper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.action-stepper-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4E5969;
+}
+.sheet-action-btn {
+  flex: 1;
+  height: 44px;
+  font-size: 15px;
+  font-weight: 700;
+  background: var(--brand-gradient, linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%)) !important;
+  border: none !important;
+  box-shadow: 0 4px 16px rgba(255, 75, 43, 0.25);
+}
+
 .checkout-content {
   padding: 10px;
 }
@@ -950,14 +1286,16 @@ export default {
   .hero-title {
     font-size: 20px;
   }
-  .product-img {
+  .product-img-wrap {
     width: 76px;
     height: 76px;
+    border-radius: 12px;
   }
   .product-item {
     padding: 12px;
   }
-  :deep(.checkout-modal) {
+  :deep(.checkout-modal),
+  :deep(.product-detail-modal) {
     position: fixed !important;
     bottom: 0 !important;
     left: 0 !important;
@@ -968,8 +1306,14 @@ export default {
     border-radius: 24px 24px 0 0 !important;
     padding-bottom: max(16px, env(safe-area-inset-bottom));
     animation: slideUpModal 0.35s cubic-bezier(0.25, 1, 0.5, 1);
-    max-height: 85vh;
+    max-height: 88vh;
     overflow-y: auto;
+  }
+  .sheet-image-hero {
+    height: 220px;
+  }
+  :deep(.sheet-big-img img) {
+    height: 220px;
   }
 }
 
