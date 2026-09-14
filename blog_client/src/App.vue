@@ -556,6 +556,85 @@ body {
     -webkit-overflow-scrolling: touch !important;
     word-break: break-word !important;
   }
+
+  /* 【移动端日期时间组件专项适配】防止安卓端横向溢出截断周日 */
+  .arco-trigger-popup.arco-picker-dropdown {
+    max-width: 96vw !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+  .arco-picker-container {
+    width: 100% !important;
+    max-width: 96vw !important;
+    box-sizing: border-box !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+  }
+  .arco-panel-date {
+    display: flex !important;
+    flex-direction: column !important; /* 横排变竖排，日历和时间不再并排挤压 */
+    width: 100% !important;
+  }
+  .arco-panel-date-inner {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 4px 6px !important;
+  }
+  .arco-picker-body {
+    width: 100% !important;
+  }
+  .arco-picker-content {
+    width: 100% !important;
+  }
+  .arco-picker-content table {
+    width: 100% !important;
+    table-layout: fixed !important; /* 7天均分表格，周日绝对不会被截断 */
+  }
+  .arco-picker-row {
+    width: 100% !important;
+  }
+  .arco-picker-cell {
+    width: 14.28% !important; /* 一周7天平分100%宽度 */
+    text-align: center !important;
+    padding: 2px 0 !important;
+  }
+  .arco-picker-date-value {
+    width: 32px !important;
+    height: 32px !important;
+    line-height: 32px !important;
+    margin: 0 auto !important;
+  }
+  .arco-panel-date-timepicker {
+    width: 100% !important;
+    border-left: none !important;
+    border-top: 1px solid var(--color-neutral-3) !important;
+  }
+  .arco-panel-date-timepicker-title {
+    height: 32px !important;
+    line-height: 32px !important;
+    font-size: 13px !important;
+  }
+  .arco-panel-date-timepicker .arco-timepicker {
+    height: 120px !important; /* 压缩滚轮高度，适应移动端屏幕 */
+    display: flex !important;
+    justify-content: space-around !important;
+  }
+  .arco-panel-date-timepicker .arco-timepicker-column {
+    flex: 1 !important;
+    text-align: center !important;
+  }
+  .arco-panel-date-timepicker .arco-timepicker-cell {
+    width: 100% !important;
+  }
+  .arco-panel-date-timepicker .arco-timepicker-cell-inner {
+    padding-left: 0 !important;
+    text-align: center !important;
+  }
+  .arco-picker-footer {
+    padding: 8px 12px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
 }
 
 @keyframes slideUpBottomSheet {

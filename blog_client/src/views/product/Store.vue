@@ -1,70 +1,97 @@
 <template>
   <div class="store-container">
     <PullToRefresh @refresh="handlePullRefresh">
+      <!-- 顶层分类 Tab (发现好物 / 社区快团) -->
+      <div class="store-nav-tabs">
+        <div 
+          class="nav-tab-item" 
+          :class="{ active: currentTab === 'products' }" 
+          @click="currentTab = 'products'"
+        >
+          <icon-apps class="tab-icon" />
+          <span>精选单品</span>
+        </div>
+        <div 
+          class="nav-tab-item" 
+          :class="{ active: currentTab === 'campaigns' }" 
+          @click="currentTab = 'campaigns'"
+        >
+          <icon-fire class="tab-icon fire" />
+          <span>社区快团</span>
+          <span v-if="campaigns.length > 0" class="tab-fire-badge">{{ campaigns.length }}</span>
+        </div>
+      </div>
+
       <!-- 社区快团区 -->
-      <div v-if="campaigns.length > 0" class="group-buy-section">
-        <h2 class="section-title" style="color: #FF5A34;"><icon-fire /> 社区快团</h2>
-        <a-grid :cols="{ xs: 1, sm: 2, md: 3 }" :colGap="20" :rowGap="20">
-          <a-grid-item v-for="campaign in campaigns" :key="campaign.id">
-            <a-card class="campaign-card" hoverable :bordered="false" :body-style="{ padding: '20px' }" @click="$router.push(`/campaign/${campaign.id}`)" style="cursor: pointer;">
-              <div class="campaign-header">
-                <h3 class="campaign-title">{{ campaign.title }}</h3>
-                <a-tag color="#FF4B2B" size="small" class="campaign-tag">进行中</a-tag>
-              </div>
-              <div class="campaign-details">
-                <div class="detail-row">
-                  <icon-location class="detail-icon" /> 
-                  <span class="detail-text">提货点: <span class="detail-highlight">{{ campaign.deliveryLocation?.name || '未知' }}</span></span>
+      <div v-show="currentTab === 'campaigns'" class="group-buy-section">
+        <div v-if="campaigns.length > 0">
+          <a-grid :cols="{ xs: 1, sm: 2, md: 3 }" :colGap="16" :rowGap="16">
+            <a-grid-item v-for="campaign in campaigns" :key="campaign.id">
+              <a-card class="campaign-card compact" hoverable :bordered="false" :body-style="{ padding: '16px 14px' }" @click="$router.push(`/campaign/${campaign.id}`)" style="cursor: pointer;">
+                <div class="campaign-header">
+                  <h3 class="campaign-title">{{ campaign.title }}</h3>
+                  <a-tag color="#FF4B2B" size="small" class="campaign-tag">进行中</a-tag>
                 </div>
-                <div class="detail-row">
-                  <icon-clock-circle class="detail-icon" /> 
-                  <div class="detail-text" style="display: flex; align-items: center;">
-                    距结束: <a-countdown :value="new Date(campaign.endTime).getTime()" format="D 天 H 时 m 分 s 秒" :value-style="{color: '#FF4B2B', fontSize: '13px', fontWeight: 'bold', marginLeft: '4px'}" />
+                <div class="campaign-details">
+                  <div class="detail-row">
+                    <icon-location class="detail-icon" /> 
+                    <span class="detail-text">提货点: <span class="detail-highlight">{{ campaign.deliveryLocation?.name || '未知' }}</span></span>
+                  </div>
+                  <div class="detail-row">
+                    <icon-clock-circle class="detail-icon" /> 
+                    <div class="detail-text" style="display: flex; align-items: center;">
+                      距结束: <a-countdown :value="new Date(campaign.endTime).getTime()" format="D 天 H 时 m 分 s 秒" :value-style="{color: '#FF4B2B', fontSize: '12px', fontWeight: 'bold', marginLeft: '4px'}" />
+                    </div>
                   </div>
                 </div>
-              </div>
-              
-              <div class="campaign-progress" v-if="campaign.targetNum > 0" style="margin-bottom: 12px;">
-                 <div style="display: flex; justify-content: space-between; font-size: 12px; color: #86909c; margin-bottom: 4px;">
-                   <span>已跟团 {{ campaign.currentNum || 0 }} 人</span>
-                   <span>目标 {{ campaign.targetNum }} 人</span>
-                 </div>
-                 <a-progress :percent="Math.min((campaign.currentNum || 0) / campaign.targetNum, 1)" size="small" color="#FF4B2B" />
-              </div>
-              
-              <div v-if="campaign.joinedAvatars && campaign.joinedAvatars.length > 0" class="joined-avatars">
-                <a-avatar-group :size="24" :max-count="5">
-                  <a-avatar v-for="(avatar, idx) in campaign.joinedAvatars" :key="idx">
-                    <img :src="avatar" />
-                  </a-avatar>
-                </a-avatar-group>
-                <span class="joined-text">等 {{ campaign.currentNum }} 人已跟团</span>
-              </div>
-              
-              <div class="campaign-products-preview" v-if="campaign.products && campaign.products.length > 0">
-                <div class="preview-imgs">
-                  <template v-if="campaign.products.length <= 4">
-                    <img v-for="cp in campaign.products" :key="cp.id" :src="$formatImageUrl(cp.product?.image)" class="preview-img" />
-                  </template>
-                  <template v-else>
-                    <img v-for="cp in campaign.products.slice(0, 3)" :key="cp.id" :src="$formatImageUrl(cp.product?.image)" class="preview-img" />
-                    <div class="preview-more">+{{ campaign.products.length - 3 }}</div>
-                  </template>
+                
+                <div class="campaign-progress" v-if="campaign.targetNum > 0" style="margin-bottom: 10px;">
+                   <div style="display: flex; justify-content: space-between; font-size: 11px; color: #86909c; margin-bottom: 3px;">
+                     <span>已跟团 {{ campaign.currentNum || 0 }} 人</span>
+                     <span>目标 {{ campaign.targetNum }} 人</span>
+                   </div>
+                   <a-progress :percent="Math.min((campaign.currentNum || 0) / campaign.targetNum, 1)" size="small" color="#FF4B2B" />
                 </div>
-                <div class="preview-text">
-                  <span class="price-start">¥{{ getMinPrice(campaign) }}<span class="price-suffix">起</span></span>
-                  <span class="count-text">共 {{ campaign.products.length }} 款</span>
+                
+                <div v-if="campaign.joinedAvatars && campaign.joinedAvatars.length > 0" class="joined-avatars">
+                  <a-avatar-group :size="22" :max-count="5">
+                    <a-avatar v-for="(avatar, idx) in campaign.joinedAvatars" :key="idx">
+                      <img :src="avatar" />
+                    </a-avatar>
+                  </a-avatar-group>
+                  <span class="joined-text">等 {{ campaign.currentNum }} 人已跟团</span>
                 </div>
-              </div>
-              
-              <a-button type="primary" class="campaign-btn" shape="round" long @click.stop="$router.push(`/campaign/${campaign.id}`)">立即跟团</a-button>
-            </a-card>
-          </a-grid-item>
-        </a-grid>
+                
+                <div class="campaign-products-preview" v-if="campaign.products && campaign.products.length > 0">
+                  <div class="preview-imgs">
+                    <template v-if="campaign.products.length <= 4">
+                      <img v-for="cp in campaign.products" :key="cp.id" :src="$formatImageUrl(cp.product?.image)" class="preview-img" />
+                    </template>
+                    <template v-else>
+                      <img v-for="cp in campaign.products.slice(0, 3)" :key="cp.id" :src="$formatImageUrl(cp.product?.image)" class="preview-img" />
+                      <div class="preview-more">+{{ campaign.products.length - 3 }}</div>
+                    </template>
+                  </div>
+                  <div class="preview-text">
+                    <span class="price-start">¥{{ getMinPrice(campaign) }}<span class="price-suffix">起</span></span>
+                    <span class="count-text">共 {{ campaign.products.length }} 款</span>
+                  </div>
+                </div>
+                
+                <a-button type="primary" class="campaign-btn" shape="round" long @click.stop="$router.push(`/campaign/${campaign.id}`)">立即跟团</a-button>
+              </a-card>
+            </a-grid-item>
+          </a-grid>
+        </div>
+        <div v-else class="empty-campaign-box">
+          <p class="empty-title">当前暂无进行中的社区快团</p>
+          <p class="empty-desc">团长正在酝酿更多美味好物，先去逛逛精选单品吧！</p>
+          <a-button type="primary" shape="round" @click="currentTab = 'products'">选购精选单品</a-button>
+        </div>
       </div>
 
     <!-- 普通单品区 -->
-    <div class="product-grid" style="margin-top: 32px;">
+    <div v-show="currentTab === 'products'" class="product-grid" style="margin-top: 12px;">
       <div class="product-header-bar">
         <h2 class="section-title" style="color: #1D2129; margin-bottom: 0;">
           <icon-apps /> 发现好物 
@@ -202,6 +229,7 @@ export default {
       currentGroupId: null,
       activeGroups: [],
       campaigns: [], // 社区快团数据
+      currentTab: 'products', // 默认打开单品 tab: 'products' | 'campaigns'
       isMonday: new Date().getDay() === 1,
       isMobile: window.innerWidth <= 768,
       currentSort: 'default',
@@ -415,6 +443,102 @@ export default {
 <style scoped>
 .store-container {
   padding: 10px 0 120px; /* Increased bottom padding to avoid bottom nav overlap */
+}
+
+/* 顶部导航分类切换 (发现好物 / 社区快团) */
+.store-nav-tabs {
+  display: inline-flex;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 4px;
+  border-radius: 30px;
+  margin-bottom: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.nav-tab-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #4E5969;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+}
+
+.nav-tab-item:hover {
+  color: #1D2129;
+}
+
+.nav-tab-item.active {
+  background: #FFFFFF;
+  color: #FF5A34;
+  box-shadow: 0 4px 12px rgba(255, 90, 52, 0.15);
+}
+
+.tab-icon {
+  font-size: 15px;
+}
+
+.tab-icon.fire {
+  color: #FF4B2B;
+}
+
+.tab-fire-badge {
+  background: #FF4B2B;
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-left: 2px;
+  line-height: 1.2;
+}
+
+.empty-campaign-box {
+  text-align: center;
+  padding: 48px 20px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 20px;
+}
+
+.empty-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1D2129;
+  margin-bottom: 6px;
+}
+
+.empty-desc {
+  font-size: 13px;
+  color: #86909C;
+  margin-bottom: 18px;
+}
+
+/* 快团卡片轻量微瘦身样式 */
+.campaign-card.compact .campaign-header {
+  margin-bottom: 10px;
+}
+.campaign-card.compact .campaign-title {
+  font-size: 16px;
+  line-height: 1.35;
+}
+.campaign-card.compact .campaign-details {
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+}
+.campaign-card.compact .detail-row {
+  margin-bottom: 4px;
+}
+.campaign-card.compact .campaign-btn {
+  height: 36px;
+  font-size: 14px;
 }
 
 

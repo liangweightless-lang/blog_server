@@ -66,16 +66,37 @@
               </a-row>
             </a-card>
             
-            <a-form-item label="发货/提货时间">
-              <a-date-picker v-model="form.deliveryTime" show-time format="YYYY-MM-DD HH:mm:ss" style="width: 100%;" />
+            <a-form-item label="发货/提货时间" required>
+              <a-date-picker 
+                v-model="form.deliveryTime" 
+                show-time 
+                format="YYYY-MM-DD HH:mm:ss" 
+                :editable="false" 
+                placeholder="请选择发货/提货时间"
+                style="width: 100%;" 
+              />
             </a-form-item>
             
-            <a-form-item label="团购开始时间">
-              <a-date-picker v-model="form.startTime" show-time format="YYYY-MM-DD HH:mm:ss" style="width: 100%;" />
+            <a-form-item label="团购开始时间" required>
+              <a-date-picker 
+                v-model="form.startTime" 
+                show-time 
+                format="YYYY-MM-DD HH:mm:ss" 
+                :editable="false" 
+                placeholder="请选择团购开始时间"
+                style="width: 100%;" 
+              />
             </a-form-item>
             
-            <a-form-item label="团购结束时间">
-              <a-date-picker v-model="form.endTime" show-time format="YYYY-MM-DD HH:mm:ss" style="width: 100%;" />
+            <a-form-item label="团购结束时间" required>
+              <a-date-picker 
+                v-model="form.endTime" 
+                show-time 
+                format="YYYY-MM-DD HH:mm:ss" 
+                :editable="false" 
+                placeholder="请选择截单结束时间"
+                style="width: 100%;" 
+              />
             </a-form-item>
           </a-form>
         </div>
