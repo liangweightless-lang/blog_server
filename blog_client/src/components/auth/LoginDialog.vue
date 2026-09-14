@@ -241,6 +241,9 @@ export default {
         this.$nextTick(() => {
           this.$refs.slideVerifyRef?.reset();
         });
+        setTimeout(() => {
+          this.$refs.slideVerifyRef?.updateDimensions();
+        }, 320);
       }
     },
     close() {
@@ -261,6 +264,9 @@ export default {
         this.$nextTick(() => {
           this.$refs.slideVerifyRef?.reset();
         });
+        setTimeout(() => {
+          this.$refs.slideVerifyRef?.updateDimensions();
+        }, 320);
       }
     },
     onSlideSuccess(ticket) {

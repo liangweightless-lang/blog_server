@@ -4,11 +4,6 @@
     ref="containerRef"
     :class="{ 'is-success': isSuccess, 'is-sliding': isSliding }"
     @click.stop
-    @mousedown.stop
-    @mouseup.stop
-    @touchstart.stop
-    @touchmove.stop
-    @touchend.stop
   >
     <!-- 背景进度填充条 -->
     <div 
@@ -26,7 +21,7 @@
       </span>
     </div>
 
-    <!-- 滑块把手 -->
+    <!-- 滑块把手：采用统一原生 Pointer Events (统一兼容 iOS/Android/桌面/触控屏) -->
     <div 
       class="slide-handle"
       ref="handleRef"
@@ -34,8 +29,11 @@
         transform: `translateX(${currentX}px)`,
         transition: isSliding ? 'none' : 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)'
       }"
-      @mousedown.stop.prevent="onDragStart"
-      @touchstart.stop.prevent="onTouchStart"
+      @pointerdown="onPointerDown"
+      @pointermove="onPointerMove"
+      @pointerup="onPointerUp"
+      @pointercancel="onPointerUp"
+      @click.stop
     >
       <icon-check v-if="isSuccess" class="handle-icon icon-success" />
       <icon-double-right v-else class="handle-icon" />
@@ -57,12 +55,12 @@ export default {
       startX: 0,
       currentX: 0,
       maxSlideWidth: 0,
-      loadingTicket: false
+      loadingTicket: false,
+      activePointerId: null
     };
   },
   computed: {
     progressWidth() {
-      // 进度宽度为当前位移 + 滑块宽度的一半
       if (this.isSuccess) {
         return this.maxSlideWidth + 40;
       }
@@ -70,98 +68,80 @@ export default {
     }
   },
   mounted() {
-    this.calcMaxSlideWidth();
-    window.addEventListener('resize', this.calcMaxSlideWidth);
+    this.updateDimensions();
+    window.addEventListener('resize', this.updateDimensions);
   },
   beforeUnmount() {
-    window.removeEventListener('resize', this.calcMaxSlideWidth);
-    this.removeGlobalMouseEvents();
-    this.removeGlobalTouchEvents();
+    window.removeEventListener('resize', this.updateDimensions);
   },
   methods: {
-    calcMaxSlideWidth() {
+    updateDimensions() {
       if (!this.$refs.containerRef || !this.$refs.handleRef) return;
-      const containerW = this.$refs.containerRef.offsetWidth || 280;
-      const handleW = this.$refs.handleRef.offsetWidth || 40;
-      // 减去左右 padding (各 3px)
-      this.maxSlideWidth = Math.max(containerW - handleW - 6, 0);
+      const cRect = this.$refs.containerRef.getBoundingClientRect();
+      const hRect = this.$refs.handleRef.getBoundingClientRect();
+      const containerW = cRect.width || this.$refs.containerRef.offsetWidth || 280;
+      const handleW = hRect.width || this.$refs.handleRef.offsetWidth || 40;
+      this.maxSlideWidth = Math.max(containerW - handleW - 6, 60);
     },
 
-    // 鼠标事件
-    onDragStart(e) {
-      if (e) e.stopPropagation();
+    // 核心：使用 W3C 现代跨端标准 PointerEvent
+    onPointerDown(e) {
       if (this.isSuccess || this.loadingTicket) return;
-      this.calcMaxSlideWidth();
+      
+      // 阻止冒泡与系统默认手势
+      e.stopPropagation();
+      e.preventDefault();
+
+      this.updateDimensions();
       this.isSliding = true;
       this.startX = e.clientX;
 
-      window.addEventListener('mousemove', this.onDragMove);
-      window.addEventListener('mouseup', this.onDragEnd);
+      const handle = e.currentTarget || e.target;
+      if (handle && handle.setPointerCapture) {
+        try {
+          handle.setPointerCapture(e.pointerId);
+          this.activePointerId = e.pointerId;
+        } catch (err) {
+          // 部分老版本浏览器降级忽略
+        }
+      }
     },
-    onDragMove(e) {
+
+    onPointerMove(e) {
       if (!this.isSliding) return;
+      e.stopPropagation();
+      e.preventDefault();
+
       const moveX = e.clientX - this.startX;
-      if (moveX < 0) {
+      if (moveX <= 0) {
         this.currentX = 0;
-      } else if (moveX > this.maxSlideWidth) {
+      } else if (moveX >= this.maxSlideWidth) {
         this.currentX = this.maxSlideWidth;
       } else {
         this.currentX = moveX;
       }
     },
-    onDragEnd(e) {
-      if (e) e.stopPropagation();
+
+    onPointerUp(e) {
       if (!this.isSliding) return;
+      e.stopPropagation();
       this.isSliding = false;
-      this.removeGlobalMouseEvents();
-      this.checkSuccess();
-    },
-    removeGlobalMouseEvents() {
-      window.removeEventListener('mousemove', this.onDragMove);
-      window.removeEventListener('mouseup', this.onDragEnd);
-    },
 
-    // 触屏移动端事件
-    onTouchStart(e) {
-      if (e) e.stopPropagation();
-      if (this.isSuccess || this.loadingTicket) return;
-      this.calcMaxSlideWidth();
-      this.isSliding = true;
-      this.startX = e.touches[0].clientX;
-
-      window.addEventListener('touchmove', this.onTouchMove, { passive: false });
-      window.addEventListener('touchend', this.onTouchEnd);
-      window.addEventListener('touchcancel', this.onTouchEnd);
-    },
-    onTouchMove(e) {
-      if (!this.isSliding) return;
-      if (e) e.preventDefault(); // 阻止手机端拖动时的页面跟随滚动
-      const moveX = e.touches[0].clientX - this.startX;
-      if (moveX < 0) {
-        this.currentX = 0;
-      } else if (moveX > this.maxSlideWidth) {
-        this.currentX = this.maxSlideWidth;
-      } else {
-        this.currentX = moveX;
+      const handle = e.currentTarget || e.target;
+      if (handle && handle.releasePointerCapture && this.activePointerId !== null) {
+        try {
+          handle.releasePointerCapture(this.activePointerId);
+        } catch (err) {}
       }
-    },
-    onTouchEnd(e) {
-      if (e) e.stopPropagation();
-      if (!this.isSliding) return;
-      this.isSliding = false;
-      this.removeGlobalTouchEvents();
+      this.activePointerId = null;
+
       this.checkSuccess();
     },
-    removeGlobalTouchEvents() {
-      window.removeEventListener('touchmove', this.onTouchMove);
-      window.removeEventListener('touchend', this.onTouchEnd);
-      window.removeEventListener('touchcancel', this.onTouchEnd);
-    },
 
-    // 校验滑动是否达成
     async checkSuccess() {
-      // 滑动距离达到 90% 以上视作拖到终点成功
-      if (this.currentX >= this.maxSlideWidth * 0.9) {
+      // 滑动距离达到 85% 以上即视为通过（更加流畅宽容）
+      const threshold = this.maxSlideWidth > 0 ? this.maxSlideWidth * 0.85 : 150;
+      if (this.currentX >= threshold) {
         this.currentX = this.maxSlideWidth;
         this.isSuccess = true;
         this.loadingTicket = true;
@@ -177,17 +157,18 @@ export default {
           this.reset();
         }
       } else {
-        // 未拖到位，平滑回弹
+        // 未滑到位，平滑回弹
         this.currentX = 0;
       }
     },
 
-    // 重置滑块
     reset() {
       this.isSliding = false;
       this.isSuccess = false;
       this.currentX = 0;
       this.loadingTicket = false;
+      this.activePointerId = null;
+      this.updateDimensions();
       this.$emit('reset');
     }
   }
@@ -205,6 +186,8 @@ export default {
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none !important; /* 关键：禁止 iOS Safari 原生手势拦截 */
   box-sizing: border-box;
   display: flex;
   align-items: center;
@@ -284,7 +267,10 @@ export default {
   justify-content: center;
   cursor: grab;
   z-index: 3;
-  touch-action: none;
+  touch-action: none !important; /* 关键：禁止 Safari 拖动延迟与滚动 */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .slide-handle:active,
@@ -303,6 +289,7 @@ export default {
   font-size: 16px;
   color: #86909C;
   transition: color 0.2s;
+  pointer-events: none;
 }
 
 .is-sliding .handle-icon {
