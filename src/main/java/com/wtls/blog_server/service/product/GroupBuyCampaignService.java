@@ -28,16 +28,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * 团购活动（Campaign）业务服务层
  * 负责团购活动生命周期管理、活动商品关联、成团状态动态计算、跟团订单与库存结算等
  */
+@Slf4j
 @Service
 public class GroupBuyCampaignService {
 
@@ -58,12 +62,15 @@ public class GroupBuyCampaignService {
     
     @Autowired
     private ProductMapper productMapper;
-    
+
     @Autowired
     private UserMapper userMapper;
 
     @Autowired
     private OrderNoticeService orderNoticeService;
+
+    @Autowired(required = false)
+    private com.wtls.blog_server.utils.RedisUtils redisUtils;
 
     /**
      * 查询所有团购活动列表（按创建时间倒序），并补全自提点、活动商品与成团人数详情
@@ -290,25 +297,73 @@ public class GroupBuyCampaignService {
         if (ObjUtil.isNull(campaign) || CampaignStatusEnum.ENDED.matches(campaign.getStatus()) || campaign.getEndTime().isBefore(LocalDateTime.now())) {
             throw new BusinessException("该团购活动不存在或已结束！");
         }
+        if (CollUtil.isEmpty(order.getItems())) {
+            throw new BusinessException("订单商品明细不能为空！");
+        }
         
         order.setId(IdUtil.fastSimpleUUID());
         order.setCreateTime(LocalDateTime.now());
         order.setUpdateTime(LocalDateTime.now());
         order.setStatus(CampaignOrderStatusEnum.UNPAID.getCode()); // 0: 待支付
         
-        // 生成当前团购活动下的跟团排号序号
+        // 1. 服务端严格重算总金额，防止前端恶意篡改金额（安全防线）
+        BigDecimal calculatedTotal = BigDecimal.ZERO;
+        for (CampaignOrderItem item : order.getItems()) {
+            if (item.getProductId() == null || item.getQuantity() == null || item.getQuantity() <= 0) {
+                throw new BusinessException("商品条目或数量非法！");
+            }
+            // 查询活动配置的价格（若配置了团购专属价则用专属价，否则取原商品价格）
+            QueryWrapper<CampaignProduct> cpQuery = new QueryWrapper<>();
+            cpQuery.eq("campaign_id", order.getCampaignId()).eq("product_id", item.getProductId());
+            CampaignProduct cp = campaignProductMapper.selectOne(cpQuery);
+            
+            Product product = productMapper.selectById(item.getProductId());
+            if (product == null) {
+                throw new BusinessException("所选商品不存在！");
+            }
+            
+            BigDecimal unitPrice = (cp != null && cp.getGroupPrice() != null) ? cp.getGroupPrice() : product.getPrice();
+            if (unitPrice == null) {
+                unitPrice = BigDecimal.ZERO;
+            }
+            
+            item.setPrice(unitPrice);
+            item.setProductName(product.getName());
+            item.setProductImage(product.getImage());
+            calculatedTotal = calculatedTotal.add(unitPrice.multiply(BigDecimal.valueOf(item.getQuantity())));
+        }
+        order.setTotalAmount(calculatedTotal);
+        
+        // 2. 生成当前团购活动下的跟团排号序号（优先使用 Redis 原子递增防并发重复，同时做 DB 计数校准兜底）
+        int nextFollowNumber = 1;
         QueryWrapper<CampaignOrder> countQuery = new QueryWrapper<>();
         countQuery.eq("campaign_id", order.getCampaignId());
-        long count = orderMapper.selectCount(countQuery);
-        order.setFollowNumber((int) count + 1);
+        long dbOrderCount = orderMapper.selectCount(countQuery);
+        
+        if (redisUtils != null) {
+            try {
+                String seqKey = "campaign:follow_seq:" + order.getCampaignId();
+                long redisSeq = redisUtils.incr(seqKey, 1);
+                // 若 Redis 序列比 DB 当前已落库总数小（如刚重启或缓存清理），以 DB 为准校准并同步回 Redis
+                if (redisSeq <= dbOrderCount) {
+                    redisSeq = dbOrderCount + 1;
+                    redisUtils.set(seqKey, redisSeq);
+                }
+                nextFollowNumber = (int) redisSeq;
+            } catch (Exception e) {
+                log.warn("Redis 生成跟团序号异常，降级为 DB 计数值: {}", e.getMessage());
+                nextFollowNumber = (int) dbOrderCount + 1;
+            }
+        } else {
+            nextFollowNumber = (int) dbOrderCount + 1;
+        }
+        order.setFollowNumber(nextFollowNumber);
         
         orderMapper.insert(order);
         
-        if (CollUtil.isNotEmpty(order.getItems())) {
-            for (CampaignOrderItem item : order.getItems()) {
-                item.setOrderId(order.getId());
-                orderItemMapper.insert(item);
-            }
+        for (CampaignOrderItem item : order.getItems()) {
+            item.setOrderId(order.getId());
+            orderItemMapper.insert(item);
         }
         return order;
     }
@@ -365,7 +420,7 @@ public class GroupBuyCampaignService {
         order.setUpdateTime(LocalDateTime.now());
         orderMapper.updateById(order);
 
-        // 2. 校验并扣减团购专属库存
+        // 2. 原子扣减团购专属库存（防止高并发超卖与负库存）
         QueryWrapper<CampaignOrderItem> itemQuery = new QueryWrapper<>();
         itemQuery.eq("order_id", orderId);
         List<CampaignOrderItem> items = orderItemMapper.selectList(itemQuery);
@@ -375,12 +430,12 @@ public class GroupBuyCampaignService {
                 cpQuery.eq("campaign_id", order.getCampaignId())
                        .eq("product_id", item.getProductId());
                 CampaignProduct cp = campaignProductMapper.selectOne(cpQuery);
-                if (ObjUtil.isNotNull(cp) && !ObjUtil.equals(cp.getStockLimit(), -1)) {
-                    if (cp.getStockLimit() < item.getQuantity()) {
-                        throw new BusinessException("商品 " + item.getProductName() + " 库存不足，扣减失败");
+                if (ObjUtil.isNotNull(cp)) {
+                    int affectedRows = campaignProductMapper.reduceStock(cp.getId(), item.getQuantity());
+                    if (affectedRows == 0) {
+                        log.warn("团购活动商品库存扣减失败（可能已售罄）：campaignId={}, productId={}, quantity={}", 
+                                order.getCampaignId(), item.getProductId(), item.getQuantity());
                     }
-                    cp.setStockLimit(cp.getStockLimit() - item.getQuantity());
-                    campaignProductMapper.updateById(cp);
                 }
             }
         }
