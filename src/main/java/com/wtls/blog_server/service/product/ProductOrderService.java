@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.wtls.blog_server.entity.product.Product;
 import com.wtls.blog_server.entity.product.ProductOrder;
 import com.wtls.blog_server.entity.user.User;
+import com.wtls.blog_server.enums.ProductOrderStatusEnum;
 import com.wtls.blog_server.exception.BusinessException;
 import com.wtls.blog_server.mapper.product.ProductMapper;
 import com.wtls.blog_server.mapper.product.ProductOrderMapper;
@@ -111,7 +112,7 @@ public class ProductOrderService {
         order.setQuantity(buyCount);
         order.setAmount(originalAmount.subtract(deduction));
         order.setPointsUsed(actualPointsToUse);
-        order.setStatus(0); // 0: 待支付
+        order.setStatus(ProductOrderStatusEnum.UNPAID.getCode()); // 待支付
         order.setShippingAddress(address);
         order.setContactPhone(contactPhone);
         order.setRemark(remark);
@@ -155,7 +156,7 @@ public class ProductOrderService {
     @Transactional
     public ProductOrder handlePaymentSuccess(String orderId) {
         ProductOrder order = orderMapper.selectById(orderId);
-        if (ObjUtil.isNull(order) || !ObjUtil.equals(order.getStatus(), 0)) {
+        if (ObjUtil.isNull(order) || !ProductOrderStatusEnum.UNPAID.matches(order.getStatus())) {
             throw new BusinessException("订单无效或已完成支付");
         }
 
@@ -166,8 +167,8 @@ public class ProductOrderService {
             throw new BusinessException("支付失败：商品库存不足");
         }
 
-        // 2. 更新订单状态为已支付待发货/自提 (1)
-        orderMapper.updateStatus(orderId, 1);
+        // 2. 更新订单状态为已支付待发货/自提
+        orderMapper.updateStatus(orderId, ProductOrderStatusEnum.PAID_PENDING_SHIP.getCode());
 
         // 3. 处理邀请人推荐奖励积分
         User buyer = userMapper.findById(order.getUserId());
@@ -314,12 +315,13 @@ public class ProductOrderService {
         if (!ObjUtil.equals(order.getUserId(), userId)) {
             throw new BusinessException("只能操作属于自己的订单");
         }
-        // 仅允许删除未支付(0) 或 已取消(2) 的历史订单
-        if (!ObjUtil.equals(order.getStatus(), 0) && !ObjUtil.equals(order.getStatus(), 2)) {
+        // 仅允许删除未支付或已取消的历史订单
+        if (!ProductOrderStatusEnum.UNPAID.matches(order.getStatus()) && 
+            !ProductOrderStatusEnum.CANCELLED.matches(order.getStatus())) {
             throw new BusinessException("只能删除未支付或已取消的订单");
         }
         // 若订单属于未支付且使用了积分抵扣，安全归还被冻结的积分
-        if (ObjUtil.equals(order.getStatus(), 0)) {
+        if (ProductOrderStatusEnum.UNPAID.matches(order.getStatus())) {
             int usedPoints = NumberUtil.nullToZero(order.getPointsUsed());
             if (usedPoints > 0) {
                 userMapper.addPoints(userId, usedPoints);
@@ -346,7 +348,8 @@ public class ProductOrderService {
         }
 
         // 已完成或已取消不再触发
-        if (ObjUtil.equals(order.getStatus(), 2) || ObjUtil.equals(order.getStatus(), 3)) {
+        if (ProductOrderStatusEnum.CANCELLED.matches(order.getStatus()) || 
+            ProductOrderStatusEnum.COMPLETED.matches(order.getStatus())) {
             return;
         }
 

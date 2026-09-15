@@ -11,6 +11,10 @@ import com.wtls.blog_server.entity.product.CampaignProduct;
 import com.wtls.blog_server.entity.product.GroupBuyCampaign;
 import com.wtls.blog_server.entity.product.Product;
 import com.wtls.blog_server.entity.user.User;
+import com.wtls.blog_server.enums.CampaignGroupStatusEnum;
+import com.wtls.blog_server.enums.CampaignOrderStatusEnum;
+import com.wtls.blog_server.enums.CampaignStatusEnum;
+import com.wtls.blog_server.enums.UserRoleEnum;
 import com.wtls.blog_server.exception.BusinessException;
 import com.wtls.blog_server.mapper.product.CampaignOrderItemMapper;
 import com.wtls.blog_server.mapper.product.CampaignOrderMapper;
@@ -103,10 +107,10 @@ public class GroupBuyCampaignService {
         }
 
         // 1. 活动到期自动流转为已结束状态 (2)
-        boolean isActive = ObjUtil.equals(campaign.getStatus(), 1);
+        boolean isActive = CampaignStatusEnum.ACTIVE.matches(campaign.getStatus());
         boolean isExpired = ObjUtil.isNotNull(campaign.getEndTime()) && campaign.getEndTime().isBefore(LocalDateTime.now());
         if (isActive && isExpired) {
-            campaign.setStatus(2);
+            campaign.setStatus(CampaignStatusEnum.ENDED.getCode());
             campaign.setUpdateTime(LocalDateTime.now());
             campaignMapper.updateById(campaign);
         }
@@ -135,22 +139,22 @@ public class GroupBuyCampaignService {
         // 4. 统计已参团人数 (排除已取消订单，优先统计已支付的有效订单)
         QueryWrapper<CampaignOrder> orderQuery = new QueryWrapper<>();
         orderQuery.eq("campaign_id", campaign.getId())
-                  .ne("status", 3); // 排除已取消/退款
+                  .ne("status", CampaignOrderStatusEnum.CANCELLED.getCode()); // 排除已取消/退款
         List<CampaignOrder> orders = orderMapper.selectList(orderQuery);
         long validPaidCount = orders.stream()
-                .filter(o -> ObjUtil.isNotNull(o.getStatus()) && o.getStatus() >= 1)
+                .filter(o -> CampaignOrderStatusEnum.isPaid(o.getStatus()))
                 .count();
         int currentNum = (int) validPaidCount;
         campaign.setCurrentNum(currentNum);
         
-        // 5. 动态计算成团状态 (扁平清晰语义)
+        // 5. 动态计算成团状态 (标准枚举语义)
         int target = ObjUtil.defaultIfNull(campaign.getTargetNum(), 0);
-        boolean isEnded = ObjUtil.equals(campaign.getStatus(), 2);
+        boolean isEnded = CampaignStatusEnum.ENDED.matches(campaign.getStatus());
         if (target <= 0) {
-            campaign.setGroupStatus(1);
+            campaign.setGroupStatus(CampaignGroupStatusEnum.SUCCESS.getCode());
             campaign.setGroupStatusText(isEnded ? "已结团" : "火热拼团中");
         } else if (currentNum >= target) {
-            campaign.setGroupStatus(1);
+            campaign.setGroupStatus(CampaignGroupStatusEnum.SUCCESS.getCode());
             campaign.setGroupStatusText("已成团");
         } else if (isEnded) {
             campaign.setGroupStatus(2);
@@ -164,7 +168,7 @@ public class GroupBuyCampaignService {
         List<String> avatars = new ArrayList<>();
         Set<Long> userIds = new HashSet<>();
         for (CampaignOrder order : orders) {
-            if (ObjUtil.isNotNull(order.getStatus()) && order.getStatus() >= 1) {
+            if (CampaignOrderStatusEnum.isPaid(order.getStatus())) {
                 userIds.add(order.getUserId());
             }
         }
@@ -190,7 +194,7 @@ public class GroupBuyCampaignService {
         campaign.setCreateTime(LocalDateTime.now());
         campaign.setUpdateTime(LocalDateTime.now());
         if (ObjUtil.isNull(campaign.getStatus())) {
-            campaign.setStatus(0); // 默认待上架/草稿
+            campaign.setStatus(CampaignStatusEnum.DRAFT.getCode()); // 默认待上架/草稿
         }
         campaignMapper.insert(campaign);
         
@@ -251,9 +255,11 @@ public class GroupBuyCampaignService {
      */
     @Transactional
     public void deleteCampaign(Long id) {
-        // 校验：若活动下尚有待提货(1)或待支付(0)的有效订单，严禁删除活动（彻底防止死锁孤儿订单）
+        // 校验：若活动下尚有待提货或待支付的有效订单，严禁删除活动（彻底防止死锁孤儿订单）
         QueryWrapper<CampaignOrder> orderCheckQuery = new QueryWrapper<>();
-        orderCheckQuery.eq("campaign_id", id).in("status", 0, 1);
+        orderCheckQuery.eq("campaign_id", id).in("status", 
+                CampaignOrderStatusEnum.UNPAID.getCode(), 
+                CampaignOrderStatusEnum.PAID_PENDING_PICKUP.getCode());
         long pendingOrdersCount = orderMapper.selectCount(orderCheckQuery);
         if (pendingOrdersCount > 0) {
             throw new com.wtls.blog_server.exception.BusinessException(
@@ -281,14 +287,14 @@ public class GroupBuyCampaignService {
     @Transactional
     public CampaignOrder createOrder(CampaignOrder order) {
         GroupBuyCampaign campaign = campaignMapper.selectById(order.getCampaignId());
-        if (ObjUtil.isNull(campaign) || ObjUtil.equals(campaign.getStatus(), 2) || campaign.getEndTime().isBefore(LocalDateTime.now())) {
+        if (ObjUtil.isNull(campaign) || CampaignStatusEnum.ENDED.matches(campaign.getStatus()) || campaign.getEndTime().isBefore(LocalDateTime.now())) {
             throw new BusinessException("该团购活动不存在或已结束！");
         }
         
         order.setId(IdUtil.fastSimpleUUID());
         order.setCreateTime(LocalDateTime.now());
         order.setUpdateTime(LocalDateTime.now());
-        order.setStatus(0); // 0: 待支付
+        order.setStatus(CampaignOrderStatusEnum.UNPAID.getCode()); // 0: 待支付
         
         // 生成当前团购活动下的跟团排号序号
         QueryWrapper<CampaignOrder> countQuery = new QueryWrapper<>();
@@ -350,12 +356,12 @@ public class GroupBuyCampaignService {
     @Transactional
     public CampaignOrder handlePaymentSuccess(String orderId) {
         CampaignOrder order = orderMapper.selectById(orderId);
-        if (ObjUtil.isNull(order) || !ObjUtil.equals(order.getStatus(), 0)) {
+        if (ObjUtil.isNull(order) || !CampaignOrderStatusEnum.UNPAID.matches(order.getStatus())) {
             throw new BusinessException("订单无效或已完成支付");
         }
 
-        // 1. 更新订单状态为已支付（1）
-        order.setStatus(1);
+        // 1. 更新订单状态为已支付待提货
+        order.setStatus(CampaignOrderStatusEnum.PAID_PENDING_PICKUP.getCode());
         order.setUpdateTime(LocalDateTime.now());
         orderMapper.updateById(order);
 
@@ -408,9 +414,10 @@ public class GroupBuyCampaignService {
                     fillCampaignDetails(c);
                 } else {
                     // 孤儿订单自动自愈机制：活动已被删除，导致订单处于无主死锁状态
-                    // 若状态仍为 0(待支付) 或 1(待核销/提货)，自动流转为 3(已失效/已取消) 并持久化更新到数据库
-                    if (ObjUtil.equals(order.getStatus(), 0) || ObjUtil.equals(order.getStatus(), 1)) {
-                        order.setStatus(3);
+                    // 若状态仍为待支付或待提货，自动流转为已失效/取消并持久化更新到数据库
+                    if (CampaignOrderStatusEnum.UNPAID.matches(order.getStatus()) || 
+                        CampaignOrderStatusEnum.PAID_PENDING_PICKUP.matches(order.getStatus())) {
+                        order.setStatus(CampaignOrderStatusEnum.CANCELLED.getCode());
                         order.setUpdateTime(LocalDateTime.now());
                         orderMapper.updateById(order);
                     }
@@ -436,8 +443,7 @@ public class GroupBuyCampaignService {
 
         // 检查操作人是否为管理员 (ADMIN / CREATOR 拥有运维特权)
         User currentUser = userMapper.selectById(userId);
-        boolean isAdmin = ObjUtil.isNotNull(currentUser) && 
-                ("ADMIN".equalsIgnoreCase(currentUser.getRole()) || "CREATOR".equalsIgnoreCase(currentUser.getRole()));
+        boolean isAdmin = ObjUtil.isNotNull(currentUser) && UserRoleEnum.isAdminOrCreator(currentUser.getRole());
 
         if (!ObjUtil.equals(order.getUserId(), userId) && !isAdmin) {
             throw new BusinessException("只能删除自己的跟团订单");
@@ -447,8 +453,10 @@ public class GroupBuyCampaignService {
         GroupBuyCampaign c = campaignMapper.selectById(order.getCampaignId());
         boolean isOrphan = (c == null);
 
-        // 如果既不是孤儿订单、也不是管理员清理，则仅允许删除未支付(0) 或 已取消/已退款(3) 的跟团订单
-        if (!isOrphan && !isAdmin && !ObjUtil.equals(order.getStatus(), 0) && !ObjUtil.equals(order.getStatus(), 3)) {
+        // 如果既不是孤儿订单、也不是管理员清理，则仅允许删除未支付或已取消的跟团订单
+        if (!isOrphan && !isAdmin && 
+            !CampaignOrderStatusEnum.UNPAID.matches(order.getStatus()) && 
+            !CampaignOrderStatusEnum.CANCELLED.matches(order.getStatus())) {
             throw new BusinessException("只能删除未支付或已取消的跟团订单");
         }
 
@@ -503,8 +511,9 @@ public class GroupBuyCampaignService {
             throw new BusinessException("无权操作他人的订单");
         }
 
-        // 已经核销(2)或已取消(3)不再触发通知
-        if (ObjUtil.equals(order.getStatus(), 2) || ObjUtil.equals(order.getStatus(), 3)) {
+        // 已经核销(COMPLETED)或已取消(CANCELLED)不再触发通知
+        if (CampaignOrderStatusEnum.COMPLETED.matches(order.getStatus()) || 
+            CampaignOrderStatusEnum.CANCELLED.matches(order.getStatus())) {
             return;
         }
 

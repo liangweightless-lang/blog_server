@@ -203,14 +203,14 @@ public class XunhupayController {
         Map<String, Object> map = new HashMap<>();
         ProductOrder pOrder = orderMapper.selectById(orderId);
         if (pOrder != null) {
-            map.put("paid", pOrder.getStatus() == 1 || pOrder.getStatus() == 3);
+            map.put("paid", com.wtls.blog_server.enums.ProductOrderStatusEnum.isPaid(pOrder.getStatus()));
             map.put("status", pOrder.getStatus());
             return Result.success(map);
         }
 
         CampaignOrder cOrder = campaignOrderMapper.selectById(orderId);
         if (cOrder != null) {
-            map.put("paid", cOrder.getStatus() == 1 || cOrder.getStatus() == 2);
+            map.put("paid", com.wtls.blog_server.enums.CampaignOrderStatusEnum.isPaid(cOrder.getStatus()));
             map.put("status", cOrder.getStatus());
             return Result.success(map);
         }

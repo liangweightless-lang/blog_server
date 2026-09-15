@@ -325,6 +325,7 @@ import {
   cleanOrphanOrders
 } from '@/api/campaign';
 import { Message, Modal } from '@arco-design/web-vue';
+import { getCampaignOrderStatus, getCampaignStatus } from '@/constants/enums';
 
 export default {
   name: 'CampaignManager',
@@ -440,12 +441,10 @@ export default {
       }
     },
     getOrderStatusColor(status) {
-      const map = { 0: 'orange', 1: 'blue', 2: 'green', 3: 'gray' };
-      return map[status] || 'gray';
+      return getCampaignOrderStatus(status).color;
     },
     getOrderStatusText(status) {
-      const map = { 0: '待付款', 1: '已付款', 2: '已提货(核销)', 3: '已退款' };
-      return map[status] || '未知';
+      return getCampaignOrderStatus(status).label;
     },
     handleConfirmCampaignPay(order) {
       Modal.confirm({

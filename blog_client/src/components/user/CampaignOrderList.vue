@@ -221,6 +221,7 @@
 <script>
 import { deleteUnpaidCampaignOrder } from '@/api/campaign';
 import { Message, Modal } from '@arco-design/web-vue';
+import { getCampaignOrderStatus } from '@/constants/enums';
 
 export default {
   name: 'CampaignOrderList',
@@ -283,12 +284,10 @@ export default {
       return map[this.activeFilter] || '暂无数据';
     },
     getOrderStatusColor(status) {
-      const colors = ['orange', 'green', 'blue', 'gray'];
-      return colors[status] || 'gray';
+      return getCampaignOrderStatus(status).color;
     },
     getOrderStatusText(status) {
-      const texts = ['待付款', '待提货', '已完成', '已取消'];
-      return texts[status] || '处理中';
+      return getCampaignOrderStatus(status).label;
     },
     getFirstProductImage(order) {
       if (order.items && order.items.length > 0 && order.items[0].productImage) {

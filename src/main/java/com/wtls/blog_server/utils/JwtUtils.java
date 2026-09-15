@@ -60,14 +60,14 @@ public class JwtUtils {
 
     public static void checkAdmin(String authHeader) {
         String role = getRoleFromHeader(authHeader);
-        if (!"ADMIN".equals(role)) {
+        if (!com.wtls.blog_server.enums.UserRoleEnum.isAdmin(role)) {
             throw new com.wtls.blog_server.exception.UnauthorizedException("权限不足，需要管理员权限");
         }
     }
 
     public static void checkAdminOrCreator(String authHeader) {
         String role = getRoleFromHeader(authHeader);
-        if (!"ADMIN".equals(role) && !"CREATOR".equals(role)) {
+        if (!com.wtls.blog_server.enums.UserRoleEnum.isAdminOrCreator(role)) {
             throw new com.wtls.blog_server.exception.UnauthorizedException("权限不足，需要管理员或小柴包酱权限");
         }
     }
