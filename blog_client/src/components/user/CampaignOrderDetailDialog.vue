@@ -133,12 +133,12 @@
       </div>
 
       <!-- 5. 底部操作区 -->
-      <div class="action-footer" v-if="order.status === 0 || order.status === 3">
+      <div class="action-footer" v-if="order.status === 0 || order.status === 3 || !order.campaign">
         <a-button status="danger" shape="round" @click="handleDeleteCurrentOrder">
-          {{ order.status === 0 ? '取消跟团' : '删除记录' }}
+          {{ !order.campaign ? '删除失效记录' : (order.status === 0 ? '取消跟团' : '删除记录') }}
         </a-button>
         <a-button 
-          v-if="order.status === 0" 
+          v-if="order.status === 0 && order.campaign" 
           type="primary" 
           style="background: linear-gradient(135deg, #FF7E67 0%, #FF5A34 100%); border: none;" 
           shape="round" 
@@ -222,11 +222,14 @@ export default {
     },
     handleDeleteCurrentOrder() {
       if (!this.order) return;
+      const isOrphan = !this.order.campaign;
       Modal.confirm({
         title: '删除订单确认',
-        content: this.order.status === 0 
-          ? '确定要取消此未支付跟团订单吗？' 
-          : '确定要删除此跟团记录吗？删除后不可恢复。',
+        content: isOrphan
+          ? '该跟团订单关联的活动已下架或删除，确认删除此失效订单记录吗？'
+          : (this.order.status === 0 
+            ? '确定要取消此未支付跟团订单吗？' 
+            : '确定要删除此跟团记录吗？删除后不可恢复。'),
         okText: '确认删除',
         cancelText: '取消',
         onOk: async () => {

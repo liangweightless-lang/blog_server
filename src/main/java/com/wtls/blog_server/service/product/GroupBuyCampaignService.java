@@ -388,6 +388,7 @@ public class GroupBuyCampaignService {
     
     /**
      * 查询个人用户的所有跟团订单，并挂载对应团购活动详情与商品条目
+     * 具备自动自愈机制：若检测到活动已被删除的孤儿脏数据，自动纠偏为已失效(3)，消除小红点死锁
      *
      * @param userId 用户ID
      * @return 个人跟团订单列表
@@ -405,6 +406,14 @@ public class GroupBuyCampaignService {
                 GroupBuyCampaign c = campaignMapper.selectById(order.getCampaignId());
                 if (ObjUtil.isNotNull(c)) {
                     fillCampaignDetails(c);
+                } else {
+                    // 孤儿订单自动自愈机制：活动已被删除，导致订单处于无主死锁状态
+                    // 若状态仍为 0(待支付) 或 1(待核销/提货)，自动流转为 3(已失效/已取消) 并持久化更新到数据库
+                    if (ObjUtil.equals(order.getStatus(), 0) || ObjUtil.equals(order.getStatus(), 1)) {
+                        order.setStatus(3);
+                        order.setUpdateTime(LocalDateTime.now());
+                        orderMapper.updateById(order);
+                    }
                 }
                 order.setCampaign(c);
             }
@@ -413,7 +422,7 @@ public class GroupBuyCampaignService {
     }
 
     /**
-     * 用户删除或取消个人未支付/已失效的跟团订单
+     * 用户删除或取消个人未支付/已失效的跟团订单，或管理员清理孤儿订单
      *
      * @param userId  用户ID
      * @param orderId 订单ID
@@ -424,13 +433,25 @@ public class GroupBuyCampaignService {
         if (ObjUtil.isNull(order)) {
             throw new BusinessException("跟团订单不存在");
         }
-        if (!ObjUtil.equals(order.getUserId(), userId)) {
+
+        // 检查操作人是否为管理员 (ADMIN / CREATOR 拥有运维特权)
+        User currentUser = userMapper.selectById(userId);
+        boolean isAdmin = ObjUtil.isNotNull(currentUser) && 
+                ("ADMIN".equalsIgnoreCase(currentUser.getRole()) || "CREATOR".equalsIgnoreCase(currentUser.getRole()));
+
+        if (!ObjUtil.equals(order.getUserId(), userId) && !isAdmin) {
             throw new BusinessException("只能删除自己的跟团订单");
         }
-        // 允许删除未支付(0) 或 已取消/已退款(3) 的跟团订单
-        if (!ObjUtil.equals(order.getStatus(), 0) && !ObjUtil.equals(order.getStatus(), 3)) {
+
+        // 检查是否为孤儿订单 (关联的活动已被删除)
+        GroupBuyCampaign c = campaignMapper.selectById(order.getCampaignId());
+        boolean isOrphan = (c == null);
+
+        // 如果既不是孤儿订单、也不是管理员清理，则仅允许删除未支付(0) 或 已取消/已退款(3) 的跟团订单
+        if (!isOrphan && !isAdmin && !ObjUtil.equals(order.getStatus(), 0) && !ObjUtil.equals(order.getStatus(), 3)) {
             throw new BusinessException("只能删除未支付或已取消的跟团订单");
         }
+
         // 1. 删除订单商品项
         QueryWrapper<CampaignOrderItem> itemQuery = new QueryWrapper<>();
         itemQuery.eq("order_id", orderId);
@@ -438,6 +459,31 @@ public class GroupBuyCampaignService {
 
         // 2. 删除主订单
         orderMapper.deleteById(orderId);
+    }
+
+    /**
+     * 一键清理所有孤儿跟团订单（活动已被删除的脏数据）
+     *
+     * @return 清理的孤儿订单数量
+     */
+    @Transactional
+    public int cleanAllOrphanOrders() {
+        List<CampaignOrder> allOrders = orderMapper.selectList(null);
+        int cleanedCount = 0;
+        if (CollUtil.isNotEmpty(allOrders)) {
+            for (CampaignOrder order : allOrders) {
+                if (ObjUtil.isNull(order.getCampaignId()) || campaignMapper.selectById(order.getCampaignId()) == null) {
+                    // 删除孤儿订单关联条目
+                    QueryWrapper<CampaignOrderItem> itemQuery = new QueryWrapper<>();
+                    itemQuery.eq("order_id", order.getId());
+                    orderItemMapper.delete(itemQuery);
+                    // 删除订单
+                    orderMapper.deleteById(order.getId());
+                    cleanedCount++;
+                }
+            }
+        }
+        return cleanedCount;
     }
 
     private static final java.util.concurrent.ConcurrentHashMap<String, Long> LAST_NOTIFY_TIME_MAP = new java.util.concurrent.ConcurrentHashMap<>();

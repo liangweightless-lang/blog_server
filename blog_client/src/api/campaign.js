@@ -91,3 +91,10 @@ export function notifyCampaignOrderPaid(orderId) {
     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
   });
 }
+
+export function cleanOrphanOrders() {
+  return request.post('/api/campaigns/orders/clean-orphans', {}, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+  });
+}
+

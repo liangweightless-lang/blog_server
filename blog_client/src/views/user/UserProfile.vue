@@ -324,8 +324,8 @@ export default {
       return (this.orders || []).filter(o => o.status === 1).length;
     },
     activeCampaignCount() {
-      // 仅统计进行中的跟团订单：待付款(0) 和 待提货/备料中(1)；已提货(2)和已取消(3)红点自动消失
-      return (this.campaignOrders || []).filter(o => o.status === 0 || o.status === 1).length;
+      // 仅统计进行中的有效跟团订单：必须存在有效活动关联，且为待付款(0)或待提货/备料中(1)；已提货(2)、已取消/已失效(3)或已下架删除活动的孤儿订单红点自动消失
+      return (this.campaignOrders || []).filter(o => (o.status === 0 || o.status === 1) && !!o.campaign).length;
     },
     filteredOrders() {
       if (!this.orders || this.orders.length === 0) return [];

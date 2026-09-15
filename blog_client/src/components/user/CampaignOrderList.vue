@@ -50,7 +50,10 @@
               <span class="follow-no-pill" v-if="order.followNumber">跟团号 #{{ order.followNumber }}</span>
               <span class="campaign-type-capsule">快团订单</span>
             </div>
-            <a-tag :color="getOrderStatusColor(order.status)" size="small" class="status-tag">
+            <a-tag v-if="!order.campaign" color="gray" size="small" class="status-tag">
+              活动已失效
+            </a-tag>
+            <a-tag v-else :color="getOrderStatusColor(order.status)" size="small" class="status-tag">
               {{ getOrderStatusText(order.status) }}
             </a-tag>
           </div>
@@ -123,8 +126,22 @@
 
           <!-- 独立操作按钮栏 -->
           <div class="order-actions-row">
+            <!-- 孤儿订单处理：关联活动已失效或已删除，直接支持清除记录 -->
+            <template v-if="!order.campaign">
+              <a-button 
+                type="text" 
+                status="danger" 
+                size="small" 
+                class="btn-del-record"
+                @click.stop="handleDeleteOrder(order)"
+              >
+                <template #icon><icon-delete /></template>
+                删除失效记录
+              </a-button>
+            </template>
+
             <!-- 待支付状态 (0) -->
-            <template v-if="order.status === 0">
+            <template v-else-if="order.status === 0">
               <a-button 
                 type="text" 
                 status="danger" 
@@ -325,11 +342,14 @@ export default {
       document.body.removeChild(input);
     },
     handleDeleteOrder(order) {
+      const isOrphan = !order.campaign;
       Modal.confirm({
         title: '跟团订单处理确认',
-        content: order.status === 0 
-          ? '确定要取消此未支付跟团订单吗？' 
-          : '确定要删除此跟团订单记录吗？删除后不可恢复。',
+        content: isOrphan 
+          ? '该订单关联的团购活动已下架或删除，确认删除此失效订单记录吗？'
+          : (order.status === 0 
+            ? '确定要取消此未支付跟团订单吗？' 
+            : '确定要删除此跟团订单记录吗？删除后不可恢复。'),
         okText: '确认',
         cancelText: '取消',
         onOk: async () => {
@@ -338,11 +358,11 @@ export default {
             Message.success('操作成功');
             this.$emit('refresh');
           } catch (e) {
-            Message.error(e.response?.data?.message || '操作失败');
+            Message.error(e?.response?.data?.message || '操作失败');
           }
         }
       });
-    }
+    },
   }
 }
 </script>

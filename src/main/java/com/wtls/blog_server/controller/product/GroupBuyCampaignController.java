@@ -133,4 +133,12 @@ public class GroupBuyCampaignController {
         service.notifyUserPaid(userId, orderId);
         return Result.success("已通知管理员核对收款");
     }
+
+    @PostMapping("/orders/clean-orphans")
+    @Operation(summary = "管理员一键清理孤儿跟团订单", description = "扫描并清理数据库中所有关联活动已被删除的脏数据订单与条目")
+    public Result<Integer> cleanOrphanOrders(@RequestHeader("Authorization") String authHeader) {
+        checkAdmin(authHeader);
+        int cleaned = service.cleanAllOrphanOrders();
+        return Result.success(cleaned, "孤儿订单清理完成，共清理 " + cleaned + " 笔失效脏数据");
+    }
 }

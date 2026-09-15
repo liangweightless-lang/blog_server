@@ -2,9 +2,14 @@
   <div class="campaign-manager">
     <a-tabs v-model:active-key="activeTab">
       <a-tab-pane key="list" title="活动列表">
-        <a-button type="primary" class="brand-btn" style="margin-bottom: 16px;" :style="{ width: isMobile ? '100%' : 'auto' }" @click="$router.push('/admin/campaign/create')">
-          <icon-plus /> 发起新团购
-        </a-button>
+        <div style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
+          <a-button type="primary" class="brand-btn" :style="{ width: isMobile ? '100%' : 'auto' }" @click="$router.push('/admin/campaign/create')">
+            <icon-plus /> 发起新团购
+          </a-button>
+          <a-button type="outline" status="warning" :style="{ width: isMobile ? '100%' : 'auto' }" @click="handleCleanOrphans">
+            <icon-tool /> 清理孤儿订单
+          </a-button>
+        </div>
 
         <!-- PC端表格 -->
         <a-table v-if="!isMobile" :data="campaigns" :loading="loading" stripe :scroll="{ x: 750 }">
@@ -316,7 +321,8 @@ import {
   getDeliveryLocations, 
   createDeliveryLocation, 
   updateDeliveryLocation, 
-  deleteDeliveryLocation 
+  deleteDeliveryLocation,
+  cleanOrphanOrders
 } from '@/api/campaign';
 import { Message, Modal } from '@arco-design/web-vue';
 
@@ -398,6 +404,24 @@ export default {
             this.fetchCampaigns();
           } catch (e) {
             Message.error('删除失败');
+          }
+        }
+      });
+    },
+    handleCleanOrphans() {
+      Modal.confirm({
+        title: '一键自愈与清理孤儿订单',
+        content: '将自动扫描并彻底清理数据库中由于活动被删除而残留的失效订单脏数据，确保统计与小红点准确无误。确定执行清理吗？',
+        okText: '立即清理',
+        cancelText: '取消',
+        onOk: async () => {
+          try {
+            const res = await cleanOrphanOrders();
+            const count = res.data.data || 0;
+            Message.success(`清理完成，共移除 ${count} 笔孤儿脏数据订单`);
+            this.fetchCampaigns();
+          } catch (e) {
+            Message.error(e?.response?.data?.message || '清理失败');
           }
         }
       });
