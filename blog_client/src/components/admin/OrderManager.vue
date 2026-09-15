@@ -66,9 +66,16 @@
             </div>
           </template>
         </a-table-column>
-        <a-table-column title="订单编号" :width="160">
+        <a-table-column title="订单编号" :width="180">
           <template #cell="{ record }">
-            <span class="mono-text">#{{ record.id }}</span>
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <span class="mono-text">#{{ record.id }}</span>
+              <a-tooltip content="点击复制订单号">
+                <a-button type="text" size="mini" @click="copyText(record.id, '订单号已复制')">
+                  <template #icon><icon-copy /></template>
+                </a-button>
+              </a-tooltip>
+            </div>
           </template>
         </a-table-column>
         <a-table-column title="买家与地址">
@@ -79,6 +86,11 @@
                 <span v-if="record.contactPhone" style="color: #165dff; font-weight: 500;">
                   <icon-phone /> <a :href="'tel:' + record.contactPhone" style="color: inherit;">{{ record.contactPhone }}</a>
                 </span>
+                <a-tooltip content="复制整段打单信息(买家+电话+地址)">
+                  <a-button type="text" size="mini" style="padding: 0 4px; font-size: 11px;" @click="copyShippingText(record)">
+                    <template #icon><icon-copy /></template> 复制打单
+                  </a-button>
+                </a-tooltip>
               </div>
               <div class="addr-line"><icon-location /> {{ record.shippingAddress || '未填写' }}</div>
               <div v-if="record.remark" style="color: #D46B08; font-size: 12px; background: #FFF7E8; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 2px;">
@@ -97,18 +109,25 @@
             <div class="table-points" v-if="record.pointsUsed">抵扣: {{ record.pointsUsed }}分</div>
           </template>
         </a-table-column>
-        <a-table-column title="状态/操作" :width="140" fixed="right">
+        <a-table-column title="状态/操作" :width="160" fixed="right">
           <template #cell="{ record }">
-            <a-tag :color="getOrderStatusColor(record.status)" size="small" style="margin-bottom: 6px;">
-              {{ getOrderStatusText(record.status) }}
-            </a-tag>
-            <div style="display: flex; gap: 6px;">
-              <a-button v-if="record.status === 0" size="small" type="primary" status="warning" shape="round" @click="openConfirmDrawer(record)">
-                确认收款
-              </a-button>
-              <a-button v-if="record.status === 1" size="small" type="primary" status="success" shape="round" @click="handleShip(record)">
-                标记发货
-              </a-button>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <a-tag :color="getOrderStatusColor(record.status)" size="small">
+                  {{ getOrderStatusText(record.status) }}
+                </a-tag>
+                <a-button type="text" size="mini" style="color: #165DFF; font-weight: 600;" @click="openDetailDrawer(record)">
+                  <template #icon><icon-file /></template> 详情
+                </a-button>
+              </div>
+              <div style="display: flex; gap: 6px;" v-if="record.status === 0 || record.status === 1">
+                <a-button v-if="record.status === 0" size="small" type="primary" status="warning" shape="round" @click="openConfirmDrawer(record)">
+                  确认收款
+                </a-button>
+                <a-button v-if="record.status === 1" size="small" type="primary" status="success" shape="round" @click="handleShip(record)">
+                  标记发货
+                </a-button>
+              </div>
             </div>
           </template>
         </a-table-column>
@@ -123,6 +142,9 @@
           <div class="m-card-header">
             <div class="m-header-left">
               <span class="m-order-no">#{{ order.id }}</span>
+              <button class="m-copy-icon-btn" @click.stop="copyText(order.id, '订单编号已复制')" title="复制单号">
+                <icon-copy />
+              </button>
               <a-tag :color="order.orderType === 'GROUP' ? 'orange' : 'arcoblue'" size="small" class="m-type-tag">
                 {{ order.orderType === 'GROUP' ? '拼团单' : '普通单' }}
               </a-tag>
@@ -132,8 +154,8 @@
             </a-tag>
           </div>
 
-          <!-- 商品主要信息区 -->
-          <div class="m-card-prod-row">
+          <!-- 商品主要信息区（支持直接点击唤起详情抽屉） -->
+          <div class="m-card-prod-row" @click="openDetailDrawer(order)" style="cursor: pointer;">
             <img :src="$formatImageUrl(getProdImage(order.productId))" class="m-prod-thumb" />
             <div class="m-prod-details">
               <h4 class="m-prod-name">{{ getProdName(order.productId) }}</h4>
@@ -159,14 +181,20 @@
             <div class="m-addr-line" v-if="order.contactPhone" style="margin-bottom: 4px; color: #165DFF; font-weight: 500;">
               <icon-phone class="m-addr-icon" />
               <span>电话: <a :href="'tel:' + order.contactPhone" style="color: inherit; text-decoration: underline;">{{ order.contactPhone }}</a></span>
+              <button class="m-copy-icon-btn" @click.stop="copyText(order.contactPhone, '手机号已复制')" title="复制手机号" style="margin-left: 4px;">
+                <icon-copy />
+              </button>
             </div>
             <div class="m-addr-line">
               <icon-location class="m-addr-icon" />
               <span>地址: {{ order.shippingAddress || '买家未填写收货地址' }}</span>
+              <button class="m-copy-icon-btn" @click.stop="copyShippingText(order)" title="一键复制打单文本" style="margin-left: 6px;">
+                <icon-copy /> 复制打单
+              </button>
             </div>
             <div class="m-remark-line" v-if="order.remark" style="margin-top: 6px; padding: 6px 10px; background: #FFF7E8; border-radius: 6px; color: #D46B08; font-size: 12px; display: flex; align-items: flex-start; gap: 4px;">
               <icon-message style="margin-top: 2px;" />
-              <span><strong>顾客备注:</strong> {{ order.remark }}</span>
+              <span><strong>顾客定制/备注:</strong> {{ order.remark }}</span>
             </div>
             <div class="m-time-line" style="margin-top: 6px;">
               <icon-clock-circle /> 下单时间: {{ $formatTime(order.createTime) }}
@@ -177,11 +205,14 @@
           <div class="m-card-footer">
             <span class="m-footer-status-desc">{{ getStatusHelpText(order.status) }}</span>
             <div class="m-action-btns">
+              <button class="m-detail-btn" @click="openDetailDrawer(order)">
+                <icon-file /> 详情
+              </button>
               <button v-if="order.status === 0" class="m-confirm-pay-btn" @click="openConfirmDrawer(order)">
-                <icon-check-circle /> 确认收款核销
+                <icon-check-circle /> 确认收款
               </button>
               <button v-if="order.status === 1" class="m-ship-btn" @click="handleShip(order)">
-                <icon-send /> 标记已发货
+                <icon-send /> 标记发货
               </button>
             </div>
           </div>
@@ -252,6 +283,16 @@
         </button>
       </template>
     </AppBottomSheet>
+
+    <!-- 全维度订单详情抽屉 (PC侧滑/手机底部滑出) -->
+    <AdminOrderDetailDrawer
+      v-model:visible="detailDrawerVisible"
+      :order="selectedOrderForDetail"
+      :product="selectedOrderForDetail ? prodMap[selectedOrderForDetail.productId] : null"
+      :isMobile="isMobile"
+      @confirm-pay="handleDetailConfirmPay"
+      @ship="handleDetailShip"
+    />
   </div>
 </template>
 
@@ -259,9 +300,14 @@
 import { getOrdersAdmin, shipOrder, confirmOrderPay } from '@/api/order';
 import { getProducts } from '@/api/product';
 import { Message } from '@arco-design/web-vue';
+import { PRODUCT_ORDER_STATUS, getProductOrderStatus } from '@/constants/enums';
+import AdminOrderDetailDrawer from './AdminOrderDetailDrawer.vue';
 
 export default {
   name: 'OrderManager',
+  components: {
+    AdminOrderDetailDrawer
+  },
   props: {
     isMobile: {
       type: Boolean,
@@ -279,15 +325,17 @@ export default {
       prodMap: {},
       loadingOrders: false,
       confirmDrawerVisible: false,
+      detailDrawerVisible: false,
+      selectedOrderForDetail: null,
       currentOrder: null,
       submitting: false,
       activeStatus: (this.initialStatus !== null && this.initialStatus !== undefined) ? this.initialStatus : 'ALL',
       searchKeyword: '',
       statusTabs: [
         { key: 'ALL', label: '全部' },
-        { key: 0, label: '待支付' },
-        { key: 1, label: '待发货' },
-        { key: 3, label: '已发货' },
+        { key: 0, label: '待付款' },
+        { key: 1, label: '待发货/自提' },
+        { key: 3, label: '已交付完成' },
         { key: 2, label: '已取消' }
       ]
     }
@@ -380,22 +428,65 @@ export default {
       return p?.image || '/img/avatar.png';
     },
     getOrderStatusColor(status) {
-      const colors = ['orange', 'green', 'gray', 'arcoblue'];
-      return colors[status] || 'gray';
+      return getProductOrderStatus(status).color;
     },
     getOrderStatusText(status) {
-      const texts = ['待支付', '已支付', '已取消', '已发货'];
-      return texts[status] || '未知';
+      return getProductOrderStatus(status).label;
     },
     getStatusHelpText(status) {
       if (status === 0) return '买家已提交订单，等待付款核销';
       if (status === 1) return '买家已完成支付，可进行配货发货';
-      if (status === 3) return '商品已出库配送中';
-      return '订单已归档或关闭';
+      if (status === 3) return '已交付完成，订单已归档';
+      if (status === 2) return '订单已取消';
+      return '订单处理中';
     },
     openConfirmDrawer(order) {
       this.currentOrder = order;
       this.confirmDrawerVisible = true;
+    },
+    openDetailDrawer(order) {
+      this.selectedOrderForDetail = order;
+      this.detailDrawerVisible = true;
+    },
+    handleDetailConfirmPay(order) {
+      this.detailDrawerVisible = false;
+      this.openConfirmDrawer(order);
+    },
+    async handleDetailShip(order) {
+      await this.handleShip(order);
+      if (this.selectedOrderForDetail && this.selectedOrderForDetail.id === order.id) {
+        this.selectedOrderForDetail.status = 3;
+      }
+    },
+    async copyText(text, successMsg = '已复制到剪贴板') {
+      if (!text) return;
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(String(text));
+        } else {
+          const input = document.createElement('textarea');
+          input.value = String(text);
+          input.style.position = 'fixed';
+          input.style.opacity = '0';
+          document.body.appendChild(input);
+          input.focus();
+          input.select();
+          document.execCommand('copy');
+          document.body.removeChild(input);
+        }
+        Message.success(successMsg);
+      } catch (err) {
+        Message.error('复制失败，请手动长按复制');
+      }
+    },
+    copyShippingText(order) {
+      if (!order) return;
+      const uid = order.userId || '';
+      const phone = order.contactPhone || '未留电话';
+      const addr = order.shippingAddress || '未留地址';
+      const remark = order.remark ? ` 【备注: ${order.remark}】` : '';
+      const fullText = `收件人: UID_${uid}，电话: ${phone}，地址: ${addr}${remark}`;
+      this.copyText(fullText, '📋 整段打单收件信息已复制！');
     },
     async submitConfirmPay() {
       if (!this.currentOrder) return;
@@ -789,6 +880,41 @@ export default {
 }
 .m-ship-btn:active {
   transform: scale(0.95);
+}
+
+.m-detail-btn {
+  background: #F2F3F5;
+  color: #1D2129;
+  border: 1px solid #E5E6EB;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+}
+.m-detail-btn:active {
+  transform: scale(0.95);
+  background: #E5E6EB;
+}
+
+.m-copy-icon-btn {
+  border: none;
+  background: transparent;
+  color: #165DFF;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+.m-copy-icon-btn:hover {
+  background: rgba(22, 93, 255, 0.08);
 }
 
 /* 人工核销抽屉 */
