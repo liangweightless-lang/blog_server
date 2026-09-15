@@ -70,6 +70,46 @@
       <a-form-item label="兴趣标签 (用英文逗号分隔)">
         <a-input v-model="homeConfigForm.tagsString" placeholder="例如: 生活方式,独立品牌,创作手记"></a-input>
       </a-form-item>
+
+      <a-divider orientation="left">🍞 烘焙出炉与客服温情服务配置</a-divider>
+
+      <a-form-item label="首页出炉配送温情提示微标签 (替换无意义虚荣指标)">
+        <a-input 
+          v-model="homeConfigForm.freshBakeNotice" 
+          placeholder="例如: 今日 17:30 鲜烤出炉 · 配送至各楼栋 (留空显示默认)"
+          allow-clear
+        ></a-input>
+        <template #extra>
+          <span style="font-size: 12px; color: #86909C;">展示在首页小柴包名片下方，让顾客第一眼看到当日新鲜出炉与配送动向。</span>
+        </template>
+      </a-form-item>
+
+      <a-form-item label="联系小柴包弹窗副标题">
+        <a-input 
+          v-model="homeConfigForm.conciergeSubtitle" 
+          placeholder="例如: 一对一鲜烤出炉咨询 · 校园自提 · 售后无忧"
+          allow-clear
+        ></a-input>
+        <template #extra>
+          <span style="font-size: 12px; color: #86909C;">展示在点击联系客服后弹出的半屏抽屉顶部副标题。</span>
+        </template>
+      </a-form-item>
+
+      <a-form-item label="客服服务时间与配送说明">
+        <a-input 
+          v-model="homeConfigForm.serviceHours" 
+          placeholder="例如: 09:00 - 22:30 (现烤出炉准时配送)"
+          allow-clear
+        ></a-input>
+      </a-form-item>
+
+      <a-form-item label="定制与售后温情说明">
+        <a-input 
+          v-model="homeConfigForm.serviceNotice" 
+          placeholder="例如: 支持特殊口味定制、宿舍下午茶团餐与急单咨询"
+          allow-clear
+        ></a-input>
+      </a-form-item>
       
       <a-divider orientation="left">第三方服务配置</a-divider>
       
@@ -111,6 +151,10 @@ export default {
         wechatId: '',
         wechatQrUrl: '',
         wechatMerchantQrUrl: '',
+        freshBakeNotice: '',
+        conciergeSubtitle: '',
+        serviceHours: '',
+        serviceNotice: '',
         amapKey: '',
         amapSecurityCode: ''
       }
@@ -144,6 +188,10 @@ export default {
             wechatId: data.wechatId || '',
             wechatQrUrl: data.wechatQrUrl || '',
             wechatMerchantQrUrl: data.wechatMerchantQrUrl || '',
+            freshBakeNotice: data.freshBakeNotice || '',
+            conciergeSubtitle: data.conciergeSubtitle || '',
+            serviceHours: data.serviceHours || '',
+            serviceNotice: data.serviceNotice || '',
             amapKey: data.amapKey || '',
             amapSecurityCode: data.amapSecurityCode || ''
           };

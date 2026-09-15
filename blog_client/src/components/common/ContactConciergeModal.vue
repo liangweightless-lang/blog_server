@@ -2,7 +2,7 @@
   <AppBottomSheet
     v-model:visible="visible"
     title="联系小柴包酱 / 客服微信"
-    subtitle="一对一鲜烤出炉咨询 · 校园自提 · 售后无忧"
+    :subtitle="config.conciergeSubtitle || '一对一鲜烤出炉咨询 · 校园自提 · 售后无忧'"
     width="420px"
   >
     <div class="concierge-modal-body">
@@ -43,15 +43,15 @@
         </button>
       </div>
 
-      <!-- 服务时间与说明 -->
+      <!-- 服务时间与说明 (支持后台灵活配置) -->
       <div class="service-notice">
-        <div class="notice-item">
+        <div class="notice-item" v-if="config.serviceHours !== 'NONE'">
           <icon-clock-circle class="notice-icon" />
-          <span>服务时间: 09:00 - 22:30 (现烤出炉准时配送)</span>
+          <span>{{ config.serviceHours || '服务时间: 09:00 - 22:30 (现烤出炉准时配送)' }}</span>
         </div>
-        <div class="notice-item">
+        <div class="notice-item" v-if="config.serviceNotice !== 'NONE'">
           <icon-check-circle-fill class="notice-icon text-green" />
-          <span>支持特殊口味定制、宿舍下午茶团餐与急单咨询</span>
+          <span>{{ config.serviceNotice || '支持特殊口味定制、宿舍下午茶团餐与急单咨询' }}</span>
         </div>
       </div>
     </div>

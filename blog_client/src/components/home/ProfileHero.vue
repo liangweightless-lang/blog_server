@@ -23,10 +23,10 @@
           {{ homeConfig.authorBio || '手工慢焙，记录灵感。在这里分享甜点与生活美学。' }}
         </p>
 
-        <!-- 极简出炉配送温情提示微标签 (替换无意义虚荣指标) -->
+        <!-- 极简出炉配送温情提示微标签 (替换无意义虚荣指标，支持后台灵活配置) -->
         <div class="fresh-bake-pill">
           <icon-fire class="pill-fire" />
-          <span class="pill-text">今日 17:30 鲜烤出炉 · 配送至各楼栋</span>
+          <span class="pill-text">{{ homeConfig.freshBakeNotice || '今日 17:30 鲜烤出炉 · 配送至各楼栋' }}</span>
         </div>
       </div>
 

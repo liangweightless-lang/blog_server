@@ -77,6 +77,11 @@ public class HomeController {
                 }
                 // 动态装配个人资料中配置的客服微信号
                 map.put("wechatId", resolveDynamicWechatId(map));
+                // 出炉配送温情提示与客服说明字段兜底
+                map.putIfAbsent("freshBakeNotice", "今日 17:30 鲜烤出炉 · 配送至各楼栋");
+                map.putIfAbsent("conciergeSubtitle", "一对一鲜烤出炉咨询 · 校园自提 · 售后无忧");
+                map.putIfAbsent("serviceHours", "09:00 - 22:30 (现烤出炉准时配送)");
+                map.putIfAbsent("serviceNotice", "支持特殊口味定制、宿舍下午茶团餐与急单咨询");
                 return Result.success(map);
             } catch (IOException e) {
                 // fallback to default
@@ -90,6 +95,10 @@ public class HomeController {
         config.put("tags", new String[]{"生活方式", "独立品牌", "创作手记"});
         config.put("wechatQrUrl", "");
         config.put("wechatId", resolveDynamicWechatId(null));
+        config.put("freshBakeNotice", "今日 17:30 鲜烤出炉 · 配送至各楼栋");
+        config.put("conciergeSubtitle", "一对一鲜烤出炉咨询 · 校园自提 · 售后无忧");
+        config.put("serviceHours", "09:00 - 22:30 (现烤出炉准时配送)");
+        config.put("serviceNotice", "支持特殊口味定制、宿舍下午茶团餐与急单咨询");
         return Result.success(config);
     }
 
