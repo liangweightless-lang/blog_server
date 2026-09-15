@@ -66,7 +66,7 @@ public class HomeController {
             try {
                 String content = new String(Files.readAllBytes(Paths.get(configPath)), StandardCharsets.UTF_8);
                 com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-                Map<String, Object> map = mapper.readValue(content, Map.class);
+                Map<String, Object> map = mapper.readValue(content, new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
                 
                 // 归一化图片路径为相对路径
                 if (map.containsKey("avatarUrl")) {
