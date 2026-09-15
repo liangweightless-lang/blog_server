@@ -70,7 +70,16 @@
               {{ isSuperAdmin ? '超级管理员' : '认证小柴包酱' }}
             </span>
           </div>
-          <div class="header-right">
+          <div class="header-right" style="display: flex; align-items: center; gap: 14px;">
+            <div 
+              class="header-async-indicator" 
+              v-if="isSuperAdmin" 
+              @click="asyncMonitorModalVisible = true" 
+              title="点击查看异步线程池与基础设施运行状态"
+            >
+              <span class="pulse-indicator"></span>
+              <span class="indicator-text">异步引擎正常</span>
+            </div>
             <a-button type="text" @click="$router.push('/')">
               <template #icon><icon-home /></template> 返回前台
             </a-button>
@@ -116,6 +125,15 @@
         </div>
 
         <div class="nav-right-slot">
+          <button 
+            v-if="isSuperAdmin" 
+            class="nav-action-btn" 
+            @click="asyncMonitorModalVisible = true" 
+            title="异步引擎监控"
+            style="margin-right: 4px;"
+          >
+            <icon-thunderbolt style="color: #FF7D00;" />
+          </button>
           <button class="nav-action-btn" @click="$router.push('/')" title="前台首页">
             <icon-export />
           </button>
@@ -436,6 +454,16 @@
         </div>
       </AppBottomSheet>
     </div>
+
+    <!-- 异步线程池与基础设施健康看板弹窗 -->
+    <a-modal 
+      v-model:visible="asyncMonitorModalVisible" 
+      :footer="false" 
+      :width="isMobile ? 'calc(100% - 32px)' : '840px'" 
+      title="异步引擎与基础设施监控"
+    >
+      <AsyncPoolMonitorCard />
+    </a-modal>
   </div>
 </template>
 
@@ -455,6 +483,7 @@ import GroupbuyManager from '@/components/admin/GroupbuyManager.vue';
 import CampaignManager from '@/components/admin/CampaignManager.vue';
 import SystemConfig from '@/components/admin/SystemConfig.vue';
 import CreatorManager from '@/components/admin/CreatorManager.vue';
+import AsyncPoolMonitorCard from '@/components/admin/AsyncPoolMonitorCard.vue';
 
 export default {
   name: 'AdminDashboard',
@@ -466,7 +495,8 @@ export default {
     GroupbuyManager,
     CampaignManager,
     SystemConfig,
-    CreatorManager
+    CreatorManager,
+    AsyncPoolMonitorCard
   },
   data() {
     return {
@@ -475,6 +505,7 @@ export default {
       selectedKeys: ['orders'],
       mobileActiveModule: null, // 移动端当前打开的具体模块，null表示在主工作台网格
       isMobile: window.innerWidth <= 768,
+      asyncMonitorModalVisible: false, // 异步线程池与基础设施健康看板弹窗
 
       // 工作台经营指标数据
       metrics: {
@@ -1439,6 +1470,43 @@ export default {
   color: #86909C;
   font-size: 13px;
 }
+
+/* PC 头部异步引擎指示胶囊 */
+.header-async-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 14px;
+  background: #F0FDF4;
+  border: 1px solid rgba(74, 222, 128, 0.4);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.header-async-indicator:hover {
+  background: #DCFCE7;
+  transform: translateY(-1px);
+}
+.pulse-indicator {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #16A34A;
+  box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7);
+  animation: pulse-green 2s infinite;
+}
+@keyframes pulse-green {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(22, 163, 74, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
+}
+.indicator-text {
+  font-size: 12px;
+  color: #15803D;
+  font-weight: 600;
+  user-select: none;
+}
+
 .empty-warn-icon {
   font-size: 28px;
   color: #FF7D00;

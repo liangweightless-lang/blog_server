@@ -23,7 +23,7 @@ public class AsyncConfig implements AsyncConfigurer {
 
     @Override
     @Bean(name = "taskExecutor")
-    public Executor getAsyncExecutor() {
+    public ThreadPoolTaskExecutor getAsyncExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         int cpuCores = Runtime.getRuntime().availableProcessors();
         

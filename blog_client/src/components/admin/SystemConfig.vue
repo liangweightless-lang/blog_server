@@ -1,5 +1,8 @@
 <template>
   <div class="system-config">
+    <!-- 异步线程池与基础设施运行监控卡片 -->
+    <AsyncPoolMonitorCard />
+
     <a-form :model="homeConfigForm" layout="vertical" style="max-width: 600px; margin-top: 20px;">
       <a-form-item label="首页头像">
         <a-upload
@@ -90,9 +93,13 @@
 <script>
 import { getHomeConfig, updateHomeConfig, getUploadUrl, getUploadHeaders } from '@/api/common';
 import { Message } from '@arco-design/web-vue';
+import AsyncPoolMonitorCard from '@/components/admin/AsyncPoolMonitorCard.vue';
 
 export default {
   name: 'SystemConfig',
+  components: {
+    AsyncPoolMonitorCard
+  },
   data() {
     return {
       savingConfig: false,

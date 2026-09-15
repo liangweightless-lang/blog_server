@@ -50,3 +50,16 @@ export function uploadFile(file) {
 export function updateHomeConfig(data) {
   return request.post('/api/home/config', data);
 }
+
+/**
+ * 获取异步线程池与基础设施运行监控数据（管理端）
+ * @returns {Promise}
+ */
+export function getAsyncPoolStatus() {
+  return request.get('/api/system/async-pool/status', {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('token')}`
+    }
+  });
+}
+
